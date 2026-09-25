@@ -60,7 +60,15 @@ st.markdown("""
         border: 1px solid #86EFAC;
         padding: 12px;
         border-radius: 10px;
-        margin-top: 10px;
+        margin-top: 12px;
+    }
+    .img-box {
+        background: #FFFFFF;
+        border: 1px solid #CBD5E1;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
     .rule-box {
         background-color: #EFF6FF;
@@ -100,7 +108,136 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. KHO HỌC LIỆU SỐ TOÀN DIỆN BÁM SÁT VỞ TỰ HỌC: ĐỦ CHỦ ĐIỂM & 3-4 VÍ DỤ CƠ BẢN
+# 3. TRÌNH TẠO HÌNH ẢNH MINH HỌA VECTOR CHUẨN SGK & VỞ TỰ HỌC
+# ==============================================================================
+def render_sgk_illustration_svg(topic_name, lesson_name):
+    """Tạo sơ đồ hình ảnh đồ họa chuẩn mực thay thế video, mô phỏng các hình vẽ SGK."""
+    t_low = (topic_name + " " + lesson_name).lower()
+    
+    # 1. Hình ảnh: Bảng biến thiên (Đơn điệu)
+    if "đơn điệu" in t_low or "đồng biến" in t_low:
+        svg = """
+        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="80" y1="20" x2="80" y2="200" stroke="#475569" stroke-width="2"/>
+            <line x1="20" y1="60" x2="480" y2="60" stroke="#475569" stroke-width="2"/>
+            <line x1="20" y1="100" x2="480" y2="100" stroke="#475569" stroke-width="2"/>
+            <text x="45" y="45" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">x</text>
+            <text x="45" y="85" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">y'</text>
+            <text x="45" y="160" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">y</text>
+            <text x="100" y="45" font-family="sans-serif" font-size="15" fill="#475569">-∞</text>
+            <text x="210" y="45" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold">x₁</text>
+            <text x="330" y="45" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold">x₂</text>
+            <text x="440" y="45" font-family="sans-serif" font-size="15" fill="#475569">+∞</text>
+            <text x="215" y="85" font-family="sans-serif" font-size="16" fill="#1E293B">0</text>
+            <text x="335" y="85" font-family="sans-serif" font-size="16" fill="#1E293B">0</text>
+            <text x="150" y="85" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text>
+            <text x="270" y="85" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text>
+            <text x="390" y="85" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text>
+            <!-- Mũi tên đồng biến nghịch biến -->
+            <line x1="110" y1="180" x2="200" y2="120" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow)"/>
+            <line x1="230" y1="120" x2="320" y2="180" stroke="#DC2626" stroke-width="3" marker-end="url(#arrow)"/>
+            <line x1="350" y1="180" x2="440" y2="120" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow)"/>
+            <text x="205" y="115" font-family="sans-serif" font-size="14" fill="#1E3A8A" font-weight="bold">Cực đại</text>
+            <text x="325" y="195" font-family="sans-serif" font-size="14" fill="#991B1B" font-weight="bold">Cực tiểu</text>
+        </svg>
+        """
+    # 2. Hình ảnh: Cực trị hàm số (Đồ thị lồi lõm)
+    elif "cực trị" in t_low:
+        svg = """
+        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <!-- Hệ trục Oxy -->
+            <line x1="40" y1="190" x2="460" y2="190" stroke="#64748B" stroke-width="2"/>
+            <line x1="70" y1="210" x2="70" y2="20" stroke="#64748B" stroke-width="2"/>
+            <text x="465" y="195" font-family="sans-serif" font-size="14" fill="#334155">x</text>
+            <text x="65" y="15" font-family="sans-serif" font-size="14" fill="#334155">y</text>
+            <!-- Đồ thị hàm bậc 3 -->
+            <path d="M 90 180 C 140 30, 200 40, 250 110 C 300 180, 360 190, 420 30" fill="none" stroke="#2563EB" stroke-width="3.5"/>
+            <!-- Điểm cực đại -->
+            <circle cx="170" cy="55" r="6" fill="#16A34A"/>
+            <line x1="120" y1="55" x2="220" y2="55" stroke="#16A34A" stroke-width="2" stroke-dasharray="4"/>
+            <text x="140" y="40" font-family="sans-serif" font-size="14" font-weight="bold" fill="#15803D">Điểm Cực Đại</text>
+            <!-- Điểm cực tiểu -->
+            <circle cx="330" cy="165" r="6" fill="#DC2626"/>
+            <line x1="280" y1="165" x2="380" y2="165" stroke="#DC2626" stroke-width="2" stroke-dasharray="4"/>
+            <text x="300" y="195" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">Điểm Cực Tiểu</text>
+        </svg>
+        """
+    # 3. Hình ảnh: Đường tiệm cận
+    elif "tiệm cận" in t_low:
+        svg = """
+        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <!-- Hệ trục -->
+            <line x1="30" y1="150" x2="470" y2="150" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="160" y1="210" x2="160" y2="15" stroke="#94A3B8" stroke-width="1.5"/>
+            <!-- Tiệm cận đứng x = x0 (đỏ) -->
+            <line x1="230" y1="10" x2="230" y2="210" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="6"/>
+            <text x="235" y="30" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text>
+            <!-- Tiệm cận ngang y = y0 (xanh) -->
+            <line x1="20" y1="80" x2="480" y2="80" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="6"/>
+            <text x="380" y="72" font-family="sans-serif" font-size="13" font-weight="bold" fill="#2563EB">TCN: y = y₀</text>
+            <!-- 2 nhánh Hypebol -->
+            <path d="M 50 72 Q 180 70 215 15" fill="none" stroke="#0F172A" stroke-width="3"/>
+            <path d="M 245 205 Q 270 90 450 88" fill="none" stroke="#0F172A" stroke-width="3"/>
+        </svg>
+        """
+    # 4. Hình ảnh: Đường tròn lượng giác (Khối 11)
+    elif "lượng giác" in t_low or "sin" in t_low or "cos" in t_low:
+        svg = """
+        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <!-- Trục Cos ngang, Sin đứng -->
+            <line x1="130" y1="110" x2="370" y2="110" stroke="#334155" stroke-width="2"/>
+            <line x1="250" y1="210" x2="250" y2="10" stroke="#334155" stroke-width="2"/>
+            <text x="375" y="115" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Trục Cos (+)</text>
+            <text x="255" y="25" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Trục Sin (+)</text>
+            <!-- Đường tròn đơn vị -->
+            <circle cx="250" cy="110" r="80" fill="none" stroke="#0284C7" stroke-width="2.5"/>
+            <!-- Góc alpha và điểm M -->
+            <line x1="250" y1="110" x2="306" y2="54" stroke="#D97706" stroke-width="2.5"/>
+            <circle cx="306" cy="54" r="5" fill="#D97706"/>
+            <text x="315" y="55" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309">M(cosα; sinα)</text>
+            <!-- Nhãn 4 góc phần tư -->
+            <text x="290" y="90" font-family="sans-serif" font-size="13" fill="#16A34A" font-weight="bold">Góc I (+,+)</text>
+            <text x="160" y="90" font-family="sans-serif" font-size="13" fill="#64748B" font-weight="bold">Góc II (+,-)</text>
+            <text x="160" y="145" font-family="sans-serif" font-size="13" fill="#64748B" font-weight="bold">Góc III (-,-)</text>
+            <text x="290" y="145" font-family="sans-serif" font-size="13" fill="#64748B" font-weight="bold">Góc IV (-,+)</text>
+        </svg>
+        """
+    # 5. Hình ảnh: Mệnh đề & Tập hợp (Biểu đồ Ven - Khối 10)
+    elif "tập hợp" in t_low or "mệnh đề" in t_low:
+        svg = """
+        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <!-- Hai vòng tròn Ven -->
+            <circle cx="200" cy="110" r="75" fill="#93C5FD" fill-opacity="0.5" stroke="#2563EB" stroke-width="2"/>
+            <circle cx="300" cy="110" r="75" fill="#FCA5A5" fill-opacity="0.5" stroke="#DC2626" stroke-width="2"/>
+            <text x="150" y="115" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E40AF">Tập A</text>
+            <text x="330" y="115" font-family="sans-serif" font-size="16" font-weight="bold" fill="#991B1B">Tập B</text>
+            <text x="235" y="115" font-family="sans-serif" font-size="15" font-weight="bold" fill="#047857">A ∩ B</text>
+            <text x="170" y="200" font-family="sans-serif" font-size="14" fill="#334155">Phần giao: phần tử thuộc cả A và B</text>
+        </svg>
+        """
+    # 6. Mặc định: Hình minh họa bảng lý thuyết toán học tổng quát
+    else:
+        svg = """
+        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="2"/>
+            <rect x="25" y="25" width="450" height="170" rx="6" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
+            <circle cx="80" cy="80" r="30" fill="#BFDBFE" stroke="#3B82F6" stroke-width="2"/>
+            <line x1="80" y1="80" x2="160" y2="130" stroke="#3B82F6" stroke-width="3"/>
+            <circle cx="160" cy="130" r="25" fill="#BBF7D0" stroke="#22C55E" stroke-width="2"/>
+            <text x="230" y="85" font-family="sans-serif" font-size="17" font-weight="bold" fill="#1E293B">SƠ ĐỒ KIẾN THỨC CỐT LÕI</text>
+            <text x="230" y="115" font-family="sans-serif" font-size="14" fill="#475569">Mô hình hóa trực quan phương pháp giải</text>
+            <text x="230" y="145" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Bám sát cấu trúc SGK & Vở tự học</text>
+        </svg>
+        """
+    st.markdown(f'<div class="img-box">{svg}</div>', unsafe_allow_html=True)
+
+# ==============================================================================
+# 4. KHO HỌC LIỆU SỐ BÁM SÁT VỞ TỰ HỌC: ĐỦ CHỦ ĐIỂM & VÍ DỤ MINH HỌA
 # ==============================================================================
 CURRICULUM_DATA = {
     "Khối 12": {
@@ -109,32 +246,31 @@ CURRICULUM_DATA = {
             "topics": {
                 "Chủ điểm 1: Tính đơn điệu của hàm số": {
                     "theory": """
-- Cho hàm số $y = f(x)$ xác định và có đạo hàm trên khoảng $K$:
+- Cho hàm số $y = f(x)$ có đạo hàm trên khoảng $K$:
   + Nếu $f'(x) > 0, \forall x \in K$ thì hàm số **đồng biến** trên $K$.
   + Nếu $f'(x) < 0, \forall x \in K$ thì hàm số **nghịch biến** trên $K$.
-  + Nếu $f'(x) \ge 0$ (hoặc $f'(x) \le 0$), $\forall x \in K$ và $f'(x) = 0$ chỉ tại hữu hạn điểm thì hàm số đồng biến (hoặc nghịch biến) trên $K$.
+  + Nếu $f'(x) \ge 0$ (hoặc $\le 0$) trên $K$ và bằng $0$ tại hữu hạn điểm thì hàm số đồng biến (hoặc nghịch biến) trên $K$.
 - **Quy trình xét tính đơn điệu:**
   1. Tìm tập xác định $D$.
-  2. Tính đạo hàm $y' = f'(x)$. Tìm các điểm mà tại đó đạo hàm bằng $0$ hoặc không xác định.
-  3. Lập bảng xét dấu $y'$ và kết luận từng khoảng đồng biến, nghịch biến.
+  2. Tính đạo hàm $y' = f'(x)$, giải phương trình $y' = 0$ và tìm điểm $y'$ không xác định.
+  3. Lập bảng xét dấu đạo hàm và kết luận các khoảng đơn điệu.
 """,
                     "formula": r"f'(x) \ge 0, \forall x \in K \iff \text{Hàm số đồng biến trên } K; \quad f'(x) \le 0, \forall x \in K \iff \text{Hàm số nghịch biến trên } K",
-                    "trap": "Kết luận khoảng đồng biến, nghịch biến phải dùng từ 'và' hoặc dấu phẩy, tuyệt đối không dùng ký hiệu hợp (U) hay phép trừ tập hợp (\\).",
+                    "trap": "Khoảng đồng biến/nghịch biến phải viết rời nhau dùng từ 'và' hoặc dấu phẩy, tuyệt đối không dùng ký hiệu hợp (U).",
                     "audio": "Hàm số đồng biến khi đạo hàm lớn hơn hoặc bằng không, nghịch biến khi đạo hàm nhỏ hơn hoặc bằng không. Luôn kết luận trên từng khoảng riêng biệt.",
                     "examples": [
                         {
-                            "title": "Ví dụ 1: Tìm khoảng đơn điệu của hàm số bậc ba",
+                            "title": "Ví dụ 1: Tìm khoảng đơn điệu của hàm số bậc ba cơ bản",
                             "problem": "Xét tính đơn điệu và tìm các khoảng đồng biến, nghịch biến của hàm số: $$y = x^3 - 3x^2 + 2$$",
                             "solution": """
 - **Bước 1: Tập xác định:** $D = \\mathbb{R}$.
-- **Bước 2: Đạo hàm:**
+- **Bước 2: Tính đạo hàm:**
   $$y' = 3x^2 - 6x = 3x(x - 2)$$
   Cho $y' = 0 \\iff 3x(x - 2) = 0 \\iff x = 0$ hoặc $x = 2$.
-- **Bước 3: Bảng xét dấu đạo hàm:**
-  + Khoảng $(-\\infty; 0)$: $y' > 0$ $\\Rightarrow$ Hàm số đồng biến.
+- **Bước 3: Xét dấu $y'$:**
+  + Khoảng $(-\\infty; 0)$ và $(2; +\\infty)$: $y' > 0$ $\\Rightarrow$ Hàm số đồng biến.
   + Khoảng $(0; 2)$: $y' < 0$ $\\Rightarrow$ Hàm số nghịch biến.
-  + Khoảng $(2; +\\infty)$: $y' > 0$ $\\Rightarrow$ Hàm số đồng biến.
-- **Kết luận:** Hàm số đồng biến trên các khoảng $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên khoảng $(0; 2)$.
+- **Kết luận:** Hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên khoảng $(0; 2)$.
 """
                         },
                         {
@@ -144,10 +280,9 @@ CURRICULUM_DATA = {
 - **Bước 1: Tập xác định:** $D = \\mathbb{R} \\setminus \\{-1\\}$.
 - **Bước 2: Tính đạo hàm theo công thức nhanh $\\left(\\frac{ax+b}{cx+d}\\right)' = \\frac{ad - bc}{(cx+d)^2}$:**
   $$y' = \\frac{2 \\cdot 1 - (-1) \\cdot 1}{(x + 1)^2} = \\frac{3}{(x + 1)^2}$$
-- **Bước 3: Xét dấu đạo hàm:**
-  Vì $3 > 0$ và $(x + 1)^2 > 0$ với mọi $x \\neq -1$ nên:
-  $$y' > 0, \\quad \\forall x \\neq -1$$
-- **Kết luận:** Hàm số đồng biến trên từng khoảng xác định $(-\\infty; -1)$ và $(-1; +\\infty)$.
+- **Bước 3: Kết luận:**
+  Do $(x + 1)^2 > 0$ với mọi $x \\neq -1$ nên $y' > 0, \\forall x \\neq -1$.
+  Vậy hàm số đồng biến trên từng khoảng xác định $(-\\infty; -1)$ và $(-1; +\\infty)$.
 """
                         },
                         {
@@ -155,22 +290,11 @@ CURRICULUM_DATA = {
                             "problem": "Tìm các khoảng đơn điệu của hàm số: $$y = \\frac{x^2 - 2x + 2}{x - 1}$$",
                             "solution": """
 - **Bước 1: Tập xác định:** $D = \\mathbb{R} \\setminus \\{1\\}$.
-- **Bước 2: Đạo hàm thương $\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}$:**
+- **Bước 2: Tính đạo hàm:**
   $$y' = \\frac{(2x - 2)(x - 1) - (x^2 - 2x + 2) \\cdot 1}{(x - 1)^2} = \\frac{x^2 - 2x}{(x - 1)^2}$$
-  Cho $y' = 0 \\iff x^2 - 2x = 0 \\iff x = 0$ hoặc $x = 2$ (cả hai đều thỏa mãn $x \\neq 1$).
-- **Bước 3: Bảng xét dấu đạo hàm:**
-  + $y' > 0$ trên $(-\\infty; 0)$ và $(2; +\\infty)$.
-  + $y' < 0$ trên $(0; 1)$ và $(1; 2)$.
-- **Kết luận:** Hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên $(0; 1)$ và $(1; 2)$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 4: Đọc khoảng đơn điệu từ bảng biến thiên",
-                            "problem": "Cho hàm số $y = f(x)$ xác định trên $\\mathbb{R}$ có bảng biến thiên: $f'(x) > 0$ trên $(-\\infty; -1)$ và $(3; +\\infty)$; $f'(x) < 0$ trên $(-1; 3)$. Khẳng định nào đúng về khoảng nghịch biến?",
-                            "solution": """
-- **Phương pháp đọc bảng biến thiên:** Khoảng nghịch biến của hàm số là khoảng của biến số $x$ mà tại đó mũi tên đi xuống hoặc đạo hàm mang dấu âm.
-- Nhìn vào dòng $f'(x)$, ta thấy dấu $(-)$ xuất hiện trên khoảng $(-1; 3)$.
-- **Kết luận:** Hàm số nghịch biến trên khoảng $(-1; 3)$.
+  Cho $y' = 0 \\iff x^2 - 2x = 0 \\iff x = 0$ hoặc $x = 2$ (thỏa mãn $x \\neq 1$).
+- **Bước 3: Kết luận:**
+  Hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên các khoảng $(0; 1)$ và $(1; 2)$.
 """
                         }
                     ],
@@ -183,70 +307,54 @@ CURRICULUM_DATA = {
                 },
                 "Chủ điểm 2: Cực trị của hàm số": {
                     "theory": """
-- **Định nghĩa:** Cho hàm số $y = f(x)$ xác định trên tập $D$ và $x_0 \in D$.
-  + Nếu tồn tại khoảng $(a; b) \subset D$ chứa $x_0$ sao cho $f(x) < f(x_0), \forall x \in (a; b) \setminus \{x_0\}$ thì $x_0$ là **điểm cực đại**. Khi đó $f(x_0)$ là **giá trị cực đại**.
-  + Nếu $f(x) > f(x_0), \forall x \in (a; b) \setminus \{x_0\}$ thì $x_0$ là **điểm cực tiểu**. Khi đó $f(x_0)$ là **giá trị cực tiểu**.
-- **Dấu hiệu 1 (Đổi dấu đạo hàm cấp 1):**
-  + Qua điểm $x_0$, nếu $f'(x)$ đổi dấu từ $(+)$ sang $(-)$ thì $x_0$ là điểm cực đại.
-  + Qua điểm $x_0$, nếu $f'(x)$ đổi dấu từ $(-)$ sang $(+)$ thì $x_0$ là điểm cực tiểu.
+- **Định nghĩa:** $x_0$ là điểm cực đại nếu $f(x) < f(x_0)$ với mọi $x$ lân cận khác $x_0$. $x_0$ là điểm cực tiểu nếu $f(x) > f(x_0)$.
+- **Dấu hiệu 1:** Qua điểm $x_0$:
+  + Đạo hàm $f'(x)$ đổi dấu từ $(+)$ sang $(-)$ thì $x_0$ là **điểm cực đại**.
+  + Đạo hàm $f'(x)$ đổi dấu từ $(-)$ sang $(+)$ thì $x_0$ là **điểm cực tiểu**.
+- **Quy tắc phân biệt:**
+  + *Điểm cực trị của hàm số:* $x_0$.
+  + *Giá trị cực trị:* $y_0 = f(x_0)$.
+  + *Điểm cực trị của đồ thị:* Cặp tọa độ $M(x_0; y_0)$.
 """,
                     "formula": r"f'(x_0) = 0 \text{ hoặc không xác định}; \quad (+) \xrightarrow{x_0} (-) \implies \text{Cực đại}; \quad (-) \xrightarrow{x_0} (+) \implies \text{Cực tiểu}",
-                    "trap": "Phân biệt rõ: 'Điểm cực trị của hàm số' là hoành độ x0. 'Giá trị cực trị' là tung độ y0 = f(x0). 'Điểm cực trị của đồ thị' là cặp tọa độ M(x0; y0).",
-                    "audio": "Điểm cực trị là giá trị x0, giá trị cực trị là tung độ y0, còn điểm cực trị của đồ thị là cặp tọa độ M(x0; y0). Nhớ phân biệt kỹ câu hỏi.",
+                    "trap": "Học sinh thường nhầm lẫn giữa hoành độ x (điểm cực trị của hàm số) và tung độ y (giá trị cực trị).",
+                    "audio": "Điểm cực trị là giá trị x0, giá trị cực trị là tung độ y0, còn điểm cực trị của đồ thị là cặp tọa độ M(x0; y0). Nhớ đọc kỹ câu hỏi đề bài.",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tìm cực trị của hàm số bậc ba",
-                            "problem": "Tìm các điểm cực trị và giá trị cực trị của hàm số: $$y = x^3 - 3x^2 + 2$$",
+                            "problem": "Tìm các điểm cực trị và giá trị cực trị tương ứng của hàm số: $$y = x^3 - 3x^2 + 2$$",
                             "solution": """
-- **Bước 1: Tập xác định:** $D = \\mathbb{R}$.
-- **Bước 2: Đạo hàm:**
-  $$y' = 3x^2 - 6x = 3x(x - 2)$$
-  Cho $y' = 0 \\iff x = 0$ hoặc $x = 2$.
-- **Bước 3: Xét dấu $y'$ qua các điểm nghiệm:**
-  + Khi $x$ qua điểm $0$, đạo hàm $y'$ đổi dấu từ $(+)$ sang $(-)$ $\\Rightarrow x = 0$ là điểm cực đại. Giá trị cực đại là $y_{CĐ} = f(0) = 2$.
-  + Khi $x$ qua điểm $2$, đạo hàm $y'$ đổi dấu từ $(-)$ sang $(+)$ $\\Rightarrow x = 2$ là điểm cực tiểu. Giá trị cực tiểu là $y_{CT} = f(2) = 2^3 - 3(2^2) + 2 = -2$.
+- **Bước 1: Đạo hàm:** $y' = 3x^2 - 6x = 3x(x - 2) = 0 \\iff x = 0$ hoặc $x = 2$.
+- **Bước 2: Xét dấu đạo hàm:**
+  + Qua $x = 0$, $y'$ đổi dấu từ $(+)$ sang $(-)$ $\\Rightarrow x = 0$ là điểm cực đại; giá trị cực đại $y_{CĐ} = f(0) = 2$.
+  + Qua $x = 2$, $y'$ đổi dấu từ $(-)$ sang $(+)$ $\\Rightarrow x = 2$ là điểm cực tiểu; giá trị cực tiểu $y_{CT} = f(2) = -2$.
 - **Kết luận:** Hàm số đạt cực đại tại $x = 0$ với $y_{CĐ} = 2$; đạt cực tiểu tại $x = 2$ với $y_{CT} = -2$.
 """
                         },
                         {
-                            "title": "Ví dụ 2: Tìm tọa độ điểm cực trị của đồ thị hàm số",
+                            "title": "Ví dụ 2: Tìm tọa độ điểm cực trị của đồ thị hàm trùng phương",
                             "problem": "Tìm tọa độ các điểm cực trị của đồ thị hàm số: $$y = -x^4 + 2x^2 + 3$$",
                             "solution": """
-- **Bước 1: Tập xác định:** $D = \\mathbb{R}$.
-- **Bước 2: Đạo hàm:**
-  $$y' = -4x^3 + 4x = -4x(x^2 - 1)$$
-  Cho $y' = 0 \\iff x = 0$ hoặc $x = 1$ hoặc $x = -1$.
-- **Bước 3: Tính giá trị tương ứng:**
-  + Tại $x = 0$: $y(0) = 3$. Đạo hàm đổi dấu từ $(-)$ sang $(+)$ $\\Rightarrow (0; 3)$ là điểm cực tiểu của đồ thị.
-  + Tại $x = 1$: $y(1) = 4$. Đạo hàm đổi dấu từ $(+)$ sang $(-)$ $\\Rightarrow (1; 4)$ là điểm cực đại của đồ thị.
-  + Tại $x = -1$: $y(-1) = 4$. Đạo hàm đổi dấu từ $(+)$ sang $(-)$ $\\Rightarrow (-1; 4)$ là điểm cực đại của đồ thị.
-- **Kết luận:** Đồ thị hàm số có hai điểm cực đại là $A(1; 4), B(-1; 4)$ và một điểm cực tiểu là $C(0; 3)$.
+- **Bước 1: Đạo hàm:**
+  $$y' = -4x^3 + 4x = -4x(x^2 - 1) = 0 \\iff x = 0, x = 1, x = -1$$
+- **Bước 2: Tính giá trị tung độ tương ứng:**
+  + Tại $x = 0$: $y = 3$. Đạo hàm đổi dấu $(-)$ sang $(+)$ $\\Rightarrow (0; 3)$ là điểm cực tiểu của đồ thị.
+  + Tại $x = 1$: $y = 4$. Đạo hàm đổi dấu $(+)$ sang $(-)$ $\\Rightarrow (1; 4)$ là điểm cực đại của đồ thị.
+  + Tại $x = -1$: $y = 4$. Đạo hàm đổi dấu $(+)$ sang $(-)$ $\\Rightarrow (-1; 4)$ là điểm cực đại của đồ thị.
+- **Kết luận:** Đồ thị có hai điểm cực đại là $A(1; 4), B(-1; 4)$ và một điểm cực tiểu là $C(0; 3)$.
 """
                         },
                         {
                             "title": "Ví dụ 3: Tìm cực trị của hàm phân thức bậc hai trên bậc nhất",
                             "problem": "Tìm các điểm cực trị của hàm số: $$y = \\frac{x^2 + 3}{x - 1}$$",
                             "solution": """
-- **Bước 1: Tập xác định:** $D = \\mathbb{R} \\setminus \\{1\\}$.
+- **Bước 1:** Tập xác định $D = \\mathbb{R} \\setminus \\{1\\}$.
 - **Bước 2: Đạo hàm:**
-  $$y' = \\frac{2x(x - 1) - (x^2 + 3) \\cdot 1}{(x - 1)^2} = \\frac{x^2 - 2x - 3}{(x - 1)^2}$$
+  $$y' = \\frac{2x(x - 1) - (x^2 + 3)}{(x - 1)^2} = \\frac{x^2 - 2x - 3}{(x - 1)^2}$$
   Cho $y' = 0 \\iff x^2 - 2x - 3 = 0 \\iff x = -1$ hoặc $x = 3$.
-- **Bước 3: Đổi dấu đạo hàm:**
-  + Qua $x = -1$, $y'$ đổi dấu từ $(+)$ sang $(-)$ $\\Rightarrow x = -1$ là điểm cực đại; $y_{CĐ} = \\frac{(-1)^2 + 3}{-1 - 1} = -2$.
-  + Qua $x = 3$, $y'$ đổi dấu từ $(-)$ sang $(+)$ $\\Rightarrow x = 3$ là điểm cực tiểu; $y_{CT} = \\frac{3^2 + 3}{3 - 1} = 6$.
-- **Kết luận:** Hàm số đạt cực đại tại $x = -1$ với $y_{CĐ} = -2$; đạt cực tiểu tại $x = 3$ với $y_{CT} = 6$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 4: Nhận biết cực trị qua đạo hàm không xác định",
-                            "problem": "Cho hàm số $y = f(x)$ liên tục trên $\\mathbb{R}$, có đạo hàm $f'(x) = \\frac{x-1}{\\sqrt[3]{x^2}}$. Hỏi hàm số có bao nhiêu điểm cực trị?",
-                            "solution": """
-- Hàm số liên tục trên toàn $\\mathbb{R}$.
-- Đạo hàm $f'(x) = 0 \\iff x = 1$. Tại $x = 0$, đạo hàm không xác định nhưng hàm số vẫn liên tục.
-- **Xét sự đổi dấu của $f'(x)$:**
-  + Khi $x$ qua điểm $0$: mẫu số $\\sqrt[3]{x^2} > 0, \\forall x \\neq 0$ và tử số $x - 1 < 0$ khi $x < 1$. Do đó qua $x = 0$, $f'(x)$ KHÔNG đổi dấu (vẫn âm). Vậy $x = 0$ không phải cực trị.
-  + Khi $x$ qua điểm $1$: tử số $x - 1$ đổi dấu từ $(-)$ sang $(+)$ $\\Rightarrow x = 1$ là điểm cực tiểu.
-- **Kết luận:** Hàm số có đúng $1$ điểm cực trị là điểm cực tiểu $x = 1$.
+- **Bước 3: Kết luận:**
+  + Điểm cực đại là $x = -1$ với giá trị cực đại $y_{CĐ} = -2$.
+  + Điểm cực tiểu là $x = 3$ với giá trị cực tiểu $y_{CT} = 6$.
 """
                         }
                     ],
@@ -262,60 +370,35 @@ CURRICULUM_DATA = {
         "Bài 2: Giá trị lớn nhất và giá trị nhỏ nhất của hàm số": {
             "chapter": "Chương I: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị của hàm số",
             "topics": {
-                "Chủ điểm 1: Tìm GTLN và GTNN của hàm số trên một đoạn [a; b]": {
+                "Chủ điểm 1: Tìm GTLN và GTNN trên đoạn [a; b]": {
                     "theory": """
-- **Định lý:** Mọi hàm số liên tục trên một đoạn $[a; b]$ đều có giá trị lớn nhất và giá trị nhỏ nhất trên đoạn đó.
-- **Quy trình tìm GTLN, GTNN trên đoạn $[a; b]$ không cần lập bảng biến thiên:**
+- Mọi hàm số liên tục trên đoạn $[a; b]$ đều có giá trị lớn nhất và giá trị nhỏ nhất trên đoạn đó.
+- **Quy trình tính nhanh không cần lập bảng biến thiên:**
   1. Tính đạo hàm $f'(x)$.
-  2. Tìm các nghiệm $x_1, x_2, \dots \in (a; b)$ của phương trình $f'(x) = 0$ (loại bỏ các nghiệm nằm ngoài đoạn).
-  3. Tính các giá trị $f(a), f(b), f(x_1), f(x_2), \dots$.
-  4. Số lớn nhất trong các giá trị vừa tính là $\\max_{[a; b]} f(x)$, số nhỏ nhất là $\\min_{[a; b]} f(x)$.
+  2. Tìm các nghiệm $x_i \in (a; b)$ của phương trình $f'(x) = 0$ (loại các nghiệm nằm ngoài khoảng).
+  3. Tính $f(a), f(b), f(x_i)$.
+  4. Số lớn nhất trong các giá trị tính được là GTLN, số nhỏ nhất là GTNN.
 """,
                     "formula": r"\max_{[a; b]} f(x) = \max\{f(a), f(b), f(x_i)\}; \quad \min_{[a; b]} f(x) = \min\{f(a), f(b), f(x_i)\}",
-                    "trap": "Chỉ lấy các nghiệm đạo hàm NẰM TRONG khoảng (a; b). Nghiệm nằm ngoài đoạn bắt buộc phải loại bỏ trước khi tính giá trị.",
-                    "audio": "Trên một đoạn số thực, ta tính giá trị tại hai đầu mút và tại các điểm đạo hàm bằng không thuộc khoảng đó rồi so sánh.",
+                    "trap": "Chỉ lấy các nghiệm nằm hẳn BÊN TRONG khoảng (a; b). Nghiệm nằm ngoài đoạn bắt buộc phải loại bỏ.",
+                    "audio": "Trên một đoạn số thực, tính giá trị tại hai đầu mút và tại các điểm đạo hàm bằng không thuộc khoảng rồi so sánh.",
                     "examples": [
                         {
-                            "title": "Ví dụ 1: Tìm GTLN, GTNN của hàm đa thức bậc ba trên đoạn",
+                            "title": "Ví dụ 1: Tìm GTLN, GTNN của hàm bậc ba trên đoạn",
                             "problem": "Tìm giá trị lớn nhất và giá trị nhỏ nhất của hàm số: $$f(x) = x^3 - 3x + 1 \\quad \\text{trên đoạn } [0; 2]$$",
                             "solution": """
-- **Bước 1:** Hàm số liên tục trên $[0; 2]$.
-- **Bước 2: Đạo hàm:**
-  $$f'(x) = 3x^2 - 3 = 0 \\iff x = 1 \\in (0; 2) \\quad \\text{hoặc } x = -1 \\notin (0; 2) \\text{ (loại)}$$
-- **Bước 3: Tính các giá trị:**
-  + $f(0) = 1$
-  + $f(1) = 1^3 - 3(1) + 1 = -1$
-  + $f(2) = 2^3 - 3(2) + 1 = 3$
-- **Bước 4: So sánh và kết luận:**
-  $$\\max_{[0; 2]} f(x) = f(2) = 3; \\quad \\min_{[0; 2]} f(x) = f(1) = -1$$
+- **Bước 1: Đạo hàm:** $f'(x) = 3x^2 - 3 = 0 \\iff x = 1 \\in (0; 2)$ hoặc $x = -1 \\notin (0; 2)$ (loại).
+- **Bước 2: Tính giá trị:** $f(0) = 1$; $f(1) = -1$; $f(2) = 3$.
+- **Kết luận:** $\\max_{[0; 2]} f(x) = f(2) = 3$ và $\\min_{[0; 2]} f(x) = f(1) = -1$.
 """
                         },
                         {
                             "title": "Ví dụ 2: Tìm GTLN, GTNN của hàm phân thức trên đoạn",
                             "problem": "Tìm giá trị lớn nhất và nhỏ nhất của hàm số: $$y = \\frac{x - 2}{x + 1} \\quad \\text{trên đoạn } [0; 3]$$",
                             "solution": """
-- **Bước 1:** Hàm số xác định và liên tục trên $[0; 3]$ (vì điểm gián đoạn $x = -1 \\notin [0; 3]$).
-- **Bước 2: Đạo hàm:**
-  $$y' = \\frac{1 \\cdot 1 - (-2) \\cdot 1}{(x + 1)^2} = \\frac{3}{(x + 1)^2} > 0, \\quad \\forall x \\in [0; 3]$$
-- Do $y' > 0$ nên hàm số đồng biến liên tục trên đoạn $[0; 3]$.
-- **Bước 3: Kết luận:**
-  + $\\min_{[0; 3]} y = y(0) = \\frac{0 - 2}{0 + 1} = -2$.
-  + $\\max_{[0; 3]} y = y(3) = \\frac{3 - 2}{3 + 1} = \\frac{1}{4}$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 3: Tìm GTLN, GTNN của hàm chứa căn thức trên đoạn",
-                            "problem": "Tìm giá trị lớn nhất và giá trị nhỏ nhất của hàm số: $$y = x + \\sqrt{4 - x^2}$$",
-                            "solution": """
-- **Bước 1: Tập xác định:** $4 - x^2 \\ge 0 \\iff x \\in [-2; 2]$. Ta xét trên đoạn $[-2; 2]$.
-- **Bước 2: Đạo hàm trên $(-2; 2)$:**
-  $$y' = 1 - \\frac{x}{\\sqrt{4 - x^2}}$$
-  Cho $y' = 0 \\iff \\sqrt{4 - x^2} = x \\iff \\begin{cases} x > 0 \\\\ 4 - x^2 = x^2 \\end{cases} \\iff 2x^2 = 4 \\iff x = \\sqrt{2} \\in (-2; 2)$.
-- **Bước 3: Tính các giá trị:**
-  + $y(-2) = -2 + 0 = -2$.
-  + $y(2) = 2 + 0 = 2$.
-  + $y(\\sqrt{2}) = \\sqrt{2} + \\sqrt{4 - 2} = 2\\sqrt{2}$.
-- **Bước 4: Kết luận:** $\\max_{[-2; 2]} y = 2\\sqrt{2}$ (đạt tại $x = \\sqrt{2}$); $\\min_{[-2; 2]} y = -2$ (đạt tại $x = -2$).
+- Hàm số xác định trên $[0; 3]$. Đạo hàm $y' = \\frac{3}{(x + 1)^2} > 0, \\forall x \\in [0; 3]$.
+- Hàm số đồng biến liên tục trên $[0; 3]$.
+- Kết luận: $\\min_{[0; 3]} y = y(0) = -2$; $\\max_{[0; 3]} y = y(3) = \\frac{1}{4}$.
 """
                         }
                     ],
@@ -333,55 +416,29 @@ CURRICULUM_DATA = {
             "topics": {
                 "Chủ điểm 1: Tiệm cận đứng và Tiệm cận ngang": {
                     "theory": """
-- **Tiệm cận đứng:** Đường thẳng $x = x_0$ là tiệm cận đứng của đồ thị hàm số $y = f(x)$ nếu có ít nhất một trong các điều kiện sau thỏa mãn:
-  $$\\lim_{x \\to x_0^+} f(x) = +\\infty; \\quad \\lim_{x \\to x_0^+} f(x) = -\\infty; \\quad \\lim_{x \\to x_0^-} f(x) = +\\infty; \\quad \\lim_{x \\to x_0^-} f(x) = -\\infty$$
-- **Tiệm cận ngang:** Đường thẳng $y = y_0$ là tiệm cận ngang của đồ thị hàm số $y = f(x)$ nếu:
-  $$\\lim_{x \\to +\\infty} f(x) = y_0 \\quad \\text{hoặc} \\quad \\lim_{x \\to -\\infty} f(x) = y_0$$
-- **Hàm số nhất biến $y = \\frac{ax + b}{cx + d}$ ($c \\neq 0, ad - bc \\neq 0$):**
-  + Tiệm cận đứng: $x = -\\frac{d}{c}$.
-  + Tiệm cận ngang: $y = \\frac{a}{c}$.
+- **Tiệm cận đứng:** $x = x_0$ nếu ít nhất một trong các giới hạn một bên khi $x \to x_0$ bằng $\pm\infty$.
+- **Tiệm cận ngang:** $y = y_0$ nếu $\lim_{x \to +\infty} y = y_0$ hoặc $\lim_{x \to -\infty} y = y_0$.
+- **Hàm nhất biến $y = \frac{ax+b}{cx+d}$:** Có TCĐ $x = -\frac{d}{c}$ và TCN $y = \frac{a}{c}$.
 """,
                     "formula": r"\lim_{x \to x_0} y = \pm\infty \implies x = x_0 \ (\text{TCĐ}); \quad \lim_{x \to \pm\infty} y = y_0 \implies y = y_0 \ (\text{TCN})",
-                    "trap": "Tránh nhầm lẫn biến: Tiệm cận đứng là phương trình dạng x = số, tiệm cận ngang là phương trình dạng y = số.",
-                    "audio": "Mẫu số triệt tiêu mà tử số khác không cho ta tiệm cận đứng x = x0. Giới hạn tại vô cực cho ta tiệm cận ngang y = y0.",
+                    "trap": "Tránh nhầm lẫn biến: Tiệm cận đứng là x = số, tiệm cận ngang là y = số.",
+                    "audio": "Mẫu số triệt tiêu mà tử số khác không cho ta tiệm cận đứng x. Giới hạn tại vô cực cho ta tiệm cận ngang y.",
                     "examples": [
                         {
-                            "title": "Ví dụ 1: Tìm tiệm cận của hàm phân thức bậc nhất trên bậc nhất",
-                            "problem": "Xác định các đường tiệm cận đứng và tiệm cận ngang của đồ thị hàm số: $$y = \\frac{2x - 3}{x + 1}$$",
+                            "title": "Ví dụ 1: Tìm tiệm cận của hàm nhất biến cơ bản",
+                            "problem": "Tìm các đường tiệm cận đứng và tiệm cận ngang của đồ thị hàm số: $$y = \\frac{2x - 3}{x + 1}$$",
                             "solution": """
-- **Tiệm cận đứng:**
-  Mẫu số triệt tiêu khi $x + 1 = 0 \\iff x = -1$.
-  Ta có $\\lim_{x \\to -1^+} \\frac{2x - 3}{x + 1} = -\\infty$ (do tử số tiến tới $-5 < 0$, mẫu số tiến tới $0^+$).
-  $\\Rightarrow$ Đường thẳng $x = -1$ là tiệm cận đứng.
-- **Tiệm cận ngang:**
-  Ta có $\\lim_{x \\to +\\infty} \\frac{2x - 3}{x + 1} = \\lim_{x \\to +\\infty} \\frac{2 - \\frac{3}{x}}{1 + \\frac{1}{x}} = 2$.
-  Tương tự $\\lim_{x \\to -\\infty} y = 2$.
-  $\\Rightarrow$ Đường thẳng $y = 2$ là tiệm cận ngang.
+- Mẫu số $x + 1 = 0 \\iff x = -1$. Ta có $\\lim_{x \\to -1^+} y = -\\infty \\implies x = -1$ là tiệm cận đứng.
+- Ta có $\\lim_{x \\to \\pm\\infty} y = 2 \\implies y = 2$ là tiệm cận ngang.
 """
                         },
                         {
-                            "title": "Ví dụ 2: Tìm tiệm cận của đồ thị hàm số có nghiệm của mẫu triệt tiêu tử",
+                            "title": "Ví dụ 2: Nhận biết đường tiệm cận khi mẫu có nghiệm triệt tiêu tử",
                             "problem": "Tìm số đường tiệm cận đứng của đồ thị hàm số: $$y = \\frac{x - 1}{x^2 - 1}$$",
                             "solution": """
-- Mẫu số $x^2 - 1 = 0 \\iff x = 1$ hoặc $x = -1$.
-- Xét tại $x = 1$:
-  $$\\lim_{x \\to 1} \\frac{x - 1}{(x - 1)(x + 1)} = \\lim_{x \\to 1} \\frac{1}{x + 1} = \\frac{1}{2} \\neq \\pm\\infty$$
-  Do đó đường thẳng $x = 1$ KHÔNG phải là tiệm cận đứng.
-- Xét tại $x = -1$:
-  $$\\lim_{x \\to -1^+} \\frac{1}{x + 1} = +\\infty$$
-  Do đó đường thẳng $x = -1$ là tiệm cận đứng duy nhất.
-- **Kết luận:** Đồ thị hàm số chỉ có đúng $1$ đường tiệm cận đứng là $x = -1$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 3: Tìm tiệm cận ngang của hàm chứa căn thức",
-                            "problem": "Tìm các đường tiệm cận ngang của đồ thị hàm số: $$y = \\frac{\\sqrt{x^2 + 1}}{x - 1}$$",
-                            "solution": """
-- Khi $x \\to +\\infty$: $\\sqrt{x^2 + 1} = x\\sqrt{1 + \\frac{1}{x^2}}$.
-  $$\\lim_{x \\to +\\infty} \\frac{x\\sqrt{1 + \\frac{1}{x^2}}}{x(1 - \\frac{1}{x})} = 1 \\implies y = 1 \\text{ là một TCN.}$$
-- Khi $x \\to -\\infty$: $\\sqrt{x^2 + 1} = -x\\sqrt{1 + \\frac{1}{x^2}}$ (vì $x < 0$).
-  $$\\lim_{x \\to -\\infty} \\frac{-x\\sqrt{1 + \\frac{1}{x^2}}}{x(1 - \\frac{1}{x})} = -1 \\implies y = -1 \\text{ là một TCN.}$$
-- **Kết luận:** Đồ thị hàm số có 2 đường tiệm cận ngang là $y = 1$ và $y = -1$.
+- Rút gọn với $x \\neq 1$: $y = \\frac{1}{x + 1}$.
+- Tại $x = 1$: $\\lim_{x \\to 1} y = \\frac{1}{2}$ (hữu hạn nên $x = 1$ không phải TCĐ).
+- Tại $x = -1$: $\\lim_{x \\to -1^+} y = +\\infty \\implies x = -1$ là tiệm cận đứng duy nhất.
 """
                         }
                     ],
@@ -399,26 +456,21 @@ CURRICULUM_DATA = {
         "Bài 1: Mệnh đề toán học": {
             "chapter": "Chương I: Mệnh đề và tập hợp",
             "topics": {
-                "Chủ điểm 1: Khái niệm mệnh đề và Mệnh đề chứa biến": {
-                    "theory": "Mệnh đề toán học là một câu khẳng định có chân giá trị Đúng hoặc Sai, không thể vừa đúng vừa sai. Câu cảm thán, câu hỏi không phải là mệnh đề.",
+                "Chủ điểm 1: Khái niệm mệnh đề và mệnh đề chứa biến": {
+                    "theory": "Mệnh đề toán học là khẳng định đúng hoặc sai, không thể vừa đúng vừa sai. Câu cảm thán, câu hỏi không phải mệnh đề.",
                     "formula": r"P \in \{\text{Đúng}, \text{Sai}\}",
-                    "trap": "Mệnh đề chứa biến chưa gán giá trị cụ thể thì chưa thể xác định tính đúng sai.",
-                    "audio": "Mệnh đề toán học là một câu khẳng định chỉ nhận một trong hai chân giá trị: Đúng hoặc Sai.",
+                    "trap": "Mệnh đề chứa biến chưa gán giá trị cụ thể thì chưa xác định tính đúng sai.",
+                    "audio": "Mệnh đề toán học là câu khẳng định chỉ nhận một trong hai chân giá trị: Đúng hoặc Sai.",
                     "examples": [
                         {
-                            "title": "Ví dụ 1: Nhận diện câu là mệnh đề toán học",
+                            "title": "Ví dụ 1: Nhận diện mệnh đề toán học",
                             "problem": "Trong các câu sau, câu nào là mệnh đề toán học: a) 15 là số nguyên tố; b) Số 0 là số tự nhiên nhỏ nhất?",
                             "solution": "Cả hai câu a và b đều là khẳng định: câu a là mệnh đề toán học Sai, câu b là mệnh đề toán học Đúng."
                         },
                         {
                             "title": "Ví dụ 2: Mệnh đề chứa biến",
-                            "problem": "Cho mệnh đề chứa biến $P(n)$: '$n$ chia hết cho 3'. Tìm một giá trị của $n$ để được mệnh đề đúng và một giá trị để được mệnh đề sai.",
-                            "solution": "- Với $n = 6$: $P(6)$ là mệnh đề đúng vì 6 chia hết cho 3.\n- Với $n = 5$: $P(5)$ là mệnh đề sai vì 5 không chia hết cho 3."
-                        },
-                        {
-                            "title": "Ví dụ 3: Xác định tính đúng sai của mệnh đề",
-                            "problem": "Xét tính đúng sai của mệnh đề: 'Tổng ba góc trong một tam giác bằng 180 độ'.",
-                            "solution": "Đây là khẳng định toán học chính xác theo tiên đề Euclid. Mệnh đề này nhận chân giá trị Đúng."
+                            "problem": "Cho mệnh đề chứa biến P(n): 'n chia hết cho 3'. Tìm giá trị n để được mệnh đề đúng và sai.",
+                            "solution": "Với n = 6: P(6) là mệnh đề đúng. Với n = 5: P(5) là mệnh đề sai."
                         }
                     ],
                     "exercise": {
@@ -428,26 +480,16 @@ CURRICULUM_DATA = {
                         "type": "NUMERIC", "target": "2", "options": []
                     }
                 },
-                "Chủ điểm 2: Mệnh đề phủ định và Mệnh đề chứa lượng từ": {
-                    "theory": "Phủ định của mệnh đề P là mệnh đề P ngang. Phủ định của 'với mọi' là 'tồn tại', phủ định của '>' là '<='.",
+                "Chủ điểm 2: Mệnh đề phủ định và Lượng từ với mọi, tồn tại": {
+                    "theory": "Phủ định của mệnh đề chứa lượng từ 'với mọi' là 'tồn tại'. Phủ định của dấu lớn hơn (>) là dấu nhỏ hơn hoặc bằng (<=).",
                     "formula": r"\overline{\forall x \in X, P(x)} \iff \exists x \in X, \overline{P(x)}",
-                    "trap": "Không được bỏ quên dấu bằng khi phủ định các bất đẳng thức lớn hơn hoặc nhỏ hơn.",
+                    "trap": "Không được bỏ quên dấu bằng khi phủ định bất đẳng thức.",
                     "audio": "Phủ định của với mọi là tồn tại, phủ định của lớn hơn là nhỏ hơn hoặc bằng.",
                     "examples": [
                         {
-                            "title": "Ví dụ 1: Phủ định mệnh đề có lượng từ với mọi",
-                            "problem": "Lập mệnh đề phủ định của $P$: '$\\forall x \\in \\mathbb{R}, x^2 + 1 > 0$'.",
-                            "solution": "Phủ định của $\\forall$ là $\\exists$, phủ định của $>$ là $\\le$.\nVậy $\\overline{P}$: '$\\exists x \\in \\mathbb{R}, x^2 + 1 \\le 0$'. Mệnh đề phủ định này Sai."
-                        },
-                        {
-                            "title": "Ví dụ 2: Phủ định mệnh đề có lượng từ tồn tại",
-                            "problem": "Lập mệnh đề phủ định của $Q$: '$\\exists n \\in \\mathbb{N}, n^2 = n$'.",
-                            "solution": "Phủ định của $\\exists$ là $\\forall$, phủ định của $=$ là $\\neq$.\nVậy $\\overline{Q}$: '$\\forall n \\in \\mathbb{N}, n^2 \\neq n$'."
-                        },
-                        {
-                            "title": "Ví dụ 3: Xét tính đúng sai của mệnh đề chứa lượng từ",
-                            "problem": "Xét tính đúng sai của mệnh đề: '$\\exists x \\in \\mathbb{R}, x^2 - 4 = 0$'.",
-                            "solution": "Phương trình $x^2 - 4 = 0$ có nghiệm $x = 2 \\in \\mathbb{R}$. Vì tồn tại ít nhất một giá trị thỏa mãn nên mệnh đề này Đúng."
+                            "title": "Ví dụ 1: Phủ định mệnh đề lượng từ với mọi",
+                            "problem": "Lập mệnh đề phủ định của P: 'Mọi số thực x đều có x^2 + 1 > 0'.",
+                            "solution": "Phủ định của 'với mọi' là 'tồn tại', phủ định của '>' là '<='. Vậy P ngang: 'Tồn tại số thực x sao cho x^2 + 1 <= 0'."
                         }
                     ],
                     "exercise": {
@@ -467,23 +509,13 @@ CURRICULUM_DATA = {
                 "Chủ điểm 1: Dấu của các giá trị lượng giác theo góc phần tư": {
                     "theory": "Trục tung là sin, trục hoành là cos. Góc phần tư thứ II có sin > 0, cos < 0, tan < 0.",
                     "formula": r"\sin^2\alpha + \cos^2\alpha = 1; \quad 1 + \tan^2\alpha = \frac{1}{\cos^2\alpha}",
-                    "trap": "Khai căn để tìm cos từ sin bắt buộc phải dựa vào góc phần tư để chọn dấu âm hoặc dương.",
+                    "trap": "Khai căn tìm cos từ sin bắt buộc phải dựa vào góc phần tư để chọn dấu âm hoặc dương.",
                     "audio": "Nhất cả dương, nhì sin dương, tam tan dương, tứ cos dương. Luôn kiểm tra kỹ góc phần tư khi khai căn.",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tính cos khi biết sin ở góc phần tư thứ II",
-                            "problem": "Cho góc $\\alpha$ thỏa mãn $\\frac{\\pi}{2} < \\alpha < \\pi$ và $\\sin\\alpha = \\frac{3}{5}$. Hãy tính $\\cos\\alpha$ và $\\tan\\alpha$.",
-                            "solution": "Ta có $\\cos^2\\alpha = 1 - \\sin^2\\alpha = 1 - \\frac{9}{25} = \\frac{16}{25}$.\nVì $\\frac{\\pi}{2} < \\alpha < \\pi$ (góc II) nên $\\cos\\alpha < 0$.\nVậy $\\cos\\alpha = -\\frac{4}{5} = -0.8$ và $\\tan\\alpha = \\frac{3/5}{-4/5} = -0.75$."
-                        },
-                        {
-                            "title": "Ví dụ 2: Tính sin khi biết cos ở góc phần tư thứ IV",
-                            "problem": "Cho $\\cos\\alpha = \\frac{5}{13}$ với $\\frac{3\\pi}{2} < \\alpha < 2\\pi$. Tính $\\sin\\alpha$.",
-                            "solution": "Ta có $\\sin^2\\alpha = 1 - \\cos^2\\alpha = 1 - \\frac{25}{169} = \\frac{144}{169}$.\nVì $\\alpha$ thuộc góc IV nên $\\sin\\alpha < 0$. Do đó $\\sin\\alpha = -\\frac{12}{13}$."
-                        },
-                        {
-                            "title": "Ví dụ 3: Rút gọn biểu thức lượng giác cơ bản",
-                            "problem": "Rút gọn biểu thức: $A = (1 - \\sin^2\\alpha)\\tan^2\\alpha + (1 - \\cos^2\\alpha)$.",
-                            "solution": "Thay $1 - \\sin^2\\alpha = \\cos^2\\alpha$ và $1 - \\cos^2\\alpha = \\sin^2\\alpha$:\n$$A = \\cos^2\\alpha \\cdot \\frac{\\sin^2\\alpha}{\\cos^2\\alpha} + \\sin^2\\alpha = \\sin^2\\alpha + \\sin^2\\alpha = 2\\sin^2\\alpha$$."
+                            "problem": "Cho góc alpha thỏa mãn pi/2 < alpha < pi và sin alpha = 3/5. Hãy tính cos alpha.",
+                            "solution": "Ta có cos^2 alpha = 1 - sin^2 alpha = 1 - 9/25 = 16/25. Vì góc alpha thuộc góc phần tư thứ II nên cos alpha < 0. Do đó cos alpha = -4/5 = -0.8."
                         }
                     ],
                     "exercise": {
@@ -499,7 +531,7 @@ CURRICULUM_DATA = {
 }
 
 # ==============================================================================
-# 4. KHO ĐỀ KHẢO THÍ CHUẨN ĐỊNH DẠNG MỚI CỦA BỘ GD&ĐT
+# 5. KHO ĐỀ KHẢO THÍ CHUẨN MA TRẬN MỚI CỦA BỘ GD&ĐT
 # ==============================================================================
 EXAM_BANK = {
     "Khối 10": {
@@ -529,7 +561,7 @@ EXAM_BANK = {
 }
 
 # ==============================================================================
-# 5. DỮ LIỆU TÀI KHOẢN & GAMIFICATION
+# 6. QUẢN LÝ TÀI KHOẢN & GAMIFICATION
 # ==============================================================================
 DEFAULT_STUDENTS = [
     {"student_id": "HS12_01", "password": "123", "full_name": "Nguyễn Hoàng Nam", "grade": 12, "current_level": "Khá", "weak_spots": "Dấu đạo hàm, Tọa độ Oxyz", "flowers": 30, "total_solved": 6},
@@ -576,40 +608,12 @@ def reward_student_flower(student_id, earned, reason):
                     pass
             break
 
-def render_3d_geometry_view(topic_type="SHAPE_3D"):
-    x = [0, 0, 3, 1.5, 0]
-    y = [0, 0, 0, 2.5, 0]
-    z = [3, 0, 0, 0, 3]
-    fig = go.Figure(data=[
-        go.Scatter3d(
-            x=x, y=y, z=z, mode='lines+markers+text',
-            text=['S', 'A', 'B', 'C', 'S'],
-            textposition='top center',
-            line=dict(color='#2563EB', width=5),
-            marker=dict(size=5, color='#E11D48')
-        ),
-        go.Mesh3d(
-            x=[0, 3, 1.5], y=[0, 0, 2.5], z=[0, 0, 0],
-            color='#67E8F9', opacity=0.35
-        )
-    ])
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(showbackground=False, showticklabels=False, title=''),
-            yaxis=dict(showbackground=False, showticklabels=False, title=''),
-            zaxis=dict(showbackground=False, showticklabels=False, title='')
-        ),
-        margin=dict(l=0, r=0, b=0, t=0),
-        height=360
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
 # ==============================================================================
-# 6. MÀN HÌNH ĐĂNG NHẬP & PHÂN QUYỀN
+# 7. MÀN HÌNH ĐĂNG NHẬP & PHÂN QUYỀN
 # ==============================================================================
 if st.session_state["auth_user"] is None:
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📐 HỆ SINH THÁI TỰ HỌC TOÁN THPT 'GSTOÁN'</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #475569;'>Chuẩn hóa từng Chủ điểm bám sát Vở tự học Kết nối tri thức</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #475569;'>Chuẩn hóa từng Chủ điểm bám sát Vở tự học Kết nối tri thức (Khối 10, 11, 12)</p>", unsafe_allow_html=True)
 
     col_l1, col_box, col_l2 = st.columns([1, 1.2, 1])
     with col_box:
@@ -641,11 +645,11 @@ if st.session_state["auth_user"] is None:
                             st.error("Mật khẩu chưa chính xác!")
                     else:
                         st.error("Không tìm thấy mã học sinh này trong danh sách!")
-            st.caption("💡 Tài khoản học sinh: `HS12_01`, `HS11_01`, `HS10_01` (Pass: `123`). Admin: `admin` / `gstoan2026`.")
+            st.caption("💡 Tài khoản: `HS12_01`, `HS11_01`, `HS10_01` (Pass: `123`). Admin: `admin` / `gstoan2026`.")
     st.stop()
 
 # ==============================================================================
-# 7. THANH ĐIỀU HƯỚNG BÊN HÔNG (SIDEBAR)
+# 8. THANH ĐIỀU HƯỚNG BÊN HÔNG (SIDEBAR)
 # ==============================================================================
 with st.sidebar:
     st.markdown(f"### 👤 {st.session_state['auth_user']['full_name']}")
@@ -655,7 +659,7 @@ with st.sidebar:
         with st.container(border=True):
             st.markdown("<h5 style='text-align: center; color: #DB2777; margin:0;'>🌸 Vườn hoa Tri thức</h5>", unsafe_allow_html=True)
             st.markdown(f"<h2 style='text-align: center; color: #BE185D; margin:4px 0;'>{flowers} 🌸</h2>", unsafe_allow_html=True)
-            st.caption("Giải đúng bài tập nhận +2 hoa. Xem video +1 hoa. Khảo thí nhận tới +3 hoa!")
+            st.caption("Giải đúng bài tập nhận +2 hoa. Nghe bài giảng +1 hoa. Khảo thí nhận tới +3 hoa!")
     else:
         st.info("Vai trò: **Cố Vấn Sư Phạm & Quản Trị**")
 
@@ -666,49 +670,11 @@ with st.sidebar:
     st.markdown("---")
 
 # ==============================================================================
-# 8. PHÂN HỆ GIÁO VIÊN
-# ==============================================================================
-if st.session_state["role"] == "teacher":
-    st.title("👩‍🏫 Bảng Điều Khiển Giáo Viên: Quản Trị & Cố Vấn Sư Phạm")
-    gt1, gt2 = st.tabs(["👥 Quản lý & Cấp Tài Khoản", "📬 Hộp Thư Cứu Trợ Sư Phạm"])
-
-    with gt1:
-        st.subheader("📋 Danh sách Học sinh Trên Hệ Thống")
-        all_st = load_all_students()
-        st.dataframe(pd.DataFrame(all_st)[["student_id", "full_name", "grade", "current_level", "flowers", "weak_spots"]], use_container_width=True)
-
-        with st.container(border=True):
-            st.markdown("#### ➕ Cấp Tài Khoản Học Sinh Mới")
-            with st.form("form_add_s"):
-                c1, c2 = st.columns(2)
-                with c1:
-                    nid = st.text_input("Mã học sinh mới (Ví dụ: HS12_02):")
-                    nname = st.text_input("Họ và tên học sinh:")
-                    ngrade = st.selectbox("Khối lớp:", [10, 11, 12], index=2)
-                with c2:
-                    npass = st.text_input("Mật khẩu cấp ban đầu:", value="123")
-                    nlvl = st.selectbox("Học lực khởi điểm:", ["Giỏi", "Khá", "Trung bình", "Cần hỗ trợ"], index=1)
-                    nweak = st.text_input("Lỗ hổng kiến thức:", value="Cần rèn luyện thêm bài tập SGK")
-                if st.form_submit_button("Lưu & Cấp Tài Khoản"):
-                    if nid and nname:
-                        new_item = {"student_id": nid.strip().upper(), "password": npass, "full_name": nname.strip(), "grade": ngrade, "current_level": nlvl, "weak_spots": nweak, "flowers": 30, "total_solved": 0}
-                        st.session_state["students_db"].append(new_item)
-                        st.success(f"Đã cấp tài khoản thành công cho học sinh {nname}!")
-                        st.rerun()
-
-    with gt2:
-        st.subheader("📬 Hộp Thư Nhận Câu Hỏi Bế Tắc Của Học Sinh")
-        if st.session_state["inbox_db"]:
-            st.dataframe(pd.DataFrame(st.session_state["inbox_db"]), use_container_width=True)
-        else:
-            st.info("Hiện không có câu hỏi bế tắc nào tồn đọng từ học sinh.")
-    st.stop()
-
-# ==============================================================================
-# 9. PHÂN HỆ HỌC SINH (BỘ CHỌN 3 BẬC: KHỐI -> BÀI HỌC -> CHỦ ĐIỂM KIẾN THỨC)
+# 9. PHÂN HỆ HỌC SINH (5 TABS: HÌNH ẢNH SGK THAY THẾ VIDEO)
 # ==============================================================================
 student_info = st.session_state["auth_user"]
 
+# BỘ CHỌN 3 BẬC: KHỐI -> BÀI HỌC -> CHỦ ĐIỂM KIẾN THỨC
 c_gr, c_les, c_top = st.columns([1, 1.8, 1.8])
 with c_gr:
     user_grade_default = 2 if student_info.get("grade") == 12 else (0 if student_info.get("grade") == 10 else 1)
@@ -728,7 +694,7 @@ cur_topic_data = cur_lesson_obj["topics"][sel_topic]
 
 # 5 TABS TOÀN DIỆN
 tab1, tab_ex, tab2, tab3, tab4 = st.tabs([
-    "📖 Cốt Lõi Kiến Thức (Video, Thuyết Minh & 3D)",
+    "📖 Cốt Lõi Kiến Thức (Hình Ảnh SGK & Audio)",
     "💡 Ví Dụ Minh Họa (Bấm Xem Lời Giải)",
     "📝 Học Sinh Tự Giải (Kiểm Minh Chứng)",
     "📸 Trợ Lý AI: Soi Vở & Tương Tác Giọng Nói",
@@ -736,29 +702,25 @@ tab1, tab_ex, tab2, tab3, tab4 = st.tabs([
 ])
 
 # ------------------------------------------------------------------------------
-# TAB 1: CỐT LÕI KIẾN THỨC
+# TAB 1: CỐT LÕI KIẾN THỨC (HÌNH ẢNH MINH HỌA SGK + AUDIO PHÍA DƯỚI)
 # ------------------------------------------------------------------------------
 with tab1:
     st.subheader(f"📌 {cur_lesson_obj['chapter']}")
     st.markdown(f"#### {sel_lesson} — *{sel_topic}*")
 
-    if "không gian" in sel_lesson or "Oxyz" in sel_lesson or "Vectơ" in sel_lesson:
+    col_img, col_n = st.columns([1.2, 1.1])
+    
+    with col_img:
         with st.container(border=True):
-            st.markdown("🌐 **Mô Hình Không Gian 3D Tương Tác Trực Tiếp (Zero-Install)**")
-            st.caption("Dùng chuột hoặc ngón tay chạm/vuốt để xoay 360 độ, quan sát hình chiếu:")
-            render_3d_geometry_view()
-
-    col_v, col_n = st.columns([1.1, 1.2])
-    with col_v:
-        with st.container(border=True):
-            st.markdown(f"🎬 **Video bài giảng vi mô: {sel_topic}**")
-            st.caption("Video tóm tắt lý thuyết trọng tâm + phương pháp giải toán then chốt")
-            st.video("https://www.youtube.com/watch?v=kYJ_t120-Jk")
+            st.markdown(f"🖼️ **Hình ảnh minh họa kiến thức (Trích SGK & Vở tự học):**")
+            # Hiển thị hình ảnh minh họa vector chuẩn SGK thay thế video
+            render_sgk_illustration_svg(sel_topic, sel_lesson)
             
+            # TRÌNH PHÁT ÂM THANH BÀI GIẢNG ĐẶT NGAY DƯỚI HÌNH ẢNH
             st.markdown("""
             <div class="audio-box">
-                <b>🎙️ Âm Thanh Thuyết Minh Chủ Điểm (Trích Vở tự học):</b><br>
-                <small>Bật nghe giảng cô đọng kiến thức cốt lõi và các bẫy sai lầm thường gặp:</small>
+                <b>🎙️ Âm Thanh Thuyết Minh Bài Giảng Vi Mô (Trích Vở tự học):</b><br>
+                <small>Nghe giảng cô đọng kiến thức cốt lõi và các bẫy sai lầm thường gặp:</small>
             </div>
             """, unsafe_allow_html=True)
             
@@ -767,23 +729,23 @@ with tab1:
             if lecture_audio_file:
                 st.audio(lecture_audio_file, format="audio/mp3")
 
-            if st.button("🌸 Đã xem và nghe xong bài giảng vi mô (+1 hoa)", key=f"vid_{sel_topic}"):
-                reward_student_flower(student_info["student_id"], 1, "chăm chỉ xem và nghe bài giảng vi mô")
+            if st.button("🌸 Đã nghe xong bài giảng vi mô (+1 hoa)", key=f"btn_audio_{sel_topic}"):
+                reward_student_flower(student_info["student_id"], 1, "chăm chỉ nghe bài giảng vi mô")
                 
     with col_n:
         with st.container(border=True):
             st.markdown("📝 **Ghi Chú Nhanh (Smart Notes)**")
-            st.markdown(f"#### 1. Định nghĩa & Khái niệm cốt lõi\n{cur_topic_data['theory']}")
+            st.markdown(f"#### 1. Khái niệm & Định lý cốt lõi\n{cur_topic_data['theory']}")
             st.markdown("#### 2. Công thức Toán học trọng tâm")
             st.markdown(f"$${cur_topic_data['formula']}$$")
-            st.markdown(f"#### 3. Phương pháp tư duy & Cảnh báo bẫy sai lầm\n- ⚠️ **Lưu ý bẫy đề thi:** {cur_topic_data['trap']}")
+            st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data['trap']}")
 
 # ------------------------------------------------------------------------------
-# TAB 2: VÍ DỤ MINH HỌA (TRÌNH BÀY ĐỀ BÀI -> BẤM VÀO ĐỂ HIỆN LỜI GIẢI CHI TIẾT)
+# TAB 2: VÍ DỤ MINH HỌA (TRÌNH BÀY ĐỀ BÀI -> BẤM XEM LỜI GIẢI CHI TIẾT)
 # ------------------------------------------------------------------------------
 with tab_ex:
     st.subheader(f"💡 Ví Dụ Minh Họa Chuẩn Mực: {sel_topic}")
-    st.caption("Danh sách 3 đến 4 ví dụ trọng tâm bám sát Vở tự học (loại bỏ bài chứa tham số m và bài vận dụng cao). Bấm vào từng đề bài để xem lời giải chi tiết và học cách trình bày.")
+    st.caption("Các ví dụ cơ bản/trọng tâm từ Vở tự học (đã loại bỏ bài chứa tham số m và vận dụng cao). Bấm vào từng đề bài để xem lời giải chi tiết và học cách trình bày.")
 
     examples_list = cur_topic_data.get("examples", [])
     if not examples_list:

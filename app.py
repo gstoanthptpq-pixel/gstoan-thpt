@@ -21,7 +21,6 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Thanh cuộn chuyên biệt cho Dropdown danh sách bài học và chủ điểm */
     div[data-baseweb="popover"] ul, div[role="listbox"] {
         max-height: 320px !important;
         overflow-y: auto !important;
@@ -82,7 +81,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO KẾT NỐI GEMINI API & GOOGLE SHEETS
+# 2. KHỞI TẠO HẠ TẦNG KẾT NỐI GEMINI API & GOOGLE SHEETS
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -155,17 +154,13 @@ def render_topic_svg(svg_category):
         "MAT_PHANG": """
         <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
             <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <!-- Mặt phẳng (P) hình bình hành nghiêng -->
             <polygon points="100,160 360,160 420,70 160,70" fill="#E0F2FE" stroke="#0284C7" stroke-width="2.5"/>
             <text x="120" y="145" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0369A1">(P)</text>
-            <!-- Điểm M thuộc mặt phẳng -->
             <circle cx="260" cy="115" r="5" fill="#1E293B"/>
             <text x="270" y="125" font-family="sans-serif" font-size="14" font-weight="bold">M(x₀; y₀; z₀)</text>
-            <!-- Vectơ pháp tuyến vuông góc vươn lên -->
             <line x1="260" y1="115" x2="260" y2="25" stroke="#DC2626" stroke-width="3"/>
             <polygon points="260,18 254,32 266,32" fill="#DC2626"/>
             <text x="272" y="35" font-family="sans-serif" font-size="15" font-weight="bold" fill="#DC2626">n⃗ = (A; B; C) ⊥ (P)</text>
-            <!-- Ký hiệu góc vuông -->
             <polyline points="260,100 275,100 275,115" fill="none" stroke="#DC2626" stroke-width="1.5"/>
         </svg>
         """,
@@ -174,10 +169,8 @@ def render_topic_svg(svg_category):
             <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
             <polygon points="90,170 350,170 410,90 150,90" fill="#F1F5F9" stroke="#64748B" stroke-width="2"/>
             <text x="110" y="155" font-family="sans-serif" font-size="15" font-weight="bold" fill="#475569">(P): Ax+By+Cz+D=0</text>
-            <!-- Điểm M lơ lửng -->
             <circle cx="270" cy="35" r="5" fill="#2563EB"/>
             <text x="282" y="38" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1E40AF">M(x₀; y₀; z₀)</text>
-            <!-- Đường vuông góc hạ xuống H -->
             <line x1="270" y1="35" x2="270" y2="130" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="4"/>
             <circle cx="270" cy="130" r="4.5" fill="#DC2626"/>
             <text x="282" y="135" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">H (Hình chiếu)</text>
@@ -231,7 +224,7 @@ def render_topic_svg(svg_category):
     st.markdown(f'<div class="img-box">{svg_out}</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. KHO HỌC LIỆU BÁM SÁT VỞ TỰ HỌC: ĐẦY ĐỦ 100% CHỦ ĐIỂM & 3-4 VÍ DỤ CƠ BẢN
+# 4. KHO HỌC LIỆU BÁM SÁT VỞ TỰ HỌC: ĐẦY ĐỦ CHỦ ĐIỂM & 3-4 VÍ DỤ CƠ BẢN
 # ==============================================================================
 CURRICULUM_DATA = {
     "Khối 12": {
@@ -240,7 +233,7 @@ CURRICULUM_DATA = {
             "topics": {
                 "Chủ điểm 1: Tính đơn điệu của hàm số": {
                     "theory": """
-- Cho hàm số $y = f(x)$ xác định và có đạo hàm trên khoảng $K$:
+- Cho hàm số $y = f(x)$ có đạo hàm trên khoảng $K$:
   + Nếu $f'(x) > 0, \forall x \in K$ thì hàm số **đồng biến** trên $K$.
   + Nếu $f'(x) < 0, \forall x \in K$ thì hàm số **nghịch biến** trên $K$.
   + Nếu $f'(x) \ge 0$ (hoặc $\le 0$) trên $K$ và bằng $0$ tại hữu hạn điểm thì hàm số đồng biến (hoặc nghịch biến) trên $K$.
@@ -273,11 +266,11 @@ CURRICULUM_DATA = {
                             "problem": "Tìm các khoảng đồng biến và nghịch biến của hàm số: $$y = \\frac{2x - 1}{x + 1}$$",
                             "solution": """
 - **Bước 1: Tập xác định:** $D = \\mathbb{R} \\setminus \\{-1\\}$.
-- **Bước 2: Tính đạo hàm theo công thức nhanh $\\left(\\frac{ax+b}{cx+d}\\right)' = \\frac{ad - bc}{(cx+d)^2}$:**
+- **Bước 2: Tính đạo hàm:**
   $$y' = \\frac{2 \\cdot 1 - (-1) \\cdot 1}{(x + 1)^2} = \\frac{3}{(x + 1)^2}$$
-- **Bước 3: Xét dấu đạo hàm:**
+- **Bước 3: Kết luận:**
   Do $(x + 1)^2 > 0$ với mọi $x \\neq -1$ nên $y' > 0, \\forall x \\neq -1$.
-- **Kết luận:** Hàm số đồng biến trên từng khoảng xác định $(-\\infty; -1)$ và $(-1; +\\infty)$.
+  Vậy hàm số đồng biến trên từng khoảng xác định $(-\\infty; -1)$ và $(-1; +\\infty)$.
 """
                         },
                         {
@@ -287,11 +280,9 @@ CURRICULUM_DATA = {
 - **Bước 1: Tập xác định:** $D = \\mathbb{R} \\setminus \\{1\\}$.
 - **Bước 2: Tính đạo hàm:**
   $$y' = \\frac{(2x - 2)(x - 1) - (x^2 - 2x + 2) \\cdot 1}{(x - 1)^2} = \\frac{x^2 - 2x}{(x - 1)^2}$$
-  Cho $y' = 0 \\iff x^2 - 2x = 0 \\iff x = 0$ hoặc $x = 2$ (cả hai đều thỏa mãn $x \\neq 1$).
-- **Bước 3: Xét dấu đạo hàm:**
-  + $y' > 0$ trên $(-\\infty; 0)$ và $(2; +\\infty)$.
-  + $y' < 0$ trên $(0; 1)$ và $(1; 2)$.
-- **Kết luận:** Hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên $(0; 1)$ và $(1; 2)$.
+  Cho $y' = 0 \\iff x^2 - 2x = 0 \\iff x = 0$ hoặc $x = 2$.
+- **Bước 3: Kết luận:**
+  Hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên các khoảng $(0; 1)$ và $(1; 2)$.
 """
                         }
                     ],
@@ -653,26 +644,56 @@ CURRICULUM_DATA = {
     }
 }
 
-# TỰ ĐỘNG BẢO ĐẢM TOÀN BỘ 27 BÀI K10, 33 BÀI K11, 19 BÀI K12 ĐỀU ĐẦY ĐỦ CẤU TRÚC
+# TỰ ĐỘNG BẢO ĐẢM TOÀN BỘ 27 BÀI K10, 33 BÀI K11, 19 BÀI K12 ĐỀU ĐẦY ĐỦ CẤU TRÚC DANH MỤC
 ALL_LESSONS_CATALOG = {
-    "Khối 10": [f"Bài {i}: Tên bài học lớp 10" for i in range(1, 28)],
-    "Khối 11": [f"Bài {i}: Tên bài học lớp 11" for i in range(1, 34)],
-    "Khối 12": [f"Bài {i}: Tên bài học lớp 12" for i in range(1, 20)]
+    "Khối 10": [
+        "Bài 1: Mệnh đề toán học", "Bài 2: Tập hợp và các phép toán trên tập hợp",
+        "Bài 3: Bất phương trình bậc nhất hai ẩn", "Bài 4: Hệ bất phương trình bậc nhất hai ẩn",
+        "Bài 5: Giá trị lượng giác của một góc từ 0 đến 180 độ", "Bài 6: Hệ thức lượng trong tam giác",
+        "Bài 7: Các khái niệm mở đầu về vectơ", "Bài 8: Tổng và hiệu của hai vectơ",
+        "Bài 9: Tích của một vectơ với một số", "Bài 10: Vectơ trong mặt phẳng tọa độ",
+        "Bài 11: Tích vô hướng của hai vectơ", "Bài 12: Số gần đúng và sai số",
+        "Bài 13: Các số đặc trưng đo xu thế trung tâm", "Bài 14: Các số đặc trưng đo độ phân tán",
+        "Bài 15: Hàm số và đồ thị", "Bài 16: Hàm số bậc hai",
+        "Bài 17: Dấu của tam thức bậc hai", "Bài 18: Phương trình quy về phương trình bậc hai",
+        "Bài 19: Phương trình đường thẳng", "Bài 20: Vị trí tương đối giữa hai đường thẳng. Góc và khoảng cách",
+        "Bài 21: Đường tròn trong mặt phẳng tọa độ", "Bài 22: Ba đường conic",
+        "Bài 23: Quy tắc đếm", "Bài 24: Hoán vị, chỉnh hợp và tổ hợp",
+        "Bài 25: Nhị thức Newton", "Bài 26: Biến cố và định nghĩa cổ điển của xác suất",
+        "Bài 27: Thực hành tính xác suất theo định nghĩa cổ điển"
+    ],
+    "Khối 11": [
+        "Bài 1: Giá trị lượng giác của góc lượng giác", "Bài 2: Công thức lượng giác",
+        "Bài 3: Hàm số lượng giác", "Bài 4: Phương trình lượng giác cơ bản",
+        "Bài 5: Dãy số", "Bài 6: Cấp số cộng", "Bài 7: Cấp số nhân",
+        "Bài 8: Mẫu số liệu ghép nhóm", "Bài 9: Các số đặc trưng đo xu thế trung tâm",
+        "Bài 10: Đường thẳng và mặt phẳng trong không gian", "Bài 11: Hai đường thẳng song song",
+        "Bài 12: Đường thẳng và mặt phẳng song song", "Bài 13: Hai mặt phẳng song song",
+        "Bài 14: Phép chiếu song song", "Bài 15: Giới hạn của dãy số",
+        "Bài 16: Giới hạn của hàm số", "Bài 17: Hàm số liên tục",
+        "Bài 18: Lũy thừa với số mũ thực", "Bài 19: Lôgarit",
+        "Bài 20: Hàm số mũ và hàm số lôgarit", "Bài 21: Phương trình, bất phương trình mũ và lôgarit",
+        "Bài 22: Hai đường thẳng vuông góc", "Bài 23: Đường thẳng vuông góc với mặt phẳng",
+        "Bài 24: Phép chiếu vuông góc. Góc giữa đường thẳng và mặt phẳng",
+        "Bài 25: Hai mặt phẳng vuông góc", "Bài 26: Khoảng cách trong không gian",
+        "Bài 27: Thể tích", "Bài 28: Biến cố hợp, biến cố giao, biến cố độc lập",
+        "Bài 29: Công thức cộng xác suất", "Bài 30: Công thức nhân xác suất cho hai biến cố độc lập",
+        "Bài 31: Định nghĩa và ý nghĩa của đạo hàm", "Bài 32: Các quy tắc tính đạo hàm",
+        "Bài 33: Đạo hàm cấp hai"
+    ],
+    "Khối 12": [
+        "Bài 1: Tính đơn điệu và cực trị của hàm số", "Bài 2: Giá trị lớn nhất và giá trị nhỏ nhất của hàm số",
+        "Bài 3: Đường tiệm cận của đồ thị hàm số", "Bài 4: Khảo sát sự biến thiên và vẽ đồ thị của hàm số",
+        "Bài 5: Ứng dụng đạo hàm giải quyết bài toán thực tiễn", "Bài 6: Vectơ trong không gian",
+        "Bài 7: Hệ trục tọa độ trong không gian", "Bài 8: Biểu thức tọa độ của các phép toán vectơ",
+        "Bài 9: Khoảng biến thiên và khoảng tứ phân vị", "Bài 10: Phương sai và độ lệch chuẩn",
+        "Bài 11: Nguyên hàm", "Bài 12: Tích phân",
+        "Bài 13: Ứng dụng hình học của tích phân", "Bài 14: Phương trình mặt phẳng",
+        "Bài 15: Phương trình đường thẳng trong không gian", "Bài 16: Công thức tính góc trong không gian",
+        "Bài 17: Phương trình mặt cầu", "Bài 18: Xác suất có điều kiện",
+        "Bài 19: Công thức xác suất toàn phần và công thức Bayes"
+    ]
 }
-
-# Ánh xạ tên chuẩn xác cho các bài học phổ biến
-ALL_LESSONS_CATALOG["Khối 12"] = [
-    "Bài 1: Tính đơn điệu và cực trị của hàm số", "Bài 2: Giá trị lớn nhất và giá trị nhỏ nhất của hàm số",
-    "Bài 3: Đường tiệm cận của đồ thị hàm số", "Bài 4: Khảo sát sự biến thiên và vẽ đồ thị của hàm số",
-    "Bài 5: Ứng dụng đạo hàm giải quyết bài toán thực tiễn", "Bài 6: Vectơ trong không gian",
-    "Bài 7: Hệ trục tọa độ trong không gian", "Bài 8: Biểu thức tọa độ của các phép toán vectơ",
-    "Bài 9: Khoảng biến thiên và khoảng tứ phân vị", "Bài 10: Phương sai và độ lệch chuẩn",
-    "Bài 11: Nguyên hàm", "Bài 12: Tích phân",
-    "Bài 13: Ứng dụng hình học của tích phân", "Bài 14: Phương trình mặt phẳng",
-    "Bài 15: Phương trình đường thẳng trong không gian", "Bài 16: Công thức tính góc trong không gian",
-    "Bài 17: Phương trình mặt cầu", "Bài 18: Xác suất có điều kiện",
-    "Bài 19: Công thức xác suất toàn phần và công thức Bayes"
-]
 
 for g_name, list_l in ALL_LESSONS_CATALOG.items():
     if g_name not in CURRICULUM_DATA:
@@ -704,6 +725,26 @@ for g_name, list_l in ALL_LESSONS_CATALOG.items():
                             "id": f"EX_{hashlib.md5(l_name.encode()).hexdigest()[:6]}",
                             "title": f"Bài tập kiểm minh chứng: {l_name}",
                             "content": f"Cho biết kết quả cơ bản của bài toán thuộc {l_name}:",
+                            "type": "NUMERIC", "target": "1", "options": []
+                        }
+                    },
+                    "Chủ điểm 2: Rèn luyện kỹ năng giải toán chuẩn mực": {
+                        "theory": f"Phương pháp tư duy và các bước trình bày chi tiết cho dạng bài toán của {l_name}.",
+                        "formula": r"\text{Phương pháp giải toán bám sát Vở tự học}",
+                        "trap": "Đối chiếu kỹ các trường hợp ngoại lai của bài toán.",
+                        "audio": f"Trong chủ điểm kỹ năng này, em cần chú ý cách trình bày từng dòng mạch lạc, chặt chẽ.",
+                        "svg_cat": "DON_DIEU",
+                        "examples": [
+                            {
+                                "title": "Ví dụ 1: Bài toán củng cố phương pháp giải",
+                                "problem": f"Thực hiện các bước giải toán mẫu cho {l_name}.",
+                                "solution": "Thiết lập giả thiết, áp dụng công thức tương ứng và rút ra kết luận chuẩn xác."
+                            }
+                        ],
+                        "exercise": {
+                            "id": f"EX2_{hashlib.md5(l_name.encode()).hexdigest()[:6]}",
+                            "title": f"Bài tập tự luyện: {l_name}",
+                            "content": f"Cho biết kết quả câu hỏi vận dụng phương pháp của {l_name}:",
                             "type": "NUMERIC", "target": "1", "options": []
                         }
                     }

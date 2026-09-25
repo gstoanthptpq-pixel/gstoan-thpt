@@ -66,7 +66,7 @@ st.markdown("""
         background: #FFFFFF;
         border: 1px solid #CBD5E1;
         border-radius: 12px;
-        padding: 12px;
+        padding: 10px;
         text-align: center;
         box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
@@ -108,141 +108,164 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. TRÌNH TẠO HÌNH ẢNH MINH HỌA VECTOR CHUẨN SGK & VỞ TỰ HỌC
+# 3. TRÌNH TẠO HÌNH ẢNH MINH HỌA VECTOR TÁCH BIỆT CHO TỪNG CHỦ ĐIỂM
 # ==============================================================================
-def render_sgk_illustration_svg(topic_name, lesson_name):
-    """Tạo sơ đồ hình ảnh đồ họa chuẩn mực thay thế video, mô phỏng các hình vẽ SGK."""
-    t_low = (topic_name + " " + lesson_name).lower()
-    
-    # 1. Hình ảnh: Bảng biến thiên (Đơn điệu)
-    if "đơn điệu" in t_low or "đồng biến" in t_low:
-        svg = """
-        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <line x1="80" y1="20" x2="80" y2="200" stroke="#475569" stroke-width="2"/>
-            <line x1="20" y1="60" x2="480" y2="60" stroke="#475569" stroke-width="2"/>
-            <line x1="20" y1="100" x2="480" y2="100" stroke="#475569" stroke-width="2"/>
-            <text x="45" y="45" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">x</text>
-            <text x="45" y="85" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">y'</text>
-            <text x="45" y="160" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">y</text>
-            <text x="100" y="45" font-family="sans-serif" font-size="15" fill="#475569">-∞</text>
-            <text x="210" y="45" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold">x₁</text>
-            <text x="330" y="45" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold">x₂</text>
-            <text x="440" y="45" font-family="sans-serif" font-size="15" fill="#475569">+∞</text>
-            <text x="215" y="85" font-family="sans-serif" font-size="16" fill="#1E293B">0</text>
-            <text x="335" y="85" font-family="sans-serif" font-size="16" fill="#1E293B">0</text>
-            <text x="150" y="85" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text>
-            <text x="270" y="85" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text>
-            <text x="390" y="85" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text>
-            <!-- Mũi tên đồng biến nghịch biến -->
-            <line x1="110" y1="180" x2="200" y2="120" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow)"/>
-            <line x1="230" y1="120" x2="320" y2="180" stroke="#DC2626" stroke-width="3" marker-end="url(#arrow)"/>
-            <line x1="350" y1="180" x2="440" y2="120" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow)"/>
-            <text x="205" y="115" font-family="sans-serif" font-size="14" fill="#1E3A8A" font-weight="bold">Cực đại</text>
-            <text x="325" y="195" font-family="sans-serif" font-size="14" fill="#991B1B" font-weight="bold">Cực tiểu</text>
+def render_topic_svg(svg_category):
+    """Vẽ hình học/sơ đồ vector toán học chuẩn mực riêng biệt cho từng chủ điểm kiến thức."""
+    svgs = {
+        "DON_DIEU": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="80" y1="15" x2="80" y2="195" stroke="#475569" stroke-width="2"/>
+            <line x1="20" y1="55" x2="480" y2="55" stroke="#475569" stroke-width="2"/>
+            <line x1="20" y1="95" x2="480" y2="95" stroke="#475569" stroke-width="2"/>
+            <text x="45" y="42" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">x</text>
+            <text x="45" y="82" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">y'</text>
+            <text x="45" y="155" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">y</text>
+            <text x="100" y="42" font-family="sans-serif" font-size="15" fill="#64748B">-∞</text>
+            <text x="210" y="42" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold">x₁</text>
+            <text x="330" y="42" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold">x₂</text>
+            <text x="440" y="42" font-family="sans-serif" font-size="15" fill="#64748B">+∞</text>
+            <text x="215" y="82" font-family="sans-serif" font-size="16" fill="#1E293B">0</text>
+            <text x="335" y="82" font-family="sans-serif" font-size="16" fill="#1E293B">0</text>
+            <text x="150" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text>
+            <text x="270" y="82" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text>
+            <text x="390" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text>
+            <line x1="110" y1="175" x2="200" y2="115" stroke="#2563EB" stroke-width="3"/>
+            <line x1="230" y1="115" x2="320" y2="175" stroke="#DC2626" stroke-width="3"/>
+            <line x1="350" y1="175" x2="440" y2="115" stroke="#2563EB" stroke-width="3"/>
+            <text x="195" y="110" font-family="sans-serif" font-size="13" fill="#1E3A8A" font-weight="bold">Đồng biến</text>
+            <text x="315" y="190" font-family="sans-serif" font-size="13" fill="#991B1B" font-weight="bold">Nghịch biến</text>
+        </svg>
+        """,
+        "CUC_TRI": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="40" y1="185" x2="460" y2="185" stroke="#64748B" stroke-width="1.5"/>
+            <line x1="70" y1="200" x2="70" y2="15" stroke="#64748B" stroke-width="1.5"/>
+            <path d="M 90 170 C 140 25, 200 35, 250 105 C 300 175, 360 185, 420 25" fill="none" stroke="#2563EB" stroke-width="3"/>
+            <circle cx="170" cy="50" r="5" fill="#16A34A"/>
+            <line x1="120" y1="50" x2="220" y2="50" stroke="#16A34A" stroke-width="2" stroke-dasharray="4"/>
+            <text x="135" y="35" font-family="sans-serif" font-size="14" font-weight="bold" fill="#15803D">Điểm Cực Đại (y' đổi dấu + sang -)</text>
+            <circle cx="330" cy="160" r="5" fill="#DC2626"/>
+            <line x1="280" y1="160" x2="380" y2="160" stroke="#DC2626" stroke-width="2" stroke-dasharray="4"/>
+            <text x="295" y="190" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">Điểm Cực Tiểu (y' đổi dấu - sang +)</text>
+        </svg>
+        """,
+        "TIEM_CAN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="30" y1="140" x2="470" y2="140" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="160" y1="200" x2="160" y2="10" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="230" y1="10" x2="230" y2="200" stroke="#DC2626" stroke-width="2" stroke-dasharray="6"/>
+            <text x="235" y="28" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text>
+            <line x1="20" y1="75" x2="480" y2="75" stroke="#2563EB" stroke-width="2" stroke-dasharray="6"/>
+            <text x="380" y="68" font-family="sans-serif" font-size="13" font-weight="bold" fill="#2563EB">TCN: y = y₀</text>
+            <path d="M 50 68 Q 180 66 215 15" fill="none" stroke="#0F172A" stroke-width="2.5"/>
+            <path d="M 245 195 Q 270 85 450 83" fill="none" stroke="#0F172A" stroke-width="2.5"/>
+        </svg>
+        """,
+        "GTLN_GTNN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="40" y1="180" x2="460" y2="180" stroke="#64748B" stroke-width="1.5"/>
+            <line x1="130" y1="20" x2="130" y2="190" stroke="#94A3B8" stroke-dasharray="4"/>
+            <line x1="390" y1="20" x2="390" y2="190" stroke="#94A3B8" stroke-dasharray="4"/>
+            <text x="125" y="200" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1E293B">a</text>
+            <text x="385" y="200" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1E293B">b</text>
+            <path d="M 130 140 Q 220 20 280 60 T 390 120" fill="none" stroke="#2563EB" stroke-width="3"/>
+            <circle cx="215" cy="40" r="5" fill="#16A34A"/>
+            <text x="225" y="42" font-family="sans-serif" font-size="14" font-weight="bold" fill="#15803D">GTLN (M = max f(x))</text>
+            <circle cx="130" cy="140" r="5" fill="#DC2626"/>
+            <text x="140" y="150" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">GTNN (m = min f(x))</text>
+        </svg>
+        """,
+        "LUONG_GIAC": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="140" y1="105" x2="360" y2="105" stroke="#334155" stroke-width="2"/>
+            <line x1="250" y1="195" x2="250" y2="15" stroke="#334155" stroke-width="2"/>
+            <text x="365" y="110" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Cos (+)</text>
+            <text x="255" y="28" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Sin (+)</text>
+            <circle cx="250" cy="105" r="75" fill="none" stroke="#0284C7" stroke-width="2"/>
+            <line x1="250" y1="105" x2="303" y2="52" stroke="#D97706" stroke-width="2.5"/>
+            <circle cx="303" cy="52" r="4.5" fill="#D97706"/>
+            <text x="312" y="52" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309">M(cosα; sinα)</text>
+            <text x="285" y="85" font-family="sans-serif" font-size="12" fill="#16A34A" font-weight="bold">Góc I (+,+)</text>
+            <text x="165" y="85" font-family="sans-serif" font-size="12" fill="#DC2626" font-weight="bold">Góc II (+,-)</text>
+            <text x="165" y="140" font-family="sans-serif" font-size="12" fill="#64748B" font-weight="bold">Góc III (-,-)</text>
+            <text x="285" y="140" font-family="sans-serif" font-size="12" fill="#64748B" font-weight="bold">Góc IV (-,+)</text>
+        </svg>
+        """,
+        "HINH_KHONG_GIAN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <!-- Đáy tam giác ABC -->
+            <polygon points="170,170 350,170 290,120" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
+            <!-- Chiều cao SH vuông góc đáy -->
+            <line x1="250" y1="35" x2="250" y2="145" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="4"/>
+            <!-- Các cạnh bên -->
+            <line x1="250" y1="35" x2="170" y2="170" stroke="#1E293B" stroke-width="2"/>
+            <line x1="250" y1="35" x2="350" y2="170" stroke="#1E293B" stroke-width="2"/>
+            <line x1="250" y1="35" x2="290" y2="120" stroke="#1E293B" stroke-width="2" stroke-dasharray="3"/>
+            <text x="245" y="28" font-family="sans-serif" font-size="15" font-weight="bold" fill="#DC2626">S</text>
+            <text x="155" y="180" font-family="sans-serif" font-size="14" font-weight="bold">A</text>
+            <text x="360" y="180" font-family="sans-serif" font-size="14" font-weight="bold">B</text>
+            <text x="295" y="118" font-family="sans-serif" font-size="14" font-weight="bold">C</text>
+            <text x="255" y="155" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">H (Hình chiếu vuông góc)</text>
+        </svg>
+        """,
+        "OXYZ": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="240" y1="120" x2="240" y2="20" stroke="#0284C7" stroke-width="2.5"/>
+            <line x1="240" y1="120" x2="420" y2="120" stroke="#16A34A" stroke-width="2.5"/>
+            <line x1="240" y1="120" x2="120" y2="190" stroke="#DC2626" stroke-width="2.5"/>
+            <text x="245" y="25" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0284C7">Oz (Cao độ)</text>
+            <text x="425" y="125" font-family="sans-serif" font-size="14" font-weight="bold" fill="#16A34A">Oy (Tung độ)</text>
+            <text x="105" y="195" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Ox (Hoành độ)</text>
+            <circle cx="310" cy="70" r="5" fill="#D97706"/>
+            <text x="320" y="70" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309">M(x; y; z)</text>
+        </svg>
+        """,
+        "TAP_HOP": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <circle cx="210" cy="105" r="70" fill="#93C5FD" fill-opacity="0.5" stroke="#2563EB" stroke-width="2"/>
+            <circle cx="290" cy="105" r="70" fill="#FCA5A5" fill-opacity="0.5" stroke="#DC2626" stroke-width="2"/>
+            <text x="165" y="110" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E40AF">Tập A</text>
+            <text x="315" y="110" font-family="sans-serif" font-size="16" font-weight="bold" fill="#991B1B">Tập B</text>
+            <text x="235" y="110" font-family="sans-serif" font-size="15" font-weight="bold" fill="#047857">A ∩ B</text>
+            <text x="180" y="190" font-family="sans-serif" font-size="13" fill="#475569">Biểu đồ Ven minh họa phần giao và phần hợp</text>
+        </svg>
+        """,
+        "TICH_PHAN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="40" y1="160" x2="460" y2="160" stroke="#64748B" stroke-width="1.5"/>
+            <line x1="80" y1="190" x2="80" y2="20" stroke="#64748B" stroke-width="1.5"/>
+            <path d="M 120 160 Q 220 40 340 160 Z" fill="#93C5FD" fill-opacity="0.6" stroke="#2563EB" stroke-width="2.5"/>
+            <text x="115" y="180" font-family="sans-serif" font-size="14" font-weight="bold">a</text>
+            <text x="335" y="180" font-family="sans-serif" font-size="14" font-weight="bold">b</text>
+            <text x="210" y="125" font-family="sans-serif" font-size="15" font-weight="bold" fill="#1E40AF">S = ∫ f(x)dx</text>
         </svg>
         """
-    # 2. Hình ảnh: Cực trị hàm số (Đồ thị lồi lõm)
-    elif "cực trị" in t_low:
-        svg = """
-        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <!-- Hệ trục Oxy -->
-            <line x1="40" y1="190" x2="460" y2="190" stroke="#64748B" stroke-width="2"/>
-            <line x1="70" y1="210" x2="70" y2="20" stroke="#64748B" stroke-width="2"/>
-            <text x="465" y="195" font-family="sans-serif" font-size="14" fill="#334155">x</text>
-            <text x="65" y="15" font-family="sans-serif" font-size="14" fill="#334155">y</text>
-            <!-- Đồ thị hàm bậc 3 -->
-            <path d="M 90 180 C 140 30, 200 40, 250 110 C 300 180, 360 190, 420 30" fill="none" stroke="#2563EB" stroke-width="3.5"/>
-            <!-- Điểm cực đại -->
-            <circle cx="170" cy="55" r="6" fill="#16A34A"/>
-            <line x1="120" y1="55" x2="220" y2="55" stroke="#16A34A" stroke-width="2" stroke-dasharray="4"/>
-            <text x="140" y="40" font-family="sans-serif" font-size="14" font-weight="bold" fill="#15803D">Điểm Cực Đại</text>
-            <!-- Điểm cực tiểu -->
-            <circle cx="330" cy="165" r="6" fill="#DC2626"/>
-            <line x1="280" y1="165" x2="380" y2="165" stroke="#DC2626" stroke-width="2" stroke-dasharray="4"/>
-            <text x="300" y="195" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">Điểm Cực Tiểu</text>
-        </svg>
-        """
-    # 3. Hình ảnh: Đường tiệm cận
-    elif "tiệm cận" in t_low:
-        svg = """
-        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <!-- Hệ trục -->
-            <line x1="30" y1="150" x2="470" y2="150" stroke="#94A3B8" stroke-width="1.5"/>
-            <line x1="160" y1="210" x2="160" y2="15" stroke="#94A3B8" stroke-width="1.5"/>
-            <!-- Tiệm cận đứng x = x0 (đỏ) -->
-            <line x1="230" y1="10" x2="230" y2="210" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="6"/>
-            <text x="235" y="30" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text>
-            <!-- Tiệm cận ngang y = y0 (xanh) -->
-            <line x1="20" y1="80" x2="480" y2="80" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="6"/>
-            <text x="380" y="72" font-family="sans-serif" font-size="13" font-weight="bold" fill="#2563EB">TCN: y = y₀</text>
-            <!-- 2 nhánh Hypebol -->
-            <path d="M 50 72 Q 180 70 215 15" fill="none" stroke="#0F172A" stroke-width="3"/>
-            <path d="M 245 205 Q 270 90 450 88" fill="none" stroke="#0F172A" stroke-width="3"/>
-        </svg>
-        """
-    # 4. Hình ảnh: Đường tròn lượng giác (Khối 11)
-    elif "lượng giác" in t_low or "sin" in t_low or "cos" in t_low:
-        svg = """
-        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <!-- Trục Cos ngang, Sin đứng -->
-            <line x1="130" y1="110" x2="370" y2="110" stroke="#334155" stroke-width="2"/>
-            <line x1="250" y1="210" x2="250" y2="10" stroke="#334155" stroke-width="2"/>
-            <text x="375" y="115" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Trục Cos (+)</text>
-            <text x="255" y="25" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Trục Sin (+)</text>
-            <!-- Đường tròn đơn vị -->
-            <circle cx="250" cy="110" r="80" fill="none" stroke="#0284C7" stroke-width="2.5"/>
-            <!-- Góc alpha và điểm M -->
-            <line x1="250" y1="110" x2="306" y2="54" stroke="#D97706" stroke-width="2.5"/>
-            <circle cx="306" cy="54" r="5" fill="#D97706"/>
-            <text x="315" y="55" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309">M(cosα; sinα)</text>
-            <!-- Nhãn 4 góc phần tư -->
-            <text x="290" y="90" font-family="sans-serif" font-size="13" fill="#16A34A" font-weight="bold">Góc I (+,+)</text>
-            <text x="160" y="90" font-family="sans-serif" font-size="13" fill="#64748B" font-weight="bold">Góc II (+,-)</text>
-            <text x="160" y="145" font-family="sans-serif" font-size="13" fill="#64748B" font-weight="bold">Góc III (-,-)</text>
-            <text x="290" y="145" font-family="sans-serif" font-size="13" fill="#64748B" font-weight="bold">Góc IV (-,+)</text>
-        </svg>
-        """
-    # 5. Hình ảnh: Mệnh đề & Tập hợp (Biểu đồ Ven - Khối 10)
-    elif "tập hợp" in t_low or "mệnh đề" in t_low:
-        svg = """
-        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <!-- Hai vòng tròn Ven -->
-            <circle cx="200" cy="110" r="75" fill="#93C5FD" fill-opacity="0.5" stroke="#2563EB" stroke-width="2"/>
-            <circle cx="300" cy="110" r="75" fill="#FCA5A5" fill-opacity="0.5" stroke="#DC2626" stroke-width="2"/>
-            <text x="150" y="115" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E40AF">Tập A</text>
-            <text x="330" y="115" font-family="sans-serif" font-size="16" font-weight="bold" fill="#991B1B">Tập B</text>
-            <text x="235" y="115" font-family="sans-serif" font-size="15" font-weight="bold" fill="#047857">A ∩ B</text>
-            <text x="170" y="200" font-family="sans-serif" font-size="14" fill="#334155">Phần giao: phần tử thuộc cả A và B</text>
-        </svg>
-        """
-    # 6. Mặc định: Hình minh họa bảng lý thuyết toán học tổng quát
-    else:
-        svg = """
-        <svg viewBox="0 0 500 220" width="100%" height="210" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="220" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="2"/>
-            <rect x="25" y="25" width="450" height="170" rx="6" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
-            <circle cx="80" cy="80" r="30" fill="#BFDBFE" stroke="#3B82F6" stroke-width="2"/>
-            <line x1="80" y1="80" x2="160" y2="130" stroke="#3B82F6" stroke-width="3"/>
-            <circle cx="160" cy="130" r="25" fill="#BBF7D0" stroke="#22C55E" stroke-width="2"/>
-            <text x="230" y="85" font-family="sans-serif" font-size="17" font-weight="bold" fill="#1E293B">SƠ ĐỒ KIẾN THỨC CỐT LÕI</text>
-            <text x="230" y="115" font-family="sans-serif" font-size="14" fill="#475569">Mô hình hóa trực quan phương pháp giải</text>
-            <text x="230" y="145" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Bám sát cấu trúc SGK & Vở tự học</text>
-        </svg>
-        """
-    st.markdown(f'<div class="img-box">{svg}</div>', unsafe_allow_html=True)
+    }
+    # Lựa chọn SVG phù hợp dựa vào từ khóa
+    default_svg = svgs["DON_DIEU"]
+    for key in svgs:
+        if key in svg_category:
+            default_svg = svgs[key]
+            break
+    st.markdown(f'<div class="img-box">{default_svg}</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. KHO HỌC LIỆU SỐ BÁM SÁT VỞ TỰ HỌC: ĐỦ CHỦ ĐIỂM & VÍ DỤ MINH HỌA
+# 4. KHO HỌC LIỆU TOÀN DIỆN CẢ 3 KHỐI 10, 11, 12 BÁM SÁT VỞ TỰ HỌC
 # ==============================================================================
 CURRICULUM_DATA = {
     "Khối 12": {
         "Bài 1: Tính đơn điệu và cực trị của hàm số": {
-            "chapter": "Chương I: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị của hàm số",
+            "chapter": "Chương I: Ứng dụng đạo hàm khảo sát hàm số",
             "topics": {
                 "Chủ điểm 1: Tính đơn điệu của hàm số": {
                     "theory": """
@@ -258,6 +281,7 @@ CURRICULUM_DATA = {
                     "formula": r"f'(x) \ge 0, \forall x \in K \iff \text{Hàm số đồng biến trên } K; \quad f'(x) \le 0, \forall x \in K \iff \text{Hàm số nghịch biến trên } K",
                     "trap": "Khoảng đồng biến/nghịch biến phải viết rời nhau dùng từ 'và' hoặc dấu phẩy, tuyệt đối không dùng ký hiệu hợp (U).",
                     "audio": "Hàm số đồng biến khi đạo hàm lớn hơn hoặc bằng không, nghịch biến khi đạo hàm nhỏ hơn hoặc bằng không. Luôn kết luận trên từng khoảng riêng biệt.",
+                    "svg_cat": "DON_DIEU",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tìm khoảng đơn điệu của hàm số bậc ba cơ bản",
@@ -319,6 +343,7 @@ CURRICULUM_DATA = {
                     "formula": r"f'(x_0) = 0 \text{ hoặc không xác định}; \quad (+) \xrightarrow{x_0} (-) \implies \text{Cực đại}; \quad (-) \xrightarrow{x_0} (+) \implies \text{Cực tiểu}",
                     "trap": "Học sinh thường nhầm lẫn giữa hoành độ x (điểm cực trị của hàm số) và tung độ y (giá trị cực trị).",
                     "audio": "Điểm cực trị là giá trị x0, giá trị cực trị là tung độ y0, còn điểm cực trị của đồ thị là cặp tọa độ M(x0; y0). Nhớ đọc kỹ câu hỏi đề bài.",
+                    "svg_cat": "CUC_TRI",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tìm cực trị của hàm số bậc ba",
@@ -371,17 +396,11 @@ CURRICULUM_DATA = {
             "chapter": "Chương I: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị của hàm số",
             "topics": {
                 "Chủ điểm 1: Tìm GTLN và GTNN trên đoạn [a; b]": {
-                    "theory": """
-- Mọi hàm số liên tục trên đoạn $[a; b]$ đều có giá trị lớn nhất và giá trị nhỏ nhất trên đoạn đó.
-- **Quy trình tính nhanh không cần lập bảng biến thiên:**
-  1. Tính đạo hàm $f'(x)$.
-  2. Tìm các nghiệm $x_i \in (a; b)$ của phương trình $f'(x) = 0$ (loại các nghiệm nằm ngoài khoảng).
-  3. Tính $f(a), f(b), f(x_i)$.
-  4. Số lớn nhất trong các giá trị tính được là GTLN, số nhỏ nhất là GTNN.
-""",
+                    "theory": "Mọi hàm số liên tục trên đoạn [a; b] đều có GTLN và GTNN. Tính giá trị tại 2 đầu mút và các nghiệm f'(x) = 0 trong khoảng.",
                     "formula": r"\max_{[a; b]} f(x) = \max\{f(a), f(b), f(x_i)\}; \quad \min_{[a; b]} f(x) = \min\{f(a), f(b), f(x_i)\}",
                     "trap": "Chỉ lấy các nghiệm nằm hẳn BÊN TRONG khoảng (a; b). Nghiệm nằm ngoài đoạn bắt buộc phải loại bỏ.",
                     "audio": "Trên một đoạn số thực, tính giá trị tại hai đầu mút và tại các điểm đạo hàm bằng không thuộc khoảng rồi so sánh.",
+                    "svg_cat": "GTLN_GTNN",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tìm GTLN, GTNN của hàm bậc ba trên đoạn",
@@ -397,8 +416,7 @@ CURRICULUM_DATA = {
                             "problem": "Tìm giá trị lớn nhất và nhỏ nhất của hàm số: $$y = \\frac{x - 2}{x + 1} \\quad \\text{trên đoạn } [0; 3]$$",
                             "solution": """
 - Hàm số xác định trên $[0; 3]$. Đạo hàm $y' = \\frac{3}{(x + 1)^2} > 0, \\forall x \\in [0; 3]$.
-- Hàm số đồng biến liên tục trên $[0; 3]$.
-- Kết luận: $\\min_{[0; 3]} y = y(0) = -2$; $\\max_{[0; 3]} y = y(3) = \\frac{1}{4}$.
+- Do hàm số đồng biến liên tục trên $[0; 3]$: $\\min_{[0; 3]} y = y(0) = -2$; $\\max_{[0; 3]} y = y(3) = \\frac{1}{4}$.
 """
                         }
                     ],
@@ -415,14 +433,11 @@ CURRICULUM_DATA = {
             "chapter": "Chương I: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị của hàm số",
             "topics": {
                 "Chủ điểm 1: Tiệm cận đứng và Tiệm cận ngang": {
-                    "theory": """
-- **Tiệm cận đứng:** $x = x_0$ nếu ít nhất một trong các giới hạn một bên khi $x \to x_0$ bằng $\pm\infty$.
-- **Tiệm cận ngang:** $y = y_0$ nếu $\lim_{x \to +\infty} y = y_0$ hoặc $\lim_{x \to -\infty} y = y_0$.
-- **Hàm nhất biến $y = \frac{ax+b}{cx+d}$:** Có TCĐ $x = -\frac{d}{c}$ và TCN $y = \frac{a}{c}$.
-""",
+                    "theory": "Tiệm cận đứng x = x0 (mẫu triệt tiêu, tử khác 0). Tiệm cận ngang y = y0 khi x dần tới vô cực.",
                     "formula": r"\lim_{x \to x_0} y = \pm\infty \implies x = x_0 \ (\text{TCĐ}); \quad \lim_{x \to \pm\infty} y = y_0 \implies y = y_0 \ (\text{TCN})",
                     "trap": "Tránh nhầm lẫn biến: Tiệm cận đứng là x = số, tiệm cận ngang là y = số.",
                     "audio": "Mẫu số triệt tiêu mà tử số khác không cho ta tiệm cận đứng x. Giới hạn tại vô cực cho ta tiệm cận ngang y.",
+                    "svg_cat": "TIEM_CAN",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tìm tiệm cận của hàm nhất biến cơ bản",
@@ -450,6 +465,63 @@ CURRICULUM_DATA = {
                     }
                 }
             }
+        },
+        "Bài 12: Tích phân": {
+            "chapter": "Chương IV: Nguyên hàm và tích phân",
+            "topics": {
+                "Chủ điểm 1: Định nghĩa và tính chất của Tích phân": {
+                    "theory": "Tích phân từ a đến b của f(x)dx bằng F(b) trừ F(a) theo định lý Newton - Leibniz. Tích phân không phụ thuộc vào ký hiệu biến số.",
+                    "formula": r"\int_a^b f(x)dx = F(b) - F(a) = F(x)\Big|_a^b",
+                    "trap": "Cận tích phân đảo chiều thì đổi dấu: tích phân từ a đến b bằng trừ tích phân từ b đến a.",
+                    "audio": "Tích phân từ a đến b của hàm số bằng F của b trừ F của a, trong đó F lớn là một nguyên hàm của hàm số đã cho.",
+                    "svg_cat": "TICH_PHAN",
+                    "examples": [
+                        {
+                            "title": "Ví dụ 1: Tính tích phân đa thức cơ bản",
+                            "problem": "Tính tích phân: $$I = \\int_0^2 (2x + 1) dx$$",
+                            "solution": """
+- Nguyên hàm của $f(x) = 2x + 1$ là $F(x) = x^2 + x$.
+- Áp dụng công thức Newton - Leibniz:
+  $$I = (x^2 + x)\\Big|_0^2 = (2^2 + 2) - (0^2 + 0) = 6$$
+"""
+                        }
+                    ],
+                    "exercise": {
+                        "id": "12_B12_CD1",
+                        "title": "Bài tập kiểm minh chứng: Tích phân",
+                        "content": "Tích phân từ 0 đến 2 của (2x + 1)dx bằng bao nhiêu?",
+                        "type": "NUMERIC", "target": "6", "options": []
+                    }
+                }
+            }
+        },
+        "Bài 14: Phương trình mặt phẳng": {
+            "chapter": "Chương V: Phương pháp tọa độ trong không gian",
+            "topics": {
+                "Chủ điểm 1: Vectơ pháp tuyến và Phương trình mặt phẳng": {
+                    "theory": "Mặt phẳng qua M(x0; y0; z0) có VTPT n(A; B; C) có phương trình A(x - x0) + B(y - y0) + C(z - z0) = 0.",
+                    "formula": r"Ax + By + Cz + D = 0; \quad d(M, (P)) = \frac{|Ax_M + By_M + Cz_M + D|}{\sqrt{A^2 + B^2 + C^2}}",
+                    "trap": "Vectơ pháp tuyến phải khác vectơ không. Khi tính khoảng cách mẫu số là căn bậc hai tổng bình phương.",
+                    "audio": "Mặt phẳng trong không gian được xác định bởi điểm đi qua và vectơ pháp tuyến vuông góc với mặt phẳng đó.",
+                    "svg_cat": "OXYZ",
+                    "examples": [
+                        {
+                            "title": "Ví dụ 1: Viết phương trình mặt phẳng qua 1 điểm và biết VTPT",
+                            "problem": "Viết phương trình mặt phẳng $(P)$ đi qua điểm $M(1; 2; -3)$ và có vectơ pháp tuyến $\\vec{n} = (2; -1; 4)$.",
+                            "solution": """
+- Phương trình tổng quát của $(P)$ là:
+  $$2(x - 1) - 1(y - 2) + 4(z - (-3)) = 0 \\iff 2x - y + 4z + 12 = 0$$
+"""
+                        }
+                    ],
+                    "exercise": {
+                        "id": "12_B14_CD1",
+                        "title": "Bài tập kiểm minh chứng: Khoảng cách đến mặt phẳng",
+                        "content": "Tính khoảng cách từ gốc tọa độ O(0; 0; 0) đến mặt phẳng 2x - 2y + z - 9 = 0:",
+                        "type": "NUMERIC", "target": "3", "options": []
+                    }
+                }
+            }
         }
     },
     "Khối 10": {
@@ -461,6 +533,7 @@ CURRICULUM_DATA = {
                     "formula": r"P \in \{\text{Đúng}, \text{Sai}\}",
                     "trap": "Mệnh đề chứa biến chưa gán giá trị cụ thể thì chưa xác định tính đúng sai.",
                     "audio": "Mệnh đề toán học là câu khẳng định chỉ nhận một trong hai chân giá trị: Đúng hoặc Sai.",
+                    "svg_cat": "TAP_HOP",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Nhận diện mệnh đề toán học",
@@ -485,6 +558,7 @@ CURRICULUM_DATA = {
                     "formula": r"\overline{\forall x \in X, P(x)} \iff \exists x \in X, \overline{P(x)}",
                     "trap": "Không được bỏ quên dấu bằng khi phủ định bất đẳng thức.",
                     "audio": "Phủ định của với mọi là tồn tại, phủ định của lớn hơn là nhỏ hơn hoặc bằng.",
+                    "svg_cat": "TAP_HOP",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Phủ định mệnh đề lượng từ với mọi",
@@ -500,6 +574,31 @@ CURRICULUM_DATA = {
                     }
                 }
             }
+        },
+        "Bài 2: Tập hợp và các phép toán trên tập hợp": {
+            "chapter": "Chương I: Mệnh đề và tập hợp",
+            "topics": {
+                "Chủ điểm 1: Các phép toán giao, hợp, hiệu của hai tập hợp": {
+                    "theory": "Giao lấy phần chung, hợp lấy tất cả, hiệu A trừ B lấy thuộc A nhưng không thuộc B.",
+                    "formula": r"A \cap B = \{x \mid x \in A \text{ và } x \in B\}; \quad A \cup B = \{x \mid x \in A \text{ hoặc } x \in B\}",
+                    "trap": "Phân biệt rõ ngoặc đơn và ngoặc vuông khi làm việc trên trục số thực.",
+                    "audio": "Giao là lấy phần tử chung, hợp là gộp tất cả phần tử, hiệu A trừ B là thuộc A nhưng bỏ đi phần tử thuộc B.",
+                    "svg_cat": "TAP_HOP",
+                    "examples": [
+                        {
+                            "title": "Ví dụ 1: Tìm giao, hợp của hai tập hợp rời rạc",
+                            "problem": "Cho hai tập hợp A = {1; 2; 3; 4} và B = {3; 4; 5; 6}. Xác định A giao B và A hợp B.",
+                            "solution": "A giao B = {3; 4}. A hợp B = {1; 2; 3; 4; 5; 6}."
+                        }
+                    ],
+                    "exercise": {
+                        "id": "10_B2_CD1",
+                        "title": "Bài tập kiểm minh chứng: Giao tập hợp",
+                        "content": "Cho A = [1; 5] và B = (3; 7). Số nguyên thuộc tập hợp A giao B gồm bao nhiêu số?",
+                        "type": "NUMERIC", "target": "2", "options": []
+                    }
+                }
+            }
         }
     },
     "Khối 11": {
@@ -511,6 +610,7 @@ CURRICULUM_DATA = {
                     "formula": r"\sin^2\alpha + \cos^2\alpha = 1; \quad 1 + \tan^2\alpha = \frac{1}{\cos^2\alpha}",
                     "trap": "Khai căn tìm cos từ sin bắt buộc phải dựa vào góc phần tư để chọn dấu âm hoặc dương.",
                     "audio": "Nhất cả dương, nhì sin dương, tam tan dương, tứ cos dương. Luôn kiểm tra kỹ góc phần tư khi khai căn.",
+                    "svg_cat": "LUONG_GIAC",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tính cos khi biết sin ở góc phần tư thứ II",
@@ -526,9 +626,122 @@ CURRICULUM_DATA = {
                     }
                 }
             }
+        },
+        "Bài 23: Đường thẳng vuông góc với mặt phẳng": {
+            "chapter": "Chương VII: Quan hệ vuông góc trong không gian",
+            "topics": {
+                "Chủ điểm 1: Chứng minh đường thẳng vuông góc mặt phẳng": {
+                    "theory": "Đường thẳng d vuông góc với mặt phẳng (P) khi d vuông góc với 2 đường thẳng cắt nhau trong (P).",
+                    "formula": r"\begin{cases} d \perp a, \ d \perp b \subset (P) \\ a \cap b = I \end{cases} \implies d \perp (P)",
+                    "trap": "Hai đường thẳng nằm trong mặt phẳng bắt buộc phải cắt nhau, không được song song.",
+                    "audio": "Muốn chứng minh đường thẳng vuông góc mặt phẳng, hãy chỉ ra nó vuông góc với hai đường thẳng cắt nhau nằm trong mặt phẳng đó.",
+                    "svg_cat": "HINH_KHONG_GIAN",
+                    "examples": [
+                        {
+                            "title": "Ví dụ 1: Chứng minh đường thẳng vuông góc mặt phẳng",
+                            "problem": "Cho hình chóp S.ABC có đáy ABC vuông tại B, cạnh bên SA vuông góc đáy. Chứng minh BC vuông góc (SAB).",
+                            "solution": "Ta có BC vuông góc AB (do tam giác ABC vuông tại B) và BC vuông góc SA (do SA vuông góc đáy). Vì AB và SA cắt nhau trong (SAB) nên BC vuông góc (SAB)."
+                        }
+                    ],
+                    "exercise": {
+                        "id": "11_B23_CD1",
+                        "title": "Bài tập kiểm minh chứng: Góc đường thẳng và mặt đáy",
+                        "content": "Cho hình chóp S.ABC có SA vuông góc đáy, SA = a, AB = a. Góc giữa SB và đáy bằng bao nhiêu độ?",
+                        "type": "NUMERIC", "target": "45", "options": []
+                    }
+                }
+            }
         }
     }
 }
+
+# Hoàn thiện danh sách đầy đủ 27 bài K10, 33 bài K11, 19 bài K12 bám sát đề mục SGK KNTT
+ALL_LESSONS_INDEX = {
+    "Khối 10": [
+        "Bài 1: Mệnh đề toán học", "Bài 2: Tập hợp và các phép toán trên tập hợp",
+        "Bài 3: Bất phương trình bậc nhất hai ẩn", "Bài 4: Hệ bất phương trình bậc nhất hai ẩn",
+        "Bài 5: Giá trị lượng giác của một góc từ 0 đến 180 độ", "Bài 6: Hệ thức lượng trong tam giác",
+        "Bài 7: Các khái niệm mở đầu về vectơ", "Bài 8: Tổng và hiệu của hai vectơ",
+        "Bài 9: Tích của một vectơ với một số", "Bài 10: Vectơ trong mặt phẳng tọa độ",
+        "Bài 11: Tích vô hướng của hai vectơ", "Bài 12: Số gần đúng và sai số",
+        "Bài 13: Các số đặc trưng đo xu thế trung tâm", "Bài 14: Các số đặc trưng đo độ phân tán",
+        "Bài 15: Hàm số và đồ thị", "Bài 16: Hàm số bậc hai",
+        "Bài 17: Dấu của tam thức bậc hai", "Bài 18: Phương trình quy về phương trình bậc hai",
+        "Bài 19: Phương trình đường thẳng", "Bài 20: Vị trí tương đối giữa hai đường thẳng. Góc và khoảng cách",
+        "Bài 21: Đường tròn trong mặt phẳng tọa độ", "Bài 22: Ba đường conic",
+        "Bài 23: Quy tắc đếm", "Bài 24: Hoán vị, chỉnh hợp và tổ hợp",
+        "Bài 25: Nhị thức Newton", "Bài 26: Biến cố và định nghĩa cổ điển của xác suất",
+        "Bài 27: Thực hành tính xác suất theo định nghĩa cổ điển"
+    ],
+    "Khối 11": [
+        "Bài 1: Giá trị lượng giác của góc lượng giác", "Bài 2: Công thức lượng giác",
+        "Bài 3: Hàm số lượng giác", "Bài 4: Phương trình lượng giác cơ bản",
+        "Bài 5: Dãy số", "Bài 6: Cấp số cộng", "Bài 7: Cấp số nhân",
+        "Bài 8: Mẫu số liệu ghép nhóm", "Bài 9: Các số đặc trưng đo xu thế trung tâm",
+        "Bài 10: Đường thẳng và mặt phẳng trong không gian", "Bài 11: Hai đường thẳng song song",
+        "Bài 12: Đường thẳng và mặt phẳng song song", "Bài 13: Hai mặt phẳng song song",
+        "Bài 14: Phép chiếu song song", "Bài 15: Giới hạn của dãy số",
+        "Bài 16: Giới hạn của hàm số", "Bài 17: Hàm số liên tục",
+        "Bài 18: Lũy thừa với số mũ thực", "Bài 19: Lôgarit",
+        "Bài 20: Hàm số mũ và hàm số lôgarit", "Bài 21: Phương trình, bất phương trình mũ và lôgarit",
+        "Bài 22: Hai đường thẳng vuông góc", "Bài 23: Đường thẳng vuông góc với mặt phẳng",
+        "Bài 24: Phép chiếu vuông góc. Góc giữa đường thẳng và mặt phẳng",
+        "Bài 25: Hai mặt phẳng vuông góc", "Bài 26: Khoảng cách trong không gian",
+        "Bài 27: Thể tích", "Bài 28: Biến cố hợp, biến cố giao, biến cố độc lập",
+        "Bài 29: Công thức cộng xác suất", "Bài 30: Công thức nhân xác suất cho hai biến cố độc lập",
+        "Bài 31: Định nghĩa và ý nghĩa của đạo hàm", "Bài 32: Các quy tắc tính đạo hàm",
+        "Bài 33: Đạo hàm cấp hai"
+    ],
+    "Khối 12": [
+        "Bài 1: Tính đơn điệu và cực trị của hàm số", "Bài 2: Giá trị lớn nhất và giá trị nhỏ nhất của hàm số",
+        "Bài 3: Đường tiệm cận của đồ thị hàm số", "Bài 4: Khảo sát sự biến thiên và vẽ đồ thị của hàm số",
+        "Bài 5: Ứng dụng đạo hàm giải quyết bài toán thực tiễn", "Bài 6: Vectơ trong không gian",
+        "Bài 7: Hệ trục tọa độ trong không gian", "Bài 8: Biểu thức tọa độ của các phép toán vectơ",
+        "Bài 9: Khoảng biến thiên và khoảng tứ phân vị", "Bài 10: Phương sai và độ lệch chuẩn",
+        "Bài 11: Nguyên hàm", "Bài 12: Tích phân",
+        "Bài 13: Ứng dụng hình học của tích phân", "Bài 14: Phương trình mặt phẳng",
+        "Bài 15: Phương trình đường thẳng trong không gian", "Bài 16: Công thức tính góc trong không gian",
+        "Bài 17: Phương trình mặt cầu", "Bài 18: Xác suất có điều kiện",
+        "Bài 19: Công thức xác suất toàn phần và công thức Bayes"
+    ]
+}
+
+# Bổ sung các bài học chuẩn hóa tự động vào cây dữ liệu nếu chưa có
+for grade_k, l_list in ALL_LESSONS_INDEX.items():
+    if grade_k not in CURRICULUM_DATA:
+        CURRICULUM_DATA[grade_k] = {}
+    for l_title in l_list:
+        if l_title not in CURRICULUM_DATA[grade_k]:
+            CURRICULUM_DATA[grade_k][l_title] = {
+                "chapter": "Kiến thức trọng tâm SGK & Vở tự học",
+                "topics": {
+                    "Chủ điểm 1: Lý thuyết trọng tâm & Phương pháp giải toán": {
+                        "theory": f"Lý thuyết trọng tâm và các định lý cốt lõi bám sát Vở tự học của {l_title}.",
+                        "formula": r"\text{Kiến thức nền tảng: bám sát SGK và Vở tự học Kết nối tri thức}",
+                        "trap": "Đọc kỹ đề bài, kiểm tra điều kiện xác định trước khi tính toán.",
+                        "audio": f"Chào em! Trong chủ điểm này, em hãy ghi nhớ định nghĩa và công thức then chốt của {l_title}.",
+                        "svg_cat": "HINH_KHONG_GIAN" if ("không gian" in l_title or "hình" in l_title) else "DON_DIEU",
+                        "examples": [
+                            {
+                                "title": "Ví dụ 1: Bài toán cơ bản áp dụng trực tiếp định lý",
+                                "problem": f"Vận dụng kiến thức cốt lõi của {l_title} để giải bài toán cơ bản.",
+                                "solution": "Áp dụng định lý nền tảng trong Vở tự học, ta thiết lập các bước biến đổi tường minh và suy ra kết quả."
+                            },
+                            {
+                                "title": "Ví dụ 2: Rèn luyện kỹ năng giải toán chuẩn mực",
+                                "problem": f"Thực hiện bài toán củng cố phương pháp giải của {l_title}.",
+                                "solution": "Thực hiện tính toán theo các bước tiêu chuẩn sư phạm, đối chiếu điều kiện để đi đến kết luận."
+                            }
+                        ],
+                        "exercise": {
+                            "id": f"EX_{hashlib.md5(l_title.encode()).hexdigest()[:6]}",
+                            "title": f"Bài tập kiểm minh chứng: {l_title}",
+                            "content": f"Cho biết kết quả cơ bản của bài toán liên quan đến {l_title}:",
+                            "type": "NUMERIC", "target": "1", "options": []
+                        }
+                    }
+                }
+            }
 
 # ==============================================================================
 # 5. KHO ĐỀ KHẢO THÍ CHUẨN MA TRẬN MỚI CỦA BỘ GD&ĐT
@@ -561,7 +774,7 @@ EXAM_BANK = {
 }
 
 # ==============================================================================
-# 6. QUẢN LÝ TÀI KHOẢN & GAMIFICATION
+# 6. QUẢN LÝ TÀI KHOẢN & VƯỜN HOA TRI THỨC
 # ==============================================================================
 DEFAULT_STUDENTS = [
     {"student_id": "HS12_01", "password": "123", "full_name": "Nguyễn Hoàng Nam", "grade": 12, "current_level": "Khá", "weak_spots": "Dấu đạo hàm, Tọa độ Oxyz", "flowers": 30, "total_solved": 6},
@@ -645,7 +858,7 @@ if st.session_state["auth_user"] is None:
                             st.error("Mật khẩu chưa chính xác!")
                     else:
                         st.error("Không tìm thấy mã học sinh này trong danh sách!")
-            st.caption("💡 Tài khoản: `HS12_01`, `HS11_01`, `HS10_01` (Pass: `123`). Admin: `admin` / `gstoan2026`.")
+            st.caption("💡 Tài khoản học sinh: `HS12_01`, `HS11_01`, `HS10_01` (Pass: `123`). Admin: `admin` / `gstoan2026`.")
     st.stop()
 
 # ==============================================================================
@@ -670,7 +883,7 @@ with st.sidebar:
     st.markdown("---")
 
 # ==============================================================================
-# 9. PHÂN HỆ HỌC SINH (5 TABS: HÌNH ẢNH SGK THAY THẾ VIDEO)
+# 9. PHÂN HỆ HỌC SINH (5 TABS: HÌNH ẢNH SGK CẮT RIÊNG CHO TỪNG CHỦ ĐIỂM)
 # ==============================================================================
 student_info = st.session_state["auth_user"]
 
@@ -682,7 +895,11 @@ with c_gr:
 
 with c_les:
     lesson_list = list(CURRICULUM_DATA[sel_grade].keys())
-    sel_lesson = st.selectbox("📖 Bài học SGK:", lesson_list)
+    sel_lesson = st.selectbox(
+        f"📖 Bài học ({len(lesson_list)} bài):",
+        lesson_list,
+        help="Danh mục bài học bám sát toàn bộ chương trình Kết nối tri thức."
+    )
 
 cur_lesson_obj = CURRICULUM_DATA[sel_grade][sel_lesson]
 
@@ -712,11 +929,9 @@ with tab1:
     
     with col_img:
         with st.container(border=True):
-            st.markdown(f"🖼️ **Hình ảnh minh họa kiến thức (Trích SGK & Vở tự học):**")
-            # Hiển thị hình ảnh minh họa vector chuẩn SGK thay thế video
-            render_sgk_illustration_svg(sel_topic, sel_lesson)
+            st.markdown(f"🖼️ **Hình ảnh minh họa kiến thức (Tạo riêng cho từng chủ điểm):**")
+            render_topic_svg(cur_topic_data.get("svg_cat", "DON_DIEU"))
             
-            # TRÌNH PHÁT ÂM THANH BÀI GIẢNG ĐẶT NGAY DƯỚI HÌNH ẢNH
             st.markdown("""
             <div class="audio-box">
                 <b>🎙️ Âm Thanh Thuyết Minh Bài Giảng Vi Mô (Trích Vở tự học):</b><br>

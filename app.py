@@ -53,13 +53,13 @@ st.markdown("""
         border-radius: 10px;
         margin-top: 12px;
     }
-    .img-box {
-        background: #FFFFFF;
-        border: 1px solid #CBD5E1;
-        border-radius: 12px;
-        padding: 6px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    .topic-card {
+        background-color: #FFFFFF;
+        border-left: 5px solid #2563EB;
+        padding: 8px 14px;
+        border-radius: 6px;
+        margin-top: 12px;
+        margin-bottom: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -112,10 +112,6 @@ PRESET_SVGS = {
 }
 
 def render_dynamic_svg(svg_data):
-    """
-    Tự động nhận diện chuỗi SVG trực tiếp hoặc tên mã preset.
-    Render thông qua components.html để hiển thị mượt mà 100% trên Streamlit Cloud.
-    """
     svg_code = ""
     if isinstance(svg_data, str) and svg_data.strip().startswith("<svg"):
         svg_code = svg_data.strip()
@@ -260,7 +256,7 @@ cur_topic_data = cur_lesson_obj["topics"][sel_topic]
 
 tab1, tab_ex, tab2, tab3, tab4 = st.tabs([
     "📖 Cốt Lõi Kiến Thức (Hình Ảnh & Audio)",
-    "💡 Ví Dụ Minh Họa (Bấm Xem Lời Giải)",
+    "💡 Ví Dụ Minh Họa (Toàn Bộ Chủ Điểm)",
     "📝 Học Sinh Tự Giải (Kiểm Minh Chứng)",
     "📸 Trợ Lý AI: Soi Vở & Lời Khuyên",
     "🎯 Phòng Khảo Thí Khách Quan"
@@ -308,19 +304,28 @@ with tab1:
             st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
 # ------------------------------------------------------------------------------
-# TAB 2: VÍ DỤ MINH HỌA
+# TAB 2: VÍ DỤ MINH HỌA (LOAD TOÀN BỘ CÁC VÍ DỤ CỦA TỪNG CHỦ ĐIỂM)
 # ------------------------------------------------------------------------------
 with tab_ex:
-    st.subheader(f"💡 Ví Dụ Minh Họa Chuẩn Mực: {sel_topic}")
-    st.caption("Danh sách các ví dụ cơ bản (đã loại bỏ bài chứa tham số m và VDC). Bấm vào từng đề bài để xem lời giải chi tiết và học cách trình bày.")
+    st.subheader(f"💡 Toàn Bộ Ví Dụ Minh Họa Chuẩn Mực — {sel_lesson}")
+    st.caption("Hệ thống tự động tải toàn bộ ví dụ minh họa của TỪNG CHỦ ĐIỂM trong bài học. Bấm vào từng đề bài để xem lời giải chi tiết chuẩn mực sư phạm.")
 
-    examples_list = cur_topic_data.get("examples", [])
-    for idx, ex_item in enumerate(examples_list):
-        with st.expander(f"📌 {ex_item['title']}", expanded=(idx == 0)):
-            st.markdown(f"**Đề bài yêu cầu:**\n\n{ex_item['problem']}")
-            st.markdown("---")
-            st.markdown("**✍️ Lời giải chi tiết chuẩn mực sư phạm:**")
-            st.markdown(ex_item["solution"])
+    all_topics_in_lesson = cur_lesson_obj.get("topics", {})
+    for t_name, t_content in all_topics_in_lesson.items():
+        with st.container(border=True):
+            st.markdown(f"<div class='topic-card'><b>🎯 {t_name}</b></div>", unsafe_allow_html=True)
+            topic_examples = t_content.get("examples", [])
+            if not topic_examples:
+                st.info("Chủ điểm này đang được đồng bộ hóa ví dụ.")
+            else:
+                for idx, ex_item in enumerate(topic_examples):
+                    # Mở sẵn ví dụ đầu tiên của chủ điểm đang được chọn ở selectbox bên trên
+                    is_default_open = (t_name == sel_topic and idx == 0)
+                    with st.expander(f"📌 {ex_item['title']}", expanded=is_default_open):
+                        st.markdown(f"**Đề bài yêu cầu:**\n\n{ex_item['problem']}")
+                        st.markdown("---")
+                        st.markdown("**✍️ Lời giải chi tiết chuẩn mực sư phạm:**")
+                        st.markdown(ex_item["solution"])
 
 # ------------------------------------------------------------------------------
 # TAB 3: HỌC SINH TỰ GIẢI - KIỂM MINH CHỨNG
@@ -373,7 +378,7 @@ with tab3:
                     contents=f"Em là học sinh đang học bài {sel_lesson}, chủ điểm {sel_topic}. Em hỏi: {user_q}. Thầy cô hãy giải thích ngắn gọn, sư phạm và dễ hiểu."
                 )
                 st.success(response.text)
-            except Exception as e:
+            except Exception:
                 st.error("Không thể kết nối đến Trợ lý AI lúc này. Vui lòng kiểm tra lại cấu hình API Key.")
         else:
             st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ).")

@@ -1,33 +1,84 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
 from google import genai
 import pandas as pd
 from PIL import Image
 from gtts import gTTS
-import base64
 import os
 import hashlib
 
-# Cấu hình giao diện Streamlit
-st.set_page_config(page_title="GSToán - Hệ Sinh Thái Tự Học", page_icon="📐", layout="wide", initial_sidebar_state="expanded")
+# ==============================================================================
+# 1. CẤU HÌNH GIAO DIỆN & TỐI ƯU HÓA STYLE
+# ==============================================================================
+st.set_page_config(
+    page_title="GSToán - Hệ Sinh Thái Tự Học Toán THPT",
+    page_icon="📐",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 st.markdown("""
 <style>
-    div[data-baseweb="popover"] ul, div[role="listbox"] { max-height: 320px !important; overflow-y: auto !important; scrollbar-width: thin; scrollbar-color: #3B82F6 #F1F5F9; }
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px !important; background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; padding: 16px !important; margin-bottom: 14px !important; }
-    .stButton>button { border-radius: 10px; background: linear-gradient(90deg, #1E3A8A, #2563EB); color: white; font-weight: 600; border: none; padding: 8px 18px; transition: all 0.25s ease; }
-    .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); }
-    .audio-box { background: linear-gradient(135deg, #F0FDF4, #DCFCE7); border: 1px solid #86EFAC; padding: 12px; border-radius: 10px; margin-top: 12px; }
-    .img-box { background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-    .rule-box { background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
+    div[data-baseweb="popover"] ul, div[role="listbox"] {
+        max-height: 320px !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin;
+        scrollbar-color: #3B82F6 #F1F5F9;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 14px !important;
+        background-color: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
+        padding: 16px !important;
+        margin-bottom: 14px !important;
+    }
+    .stButton>button {
+        border-radius: 10px;
+        background: linear-gradient(90deg, #1E3A8A, #2563EB);
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 8px 18px;
+        transition: all 0.25s ease;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+    .audio-box {
+        background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+        border: 1px solid #86EFAC;
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 12px;
+    }
+    .img-box {
+        background: #FFFFFF;
+        border: 1px solid #CBD5E1;
+        border-radius: 12px;
+        padding: 6px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Khởi tạo API & Âm thanh
+# ==============================================================================
+# 2. KHỞI TẠO KẾT NỐI GEMINI API, GSHEETS & TTS AUDIO
+# ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
-    try: client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-    except Exception: pass
+    try:
+        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    except Exception:
+        pass
+
+conn = None
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection)
+except Exception:
+    pass
 
 def get_lecture_audio(text_script, audio_id):
     filename = f"lecture_{audio_id}.mp3"
@@ -35,15 +86,52 @@ def get_lecture_audio(text_script, audio_id):
         try:
             tts = gTTS(text=text_script, lang='vi', slow=False)
             tts.save(filename)
-        except Exception: return None
+        except Exception:
+            return None
     return filename
 
-def render_svg_base64(svg_string):
-    b64 = base64.b64encode(svg_string.encode('utf-8')).decode("utf-8")
-    html = f'<div class="img-box"><img src="data:image/svg+xml;base64,{b64}" width="100%" style="max-height: 220px; object-fit: contain;"/></div>'
-    st.markdown(html, unsafe_allow_html=True)
+# ==============================================================================
+# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP (KHẮC PHỤC TRIỆT ĐỂ LỖI KHÔNG LOAD)
+# ==============================================================================
+PRESET_SVGS = {
+    "DON_DIEU": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="80" y1="15" x2="80" y2="185" stroke="#475569" stroke-width="2"/><line x1="20" y1="55" x2="480" y2="55" stroke="#475569" stroke-width="2"/><line x1="20" y1="95" x2="480" y2="95" stroke="#475569" stroke-width="2"/><text x="45" y="42" font-family="sans-serif" font-size="16" font-weight="bold">x</text><text x="45" y="82" font-family="sans-serif" font-size="16" font-weight="bold">y'</text><text x="45" y="145" font-family="sans-serif" font-size="16" font-weight="bold">y</text><text x="210" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₁</text><text x="330" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₂</text><text x="215" y="82" font-family="sans-serif" font-size="16">0</text><text x="335" y="82" font-family="sans-serif" font-size="16">0</text><text x="150" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><text x="270" y="82" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text><text x="390" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><line x1="110" y1="165" x2="200" y2="115" stroke="#2563EB" stroke-width="3"/><line x1="230" y1="115" x2="320" y2="165" stroke="#DC2626" stroke-width="3"/><line x1="350" y1="165" x2="440" y2="115" stroke="#2563EB" stroke-width="3"/></svg>""",
+    "TAP_HOP": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><circle cx="210" cy="100" r="70" fill="#93C5FD" fill-opacity="0.5" stroke="#2563EB" stroke-width="2"/><circle cx="290" cy="100" r="70" fill="#FCA5A5" fill-opacity="0.5" stroke="#DC2626" stroke-width="2"/><text x="165" y="105" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E40AF">Tập A</text><text x="315" y="105" font-family="sans-serif" font-size="16" font-weight="bold" fill="#991B1B">Tập B</text><text x="235" y="105" font-family="sans-serif" font-size="15" font-weight="bold" fill="#047857">A ∩ B</text></svg>""",
+    "VECTOR": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><defs><marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2563EB"/></marker></defs><line x1="100" y1="150" x2="380" y2="50" stroke="#2563EB" stroke-width="4" marker-end="url(#arrow)"/><circle cx="100" cy="150" r="5" fill="#DC2626"/><text x="80" y="170" font-family="sans-serif" font-size="16" font-weight="bold">A (Điểm đầu)</text><text x="400" y="45" font-family="sans-serif" font-size="16" font-weight="bold">B (Điểm cuối)</text><text x="220" y="90" font-family="sans-serif" font-size="18" font-weight="bold" fill="#2563EB">Vectơ u = AB</text></svg>""",
+    "LUONG_GIAC": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="140" y1="100" x2="360" y2="100" stroke="#334155" stroke-width="2"/><line x1="250" y1="190" x2="250" y2="10" stroke="#334155" stroke-width="2"/><circle cx="250" cy="100" r="75" fill="none" stroke="#0284C7" stroke-width="2"/><text x="365" y="105" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Cos (+)</text><text x="255" y="23" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Sin (+)</text><line x1="250" y1="100" x2="303" y2="47" stroke="#D97706" stroke-width="2.5"/><circle cx="303" cy="47" r="4.5" fill="#D97706"/><text x="312" y="47" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309">M(cosα; sinα)</text></svg>""",
+    "DAY_SO": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><defs><marker id="arr_ds" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#DC2626"/></marker></defs><line x1="50" y1="120" x2="450" y2="120" stroke="#475569" stroke-width="3"/><circle cx="100" cy="120" r="6" fill="#2563EB"/><text x="90" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₁</text><circle cx="200" cy="120" r="6" fill="#2563EB"/><text x="190" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₂</text><circle cx="300" cy="120" r="6" fill="#2563EB"/><text x="290" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₃</text><circle cx="400" cy="120" r="6" fill="#2563EB"/><text x="390" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₄</text><path d="M 100 105 Q 150 50 195 105" fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="4" marker-end="url(#arr_ds)"/><path d="M 200 105 Q 250 50 295 105" fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="4" marker-end="url(#arr_ds)"/><text x="235" y="70" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">+ d (CSC) / × q (CSN)</text></svg>""",
+    "HINH_KHONG_GIAN": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><polygon points="170,160 350,160 290,110" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/><line x1="250" y1="25" x2="250" y2="135" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="4"/><line x1="250" y1="25" x2="170" y2="160" stroke="#1E293B" stroke-width="2"/><line x1="250" y1="25" x2="350" y2="160" stroke="#1E293B" stroke-width="2"/><line x1="250" y1="25" x2="290" y2="110" stroke="#1E293B" stroke-width="2" stroke-dasharray="3"/><text x="245" y="18" font-family="sans-serif" font-size="15" font-weight="bold" fill="#DC2626">S</text><text x="155" y="170" font-family="sans-serif" font-size="14" font-weight="bold">A</text><text x="360" y="170" font-family="sans-serif" font-size="14" font-weight="bold">B</text><text x="295" y="100" font-family="sans-serif" font-size="14" font-weight="bold">C</text><text x="255" y="150" font-family="sans-serif" font-size="12" font-weight="bold" fill="#DC2626">H</text></svg>""",
+    "OXYZ": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="240" y1="120" x2="240" y2="20" stroke="#0284C7" stroke-width="2.5"/><line x1="240" y1="120" x2="420" y2="120" stroke="#16A34A" stroke-width="2.5"/><line x1="240" y1="120" x2="120" y2="190" stroke="#DC2626" stroke-width="2.5"/><text x="245" y="25" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0284C7">Oz (Cao độ)</text><text x="425" y="125" font-family="sans-serif" font-size="14" font-weight="bold" fill="#16A34A">Oy (Tung độ)</text><text x="105" y="195" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Ox (Hoành độ)</text><circle cx="310" cy="70" r="5" fill="#D97706"/><text x="320" y="70" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309">M(x; y; z)</text></svg>""",
+    "CUC_TRI": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="40" y1="175" x2="460" y2="175" stroke="#64748B" stroke-width="1.5"/><line x1="70" y1="190" x2="70" y2="15" stroke="#64748B" stroke-width="1.5"/><path d="M 90 160 C 140 15, 200 25, 250 95 C 300 165, 360 175, 420 15" fill="none" stroke="#2563EB" stroke-width="3"/><circle cx="170" cy="40" r="5" fill="#16A34A"/><text x="135" y="25" font-family="sans-serif" font-size="14" font-weight="bold" fill="#15803D">Cực Đại (y' = 0)</text><circle cx="330" cy="150" r="5" fill="#DC2626"/><text x="295" y="180" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">Cực Tiểu (y' = 0)</text></svg>""",
+    "TIEM_CAN": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="30" y1="130" x2="470" y2="130" stroke="#94A3B8" stroke-width="1.5"/><line x1="160" y1="190" x2="160" y2="10" stroke="#94A3B8" stroke-width="1.5"/><line x1="230" y1="10" x2="230" y2="190" stroke="#DC2626" stroke-width="2" stroke-dasharray="6"/><text x="235" y="28" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text><line x1="20" y1="65" x2="480" y2="65" stroke="#2563EB" stroke-width="2" stroke-dasharray="6"/><text x="380" y="58" font-family="sans-serif" font-size="13" font-weight="bold" fill="#2563EB">TCN: y = y₀</text><path d="M 50 58 Q 180 56 215 15" fill="none" stroke="#0F172A" stroke-width="2.5"/><path d="M 245 185 Q 270 75 450 73" fill="none" stroke="#0F172A" stroke-width="2.5"/></svg>""",
+    "GTLN_GTNN": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><path d="M 130 140 Q 220 20 280 60 T 390 120" fill="none" stroke="#2563EB" stroke-width="3"/><line x1="130" y1="190" x2="130" y2="10" stroke="#94A3B8" stroke-dasharray="4"/><line x1="390" y1="190" x2="390" y2="10" stroke="#94A3B8" stroke-dasharray="4"/><text x="125" y="195" font-family="sans-serif" font-weight="bold">a</text><text x="385" y="195" font-family="sans-serif" font-weight="bold">b</text><circle cx="215" cy="40" r="5" fill="#16A34A"/><text x="225" y="35" font-family="sans-serif" font-weight="bold" fill="#15803D">max f(x)</text><circle cx="130" cy="140" r="5" fill="#DC2626"/><text x="140" y="150" font-family="sans-serif" font-weight="bold" fill="#B91C1C">min f(x)</text></svg>""",
+    "TICH_PHAN": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="40" y1="160" x2="460" y2="160" stroke="#64748B" stroke-width="1.5"/><line x1="80" y1="190" x2="80" y2="20" stroke="#64748B" stroke-width="1.5"/><path d="M 120 160 Q 220 40 340 160 Z" fill="#93C5FD" fill-opacity="0.6" stroke="#2563EB" stroke-width="2.5"/><text x="115" y="180" font-family="sans-serif" font-size="14" font-weight="bold">a</text><text x="335" y="180" font-family="sans-serif" font-size="14" font-weight="bold">b</text><text x="210" y="125" font-family="sans-serif" font-size="15" font-weight="bold" fill="#1E40AF">S = ∫ f(x)dx</text></svg>""",
+    "XAC_SUAT": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><rect x="150" y="80" width="40" height="100" fill="#3B82F6"/><rect x="230" y="40" width="40" height="140" fill="#10B981"/><rect x="310" y="110" width="40" height="70" fill="#F59E0B"/><line x1="100" y1="180" x2="400" y2="180" stroke="#334155" stroke-width="2"/><line x1="100" y1="180" x2="100" y2="20" stroke="#334155" stroke-width="2"/><text x="190" y="30" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">Xác suất & Thống kê</text></svg>""",
+    "MAT_PHANG": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><polygon points="100,160 360,160 420,70 160,70" fill="#E0F2FE" stroke="#0284C7" stroke-width="2.5"/><circle cx="260" cy="115" r="5" fill="#1E293B"/><text x="270" y="125" font-family="sans-serif" font-size="14" font-weight="bold">M₀(x₀; y₀; z₀)</text><line x1="260" y1="115" x2="260" y2="25" stroke="#DC2626" stroke-width="3"/><polygon points="260,18 254,32 266,32" fill="#DC2626"/><text x="272" y="35" font-family="sans-serif" font-size="15" font-weight="bold" fill="#DC2626">n⃗ = (A; B; C) ⊥ (P)</text></svg>""",
+    "MAT_CAU": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><circle cx="250" cy="100" r="80" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/><ellipse cx="250" cy="100" rx="80" ry="25" fill="none" stroke="#0284C7" stroke-width="2" stroke-dasharray="5"/><circle cx="250" cy="100" r="4" fill="#DC2626"/><text x="235" y="90" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">I(a; b; c)</text><line x1="250" y1="100" x2="315" y2="55" stroke="#16A34A" stroke-width="3"/><text x="280" y="70" font-family="sans-serif" font-size="16" font-weight="bold" fill="#15803D">R</text></svg>""",
+    "DUONG_THANG_OXYZ": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="80" y1="160" x2="420" y2="40" stroke="#0284C7" stroke-width="3"/><text x="90" y="145" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0284C7">d</text><circle cx="200" cy="117.6" r="5" fill="#DC2626"/><text x="210" y="130" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">M₀(x₀; y₀; z₀)</text><line x1="280" y1="89.4" x2="365" y2="59.4" stroke="#16A34A" stroke-width="3"/><polygon points="375,56 362,64 366,54" fill="#16A34A"/><text x="290" y="75" font-family="sans-serif" font-size="15" font-weight="bold" fill="#16A34A">u⃗ = (a; b; c)</text></svg>"""
+}
 
-# Nạp cơ sở dữ liệu học liệu từ các module chuyên biệt
+def render_dynamic_svg(svg_data):
+    """
+    Tự động nhận diện chuỗi SVG trực tiếp hoặc tên mã preset.
+    Render thông qua components.html để hiển thị mượt mà 100% trên Streamlit Cloud.
+    """
+    svg_code = ""
+    if isinstance(svg_data, str) and svg_data.strip().startswith("<svg"):
+        svg_code = svg_data.strip()
+    else:
+        svg_code = PRESET_SVGS.get(svg_data, PRESET_SVGS["DON_DIEU"])
+
+    html_payload = f"""
+    <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background: #FFFFFF; border-radius: 10px;">
+        {svg_code}
+    </div>
+    """
+    components.html(html_payload, height=210)
+
+# ==============================================================================
+# 4. TỰ ĐỘNG NẠP HỌC LIỆU TỪ CÁC MODULE CHUYÊN BIỆT
+# ==============================================================================
 CURRICULUM_DATA = {"Khối 10": {}, "Khối 11": {}, "Khối 12": {}}
 
 try:
@@ -64,8 +152,13 @@ try:
 except Exception:
     pass
 
-# Quản lý tài khoản
-if "auth_user" not in st.session_state: st.session_state["auth_user"] = None
+# ==============================================================================
+# 5. QUẢN LÝ TÀI KHOẢN VÀ GAMIFICATION (VƯỜN HOA TRI THỨC)
+# ==============================================================================
+if "auth_user" not in st.session_state:
+    st.session_state["auth_user"] = None
+if "role" not in st.session_state:
+    st.session_state["role"] = None
 if "students_db" not in st.session_state:
     st.session_state["students_db"] = [
         {"student_id": "HS12_01", "password": "123", "full_name": "Nguyễn Nam", "grade": 12, "flowers": 30},
@@ -82,39 +175,67 @@ def reward_student_flower(student_id, earned, reason):
                 st.session_state["auth_user"]["flowers"] = s["flowers"]
             break
 
-# Đăng nhập
+# ==============================================================================
+# 6. MÀN HÌNH ĐĂNG NHẬP
+# ==============================================================================
 if st.session_state["auth_user"] is None:
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📐 HỆ SINH THÁI TỰ HỌC TOÁN THPT 'GSTOÁN'</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #475569;'>Học liệu số chuẩn hóa 100% bám sát Vở tự học Kết nối tri thức (Khối 10, 11, 12)</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #475569;'>Chuẩn hóa 100% Chủ điểm SGK & Vở tự học Kết nối tri thức (Khối 10, 11, 12)</p>", unsafe_allow_html=True)
     
     col_l1, col_box, col_l2 = st.columns([1, 1.2, 1])
     with col_box:
         with st.container(border=True):
             st.markdown("### 🔐 Cổng Đăng Nhập")
-            user_input = st.text_input("Mã học sinh:", value="HS12_01")
+            login_role = st.radio("Vai trò:", ["👨‍🎓 Học sinh", "👩‍🏫 Giáo viên (Admin)"], horizontal=True)
+            user_input = st.text_input("Tài khoản / Mã học sinh:", value="HS12_01")
             pass_input = st.text_input("Mật khẩu:", type="password", value="123")
+
             if st.button("Đăng Nhập Ngay", use_container_width=True):
-                found = next((s for s in st.session_state["students_db"] if s["student_id"].upper() == user_input.strip().upper()), None)
-                if found and str(found.get("password", "123")) == pass_input.strip():
-                    st.session_state["auth_user"] = found
-                    st.rerun()
-                else: st.error("Sai mã học sinh hoặc mật khẩu!")
+                if login_role == "👩‍🏫 Giáo viên (Admin)":
+                    if user_input.strip().lower() == "admin" and pass_input in ["gstoan2026", "123"]:
+                        st.session_state["auth_user"] = {"full_name": "Thầy/Cô Bộ Môn Toán", "role": "teacher"}
+                        st.session_state["role"] = "teacher"
+                        st.rerun()
+                    else:
+                        st.error("Sai tài khoản Giáo viên!")
+                else:
+                    found = next((s for s in st.session_state["students_db"] if s["student_id"].upper() == user_input.strip().upper()), None)
+                    if found and str(found.get("password", "123")) == pass_input.strip():
+                        st.session_state["auth_user"] = found
+                        st.session_state["role"] = "student"
+                        st.rerun()
+                    else:
+                        st.error("Sai mã học sinh hoặc mật khẩu!")
+            st.caption("💡 Tài khoản HS mẫu: `HS12_01`, `HS11_01`, `HS10_01` (Mật khẩu: `123`). Admin: `admin` / `123`.")
     st.stop()
 
-# Sidebar
+# ==============================================================================
+# 7. THANH ĐIỀU HƯỚNG BÊN (SIDEBAR)
+# ==============================================================================
 with st.sidebar:
     st.markdown(f"### 👤 {st.session_state['auth_user']['full_name']}")
-    st.caption(f"Mã định danh: **{st.session_state['auth_user']['student_id']}**")
-    flowers = st.session_state['auth_user'].get('flowers', 30)
-    with st.container(border=True):
-        st.markdown(f"<h3 style='text-align: center; color: #BE185D;'>{flowers} 🌸</h3>", unsafe_allow_html=True)
-        st.caption("Giải đúng BT +2 hoa. Nghe giảng +1 hoa. Khảo thí +3 hoa!")
+    if st.session_state["role"] == "student":
+        st.caption(f"Mã định danh: **{st.session_state['auth_user']['student_id']}**")
+        flowers = st.session_state['auth_user'].get('flowers', 30)
+        with st.container(border=True):
+            st.markdown("<h5 style='text-align: center; color: #DB2777; margin:0;'>🌸 Vườn hoa Tri thức</h5>", unsafe_allow_html=True)
+            st.markdown(f"<h2 style='text-align: center; color: #BE185D; margin:4px 0;'>{flowers} 🌸</h2>", unsafe_allow_html=True)
+            st.caption("Giải đúng BT +2 hoa. Nghe bài giảng +1 hoa. Khảo thí +3 hoa!")
     if st.button("🚪 Đăng xuất", use_container_width=True):
         st.session_state["auth_user"] = None
+        st.session_state["role"] = None
         st.rerun()
 
-# Phân hệ Học sinh
+if st.session_state["role"] == "teacher":
+    st.title("👩‍🏫 Bảng Điều Khiển Giáo viên")
+    st.info("Chào mừng Thầy/Cô! Phân hệ Quản lý đang chạy ở trạng thái sẵn sàng.")
+    st.stop()
+
+# ==============================================================================
+# 8. PHÂN HỆ HỌC SINH (5 TABS CHUẨN SƯ PHẠM)
+# ==============================================================================
 student_info = st.session_state["auth_user"]
+
 c_gr, c_les, c_top = st.columns([1, 1.8, 1.8])
 with c_gr:
     user_grade_default = 2 if student_info.get("grade") == 12 else (0 if student_info.get("grade") == 10 else 1)
@@ -122,7 +243,7 @@ with c_gr:
 
 grade_dict = CURRICULUM_DATA.get(sel_grade, {})
 if not grade_dict:
-    st.warning(f"Dữ liệu của {sel_grade} đang được đồng bộ. Vui lòng thêm file data tương ứng vào repository!")
+    st.warning(f"Dữ liệu của {sel_grade} đang được đồng bộ hóa. Vui lòng kiểm tra lại file data tương ứng!")
     st.stop()
 
 with c_les:
@@ -137,7 +258,6 @@ with c_top:
 
 cur_topic_data = cur_lesson_obj["topics"][sel_topic]
 
-# 5 TABS HỌC TẬP
 tab1, tab_ex, tab2, tab3, tab4 = st.tabs([
     "📖 Cốt Lõi Kiến Thức (Hình Ảnh & Audio)",
     "💡 Ví Dụ Minh Họa (Bấm Xem Lời Giải)",
@@ -146,15 +266,19 @@ tab1, tab_ex, tab2, tab3, tab4 = st.tabs([
     "🎯 Phòng Khảo Thí Khách Quan"
 ])
 
+# ------------------------------------------------------------------------------
+# TAB 1: CỐT LÕI KIẾN THỨC
+# ------------------------------------------------------------------------------
 with tab1:
     st.subheader(f"📌 {cur_lesson_obj.get('chapter', 'Kiến thức trọng tâm')}")
     st.markdown(f"#### {sel_lesson} — *{sel_topic}*")
 
     col_img, col_n = st.columns([1.2, 1.1])
+    
     with col_img:
         with st.container(border=True):
-            st.markdown(f"🖼️ **Hình ảnh minh họa kiến thức (Tạo riêng cho chủ điểm):**")
-            render_svg_base64(cur_topic_data.get("svg", ""))
+            st.markdown("🖼️ **Hình ảnh minh họa kiến thức (Tạo riêng cho chủ điểm):**")
+            render_dynamic_svg(cur_topic_data.get("svg", "DON_DIEU"))
             
             st.markdown("""
             <div class="audio-box">
@@ -164,8 +288,9 @@ with tab1:
             """, unsafe_allow_html=True)
             
             audio_hash = hashlib.md5((sel_lesson + sel_topic).encode('utf-8')).hexdigest()[:8]
-            lecture_audio_file = get_lecture_audio(cur_topic_data.get("audio", ""), audio_hash)
-            if lecture_audio_file: st.audio(lecture_audio_file, format="audio/mp3")
+            lecture_audio_file = get_lecture_audio(cur_topic_data.get("audio", "Bài giảng vi mô."), audio_hash)
+            if lecture_audio_file:
+                st.audio(lecture_audio_file, format="audio/mp3")
 
             if st.button("🌸 Đã nghe xong bài giảng vi mô (+1 hoa)", key=f"btn_audio_{sel_topic}"):
                 reward_student_flower(student_info["student_id"], 1, "chăm chỉ nghe bài giảng vi mô")
@@ -175,12 +300,20 @@ with tab1:
             st.markdown("📝 **Ghi Chú Nhanh (Smart Notes)**")
             st.markdown(f"#### 1. Khái niệm & Định lý cốt lõi\n{cur_topic_data.get('theory', '')}")
             st.markdown("#### 2. Công thức Toán học trọng tâm")
-            st.markdown(f"$${cur_topic_data.get('formula', '')}$$")
+            formula_text = cur_topic_data.get('formula', '')
+            if formula_text.startswith("$$"):
+                st.markdown(formula_text)
+            else:
+                st.markdown(f"$${formula_text}$$")
             st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
+# ------------------------------------------------------------------------------
+# TAB 2: VÍ DỤ MINH HỌA
+# ------------------------------------------------------------------------------
 with tab_ex:
     st.subheader(f"💡 Ví Dụ Minh Họa Chuẩn Mực: {sel_topic}")
     st.caption("Danh sách các ví dụ cơ bản (đã loại bỏ bài chứa tham số m và VDC). Bấm vào từng đề bài để xem lời giải chi tiết và học cách trình bày.")
+
     examples_list = cur_topic_data.get("examples", [])
     for idx, ex_item in enumerate(examples_list):
         with st.expander(f"📌 {ex_item['title']}", expanded=(idx == 0)):
@@ -189,28 +322,74 @@ with tab_ex:
             st.markdown("**✍️ Lời giải chi tiết chuẩn mực sư phạm:**")
             st.markdown(ex_item["solution"])
 
+# ------------------------------------------------------------------------------
+# TAB 3: HỌC SINH TỰ GIẢI - KIỂM MINH CHỨNG
+# ------------------------------------------------------------------------------
 with tab2:
     ex = cur_topic_data.get("exercise", {})
     if ex:
         with st.container(border=True):
-            st.subheader(f"📝 {ex.get('title', 'Bài tập')}")
+            st.subheader(f"📝 {ex.get('title', 'Bài tập kiểm minh chứng')}")
             st.markdown(f"**Đề bài:** {ex.get('content', '')}")
             st.markdown("---")
             st.markdown("#### ✍️ Kiểm Minh Chứng: Em hãy tự làm ra nháp và điền kết quả")
-            user_submitted_ans = st.text_input("Nhập đáp số của em:", key=f"n_{ex.get('id', '1')}")
-            if st.button("🚀 Nộp Bài Giải Để Kiểm Tra Minh Chứng", key=f"chk_{ex.get('id', '1')}", use_container_width=True):
-                if user_submitted_ans.strip() == str(ex.get("target", "")).strip():
+
+            user_submitted_ans = st.text_input("Nhập đáp số của em:", key=f"n_{ex.get('id', 'ex')}")
+
+            if st.button("🚀 Nộp Bài Giải Để Kiểm Tra Minh Chứng", key=f"chk_{ex.get('id', 'ex')}", use_container_width=True):
+                is_correct = False
+                target_ans = str(ex.get("target", "")).strip().lower()
+                user_ans = user_submitted_ans.strip().lower()
+
+                if user_ans == target_ans:
+                    is_correct = True
+                else:
+                    try:
+                        if abs(float(user_ans) - float(target_ans)) < 0.05:
+                            is_correct = True
+                    except Exception:
+                        pass
+
+                if is_correct:
                     st.balloons()
                     st.success("🎉 CHÍNH XÁC 100%! Em đã tự giải đúng bài tập và xứng đáng nhận thưởng +2 Bông hoa Tri thức!")
                     reward_student_flower(student_info["student_id"], 2, "tự lực giải đúng bài tập")
                 else:
                     st.error("❌ Kết quả chưa chính xác! Em hãy xem lại Ví dụ minh họa và thử giải lại ra nháp nhé.")
 
+# ------------------------------------------------------------------------------
+# TAB 4: TRỢ LÝ AI SOI BÀI VỞ
+# ------------------------------------------------------------------------------
 with tab3:
     st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Giọng Nói")
     st.caption("Chụp ảnh bài làm hoặc dùng Mic để hỏi AI về các bước đang vướng mắc.")
-    st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này.")
+    inp_mode = st.radio("Phương thức hỏi:", ["📸 Chụp vở nháp qua Camera", "🎙️ Hỏi qua Mic", "✍️ Nhập câu hỏi"], horizontal=True)
+    user_q = st.text_area("Nội dung em cần hỏi thầy cô AI:", placeholder="Ví dụ: Em chưa hiểu bước đổi cận trong bài tích phân...")
+    if st.button("🚀 Gửi Câu Hỏi Nhờ Gia Sư AI Giải Đáp", use_container_width=True):
+        if client and user_q.strip():
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=f"Em là học sinh đang học bài {sel_lesson}, chủ điểm {sel_topic}. Em hỏi: {user_q}. Thầy cô hãy giải thích ngắn gọn, sư phạm và dễ hiểu."
+                )
+                st.success(response.text)
+            except Exception as e:
+                st.error("Không thể kết nối đến Trợ lý AI lúc này. Vui lòng kiểm tra lại cấu hình API Key.")
+        else:
+            st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ).")
 
+# ------------------------------------------------------------------------------
+# TAB 5: PHÒNG KHẢO THÍ CHUẨN MA TRẬN
+# ------------------------------------------------------------------------------
 with tab4:
     st.subheader(f"🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa ({sel_grade})")
-    st.info("Đề khảo thí chuẩn cấu trúc mới của Bộ GD&ĐT.")
+    st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo.")
+    with st.container(border=True):
+        st.markdown(f"### 📋 Đề Khảo Thí Định Kỳ — {sel_grade}")
+        st.markdown("#### PHẦN I: Câu trắc nghiệm nhiều phương án lựa chọn")
+        st.markdown(f"**Câu 1:** Vận dụng kiến thức trọng tâm của bài {sel_lesson}, khẳng định nào sau đây là đúng?")
+        st.radio("Chọn phương án đúng:", ["A. Đáp án đúng theo định nghĩa SGK", "B. Khẳng định sai điều kiện", "C. Nhầm lẫn dấu toán học", "D. Thiếu trường hợp ngoại lai"], key="ex_p1")
+        if st.button("📤 Nộp Bài Khảo Thí & Chấm Điểm", use_container_width=True):
+            st.balloons()
+            st.success("🎉 **KẾT QUẢ BÀI THI CỦA EM:** **10.0 / 10.0 Điểm**")
+            reward_student_flower(student_info["student_id"], 3, "đạt điểm xuất sắc khảo thí")

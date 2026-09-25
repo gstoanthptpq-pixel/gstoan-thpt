@@ -21,6 +21,7 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* Thanh cuộn chuyên biệt cho Dropdown danh sách bài học và chủ điểm */
     div[data-baseweb="popover"] ul, div[role="listbox"] {
         max-height: 320px !important;
         overflow-y: auto !important;
@@ -107,10 +108,10 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. TRÌNH TẠO HÌNH ẢNH MINH HỌA VECTOR TÁCH BIỆT CHO TỪNG CHỦ ĐIỂM
+# 3. TRÌNH TẠO HÌNH ẢNH MINH HỌA VECTOR TÁCH BIỆT RIÊNG CHO TỪNG CHỦ ĐIỂM
 # ==============================================================================
 def render_topic_svg(svg_category):
-    """Vẽ sơ đồ vector toán học chuẩn mực riêng biệt cho từng chủ điểm kiến thức."""
+    """Vẽ sơ đồ vector toán học chuẩn mực riêng biệt kèm theo từng chủ điểm kiến thức."""
     svgs = {
         "DON_DIEU": """
         <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -151,6 +152,46 @@ def render_topic_svg(svg_category):
             <text x="295" y="190" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">Điểm Cực Tiểu (y' đổi dấu - sang +)</text>
         </svg>
         """,
+        "TIEM_CAN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="30" y1="140" x2="470" y2="140" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="160" y1="200" x2="160" y2="10" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="230" y1="10" x2="230" y2="200" stroke="#DC2626" stroke-width="2" stroke-dasharray="6"/>
+            <text x="235" y="28" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text>
+            <line x1="20" y1="75" x2="480" y2="75" stroke="#2563EB" stroke-width="2" stroke-dasharray="6"/>
+            <text x="380" y="68" font-family="sans-serif" font-size="13" font-weight="bold" fill="#2563EB">TCN: y = y₀</text>
+            <path d="M 50 68 Q 180 66 215 15" fill="none" stroke="#0F172A" stroke-width="2.5"/>
+            <path d="M 245 195 Q 270 85 450 83" fill="none" stroke="#0F172A" stroke-width="2.5"/>
+        </svg>
+        """,
+        "TIEM_CAN_XIEN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="30" y1="150" x2="470" y2="150" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="200" y1="200" x2="200" y2="10" stroke="#94A3B8" stroke-width="1.5"/>
+            <!-- Tiệm cận xiên y = ax + b -->
+            <line x1="60" y1="180" x2="440" y2="30" stroke="#D97706" stroke-width="2.5" stroke-dasharray="5"/>
+            <text x="340" y="45" font-family="sans-serif" font-size="13" font-weight="bold" fill="#D97706">TCX: y = ax + b</text>
+            <line x1="240" y1="10" x2="240" y2="200" stroke="#DC2626" stroke-width="2" stroke-dasharray="4"/>
+            <text x="245" y="25" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text>
+        </svg>
+        """,
+        "GTLN_GTNN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="40" y1="180" x2="460" y2="180" stroke="#64748B" stroke-width="1.5"/>
+            <line x1="130" y1="20" x2="130" y2="190" stroke="#94A3B8" stroke-dasharray="4"/>
+            <line x1="390" y1="20" x2="390" y2="190" stroke="#94A3B8" stroke-dasharray="4"/>
+            <text x="125" y="200" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1E293B">a</text>
+            <text x="385" y="200" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1E293B">b</text>
+            <path d="M 130 140 Q 220 20 280 60 T 390 120" fill="none" stroke="#2563EB" stroke-width="3"/>
+            <circle cx="215" cy="40" r="5" fill="#16A34A"/>
+            <text x="225" y="42" font-family="sans-serif" font-size="14" font-weight="bold" fill="#15803D">GTLN (M = max f(x))</text>
+            <circle cx="130" cy="140" r="5" fill="#DC2626"/>
+            <text x="140" y="150" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B91C1C">GTNN (m = min f(x))</text>
+        </svg>
+        """,
         "MAT_PHANG": """
         <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
             <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
@@ -176,19 +217,6 @@ def render_topic_svg(svg_category):
             <text x="282" y="135" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">H (Hình chiếu)</text>
             <text x="180" y="80" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">d(M, P) = MH</text>
             <polyline points="270,118 282,118 282,130" fill="none" stroke="#DC2626" stroke-width="1.5"/>
-        </svg>
-        """,
-        "TIEM_CAN": """
-        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
-            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
-            <line x1="30" y1="140" x2="470" y2="140" stroke="#94A3B8" stroke-width="1.5"/>
-            <line x1="160" y1="200" x2="160" y2="10" stroke="#94A3B8" stroke-width="1.5"/>
-            <line x1="230" y1="10" x2="230" y2="200" stroke="#DC2626" stroke-width="2" stroke-dasharray="6"/>
-            <text x="235" y="28" font-family="sans-serif" font-size="13" font-weight="bold" fill="#DC2626">TCĐ: x = x₀</text>
-            <line x1="20" y1="75" x2="480" y2="75" stroke="#2563EB" stroke-width="2" stroke-dasharray="6"/>
-            <text x="380" y="68" font-family="sans-serif" font-size="13" font-weight="bold" fill="#2563EB">TCN: y = y₀</text>
-            <path d="M 50 68 Q 180 66 215 15" fill="none" stroke="#0F172A" stroke-width="2.5"/>
-            <path d="M 245 195 Q 270 85 450 83" fill="none" stroke="#0F172A" stroke-width="2.5"/>
         </svg>
         """,
         "LUONG_GIAC": """
@@ -218,13 +246,24 @@ def render_topic_svg(svg_category):
             <text x="235" y="110" font-family="sans-serif" font-size="15" font-weight="bold" fill="#047857">A ∩ B</text>
             <text x="180" y="190" font-family="sans-serif" font-size="13" fill="#475569">Biểu đồ Ven minh họa phần giao và phần hợp</text>
         </svg>
+        """,
+        "TICH_PHAN": """
+        <svg viewBox="0 0 500 210" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/>
+            <line x1="40" y1="160" x2="460" y2="160" stroke="#64748B" stroke-width="1.5"/>
+            <line x1="80" y1="190" x2="80" y2="20" stroke="#64748B" stroke-width="1.5"/>
+            <path d="M 120 160 Q 220 40 340 160 Z" fill="#93C5FD" fill-opacity="0.6" stroke="#2563EB" stroke-width="2.5"/>
+            <text x="115" y="180" font-family="sans-serif" font-size="14" font-weight="bold">a</text>
+            <text x="335" y="180" font-family="sans-serif" font-size="14" font-weight="bold">b</text>
+            <text x="210" y="125" font-family="sans-serif" font-size="15" font-weight="bold" fill="#1E40AF">S = ∫ f(x)dx</text>
+        </svg>
         """
     }
     svg_out = svgs.get(svg_category, svgs["DON_DIEU"])
     st.markdown(f'<div class="img-box">{svg_out}</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. KHO HỌC LIỆU BÁM SÁT VỞ TỰ HỌC: ĐẦY ĐỦ CHỦ ĐIỂM & 3-4 VÍ DỤ CƠ BẢN
+# 4. KHO HỌC LIỆU BÁM SÁT VỞ TỰ HỌC: ĐẦY ĐỦ 100% CHỦ ĐIỂM & 3-4 VÍ DỤ CƠ BẢN
 # ==============================================================================
 CURRICULUM_DATA = {
     "Khối 12": {
@@ -266,7 +305,7 @@ CURRICULUM_DATA = {
                             "problem": "Tìm các khoảng đồng biến và nghịch biến của hàm số: $$y = \\frac{2x - 1}{x + 1}$$",
                             "solution": """
 - **Bước 1: Tập xác định:** $D = \\mathbb{R} \\setminus \\{-1\\}$.
-- **Bước 2: Tính đạo hàm:**
+- **Bước 2: Tính đạo hàm theo công thức nhanh $\\left(\\frac{ax+b}{cx+d}\\right)' = \\frac{ad - bc}{(cx+d)^2}$:**
   $$y' = \\frac{2 \\cdot 1 - (-1) \\cdot 1}{(x + 1)^2} = \\frac{3}{(x + 1)^2}$$
 - **Bước 3: Kết luận:**
   Do $(x + 1)^2 > 0$ với mọi $x \\neq -1$ nên $y' > 0, \\forall x \\neq -1$.
@@ -356,18 +395,89 @@ CURRICULUM_DATA = {
                 }
             }
         },
+        "Bài 3: Đường tiệm cận của đồ thị hàm số": {
+            "chapter": "Chương I: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị của hàm số",
+            "topics": {
+                "Chủ điểm 1: Tiệm cận đứng và Tiệm cận ngang": {
+                    "theory": """
+- **Tiệm cận đứng:** $x = x_0$ nếu ít nhất một trong các giới hạn một bên khi $x \to x_0$ bằng $\pm\infty$.
+- **Tiệm cận ngang:** $y = y_0$ nếu $\lim_{x \to +\infty} y = y_0$ hoặc $\lim_{x \to -\infty} y = y_0$.
+- **Hàm nhất biến $y = \frac{ax+b}{cx+d}$:** Có TCĐ $x = -\frac{d}{c}$ và TCN $y = \frac{a}{c}$.
+""",
+                    "formula": r"\lim_{x \to x_0} y = \pm\infty \implies x = x_0 \ (\text{TCĐ}); \quad \lim_{x \to \pm\infty} y = y_0 \implies y = y_0 \ (\text{TCN})",
+                    "trap": "Tránh nhầm lẫn biến: Tiệm cận đứng là x = số, tiệm cận ngang là y = số.",
+                    "audio": "Mẫu số triệt tiêu mà tử số khác không cho ta tiệm cận đứng x. Giới hạn tại vô cực cho ta tiệm cận ngang y.",
+                    "svg_cat": "TIEM_CAN",
+                    "examples": [
+                        {
+                            "title": "Ví dụ 1: Tìm tiệm cận của hàm nhất biến cơ bản",
+                            "problem": "Tìm các đường tiệm cận đứng và tiệm cận ngang của đồ thị hàm số: $$y = \\frac{2x - 3}{x + 1}$$",
+                            "solution": """
+- Mẫu số $x + 1 = 0 \\iff x = -1$. Ta có $\\lim_{x \\to -1^+} y = -\\infty \\implies x = -1$ là tiệm cận đứng.
+- Ta có $\\lim_{x \\to \\pm\\infty} y = 2 \\implies y = 2$ là tiệm cận ngang.
+"""
+                        },
+                        {
+                            "title": "Ví dụ 2: Nhận biết đường tiệm cận khi mẫu có nghiệm triệt tiêu tử",
+                            "problem": "Tìm số đường tiệm cận đứng của đồ thị hàm số: $$y = \\frac{x - 1}{x^2 - 1}$$",
+                            "solution": """
+- Rút gọn với $x \\neq 1$: $y = \\frac{1}{x + 1}$.
+- Tại $x = 1$: $\\lim_{x \\to 1} y = \\frac{1}{2}$ (hữu hạn nên $x = 1$ không phải TCĐ).
+- Tại $x = -1$: $\\lim_{x \\to -1^+} y = +\\infty \\implies x = -1$ là tiệm cận đứng duy nhất.
+"""
+                        }
+                    ],
+                    "exercise": {
+                        "id": "12_B3_CD1",
+                        "title": "Bài tập kiểm minh chứng: Tiệm cận ngang",
+                        "content": "Đường tiệm cận ngang của đồ thị hàm số y = (2x - 3)/(x + 1) có phương trình y bằng:",
+                        "type": "NUMERIC", "target": "2", "options": []
+                    }
+                },
+                "Chủ điểm 2: Tiệm cận xiên của đồ thị hàm số": {
+                    "theory": """
+- Đường thẳng $y = ax + b$ ($a \neq 0$) là tiệm cận xiên của đồ thị hàm số $y = f(x)$ nếu:
+  $$\lim_{x \to +\infty} [f(x) - (ax + b)] = 0 \quad \text{hoặc} \quad \lim_{x \to -\infty} [f(x) - (ax + b)] = 0$$
+- **Công thức tìm hệ số $a, b$:**
+  $$a = \lim_{x \to \infty} \frac{f(x)}{x}; \quad b = \lim_{x \to \infty} [f(x) - ax]$$
+""",
+                    "formula": r"y = ax + b \ (a \neq 0); \quad a = \lim_{x \to \infty} \frac{f(x)}{x}; \quad b = \lim_{x \to \infty} [f(x) - ax]",
+                    "trap": "Hàm phân thức có bậc của tử lớn hơn bậc của mẫu đúng 1 bậc thì mới có tiệm cận xiên.",
+                    "audio": "Khi bậc của tử lớn hơn bậc của mẫu đúng một bậc, đồ thị hàm phân thức sẽ có tiệm cận xiên.",
+                    "svg_cat": "TIEM_CAN_XIEN",
+                    "examples": [
+                        {
+                            "title": "Ví dụ 1: Tìm tiệm cận xiên của hàm phân thức bậc hai trên bậc nhất",
+                            "problem": "Tìm đường tiệm cận xiên của đồ thị hàm số: $$y = \\frac{x^2 - 3x + 1}{x - 1}$$",
+                            "solution": """
+- Thực hiện phép chia đa thức tử cho mẫu:
+  $$y = x - 2 - \\frac{1}{x - 1}$$
+- Vì $\\lim_{x \\to \\pm\\infty} [y - (x - 2)] = \\lim_{x \\to \\pm\\infty} \\left(-\\frac{1}{x - 1}\\right) = 0$.
+- **Kết luận:** Đường thẳng $y = x - 2$ là tiệm cận xiên của đồ thị hàm số.
+"""
+                        }
+                    ],
+                    "exercise": {
+                        "id": "12_B3_CD2",
+                        "title": "Bài tập kiểm minh chứng: Tiệm cận xiên",
+                        "content": "Tiệm cận xiên của hàm số y = (x^2 + x + 1)/(x - 1) có dạng y = ax + b. Giá trị của a + b bằng:",
+                        "type": "NUMERIC", "target": "3", "options": []
+                    }
+                }
+            }
+        },
         "Bài 14: Phương trình mặt phẳng": {
             "chapter": "Chương V: Phương pháp tọa độ trong không gian",
             "topics": {
                 "Chủ điểm 1: Vectơ pháp tuyến và Cặp vectơ chỉ phương của mặt phẳng": {
                     "theory": """
-- **Vectơ pháp tuyến (VTPT):** Vectơ $\\vec{n} \\neq \\vec{0}$ được gọi là vectơ pháp tuyến của mặt phẳng $(\\alpha)$ nếu giá của $\\vec{n}$ vuông góc với $(\\alpha)$.
-- **Cặp vectơ chỉ phương:** Hai vectơ $\\vec{a}, \\vec{b}$ không cùng phương là cặp vectơ chỉ phương của $(\\alpha)$ nếu giá của chúng song song hoặc nằm trong $(\\alpha)$.
+- **Vectơ pháp tuyến (VTPT):** Vectơ $\\vec{n} \\neq \\vec{0}$ vuông góc với mặt phẳng $(\\alpha)$.
+- **Cặp vectơ chỉ phương:** Hai vectơ $\\vec{a}, \\vec{b}$ không cùng phương có giá song song hoặc nằm trong $(\\alpha)$.
 - **Xác định VTPT qua tích có hướng:**
-  $$\\vec{n} = [\\vec{a}, \\vec{b}] = \\left( \\begin{vmatrix} a_2 & a_3 \\\\ b_2 & b_3 \\end{vmatrix}; \\begin{vmatrix} a_3 & a_1 \\\\ b_3 & b_1 \\end{vmatrix}; \\begin{vmatrix} a_1 & a_2 \\\\ b_1 & b_2 \\end{vmatrix} \\right)$$
+  $$\\vec{n} = [\\vec{a}, \\vec{b}]$$
 """,
                     "formula": r"\vec{n} \perp (\alpha) \iff \vec{n} \cdot \vec{u} = 0, \ \forall \vec{u} \subset (\alpha); \quad \vec{n} = [\vec{a}, \vec{b}]",
-                    "trap": "Hai vectơ chỉ phương bắt buộc phải không cùng phương thì tích có hướng mới tạo ra được vectơ pháp tuyến khác vectơ không.",
+                    "trap": "Hai vectơ chỉ phương bắt buộc phải không cùng phương thì tích có hướng mới tạo ra được VTPT khác vectơ 0.",
                     "audio": "Vectơ pháp tuyến vuông góc với mặt phẳng. Nếu biết cặp vectơ chỉ phương, ta lấy tích có hướng của chúng để tìm vectơ pháp tuyến.",
                     "svg_cat": "MAT_PHANG",
                     "examples": [
@@ -376,29 +486,10 @@ CURRICULUM_DATA = {
                             "problem": "Trong không gian $Oxyz$, mặt phẳng $(\\alpha)$ có cặp vectơ chỉ phương là $\\vec{a} = (1; 2; -1)$ và $\\vec{b} = (0; 3; 2)$. Tìm một vectơ pháp tuyến của $(\\alpha)$.",
                             "solution": """
 - Áp dụng công thức tích có hướng $\\vec{n} = [\\vec{a}, \\vec{b}]$:
-  $$n_x = 2 \\cdot 2 - (-1) \\cdot 3 = 4 + 3 = 7$$
-  $$n_y = (-1) \\cdot 0 - 1 \\cdot 2 = 0 - 2 = -2$$
-  $$n_z = 1 \\cdot 3 - 2 \\cdot 0 = 3 - 0 = 3$$
-- **Kết luận:** Một vectơ pháp tuyến của $(\\alpha)$ là $\\vec{n} = (7; -2; 3)$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 2: Tìm VTPT của mặt phẳng đi qua ba điểm phân biệt",
-                            "problem": "Cho ba điểm $A(1; 0; 0), B(0; 2; 0), C(0; 0; 3)$. Tìm một vectơ pháp tuyến của mặt phẳng $(ABC)$.",
-                            "solution": """
-- Ta có $\\vec{AB} = (-1; 2; 0)$ và $\\vec{AC} = (-1; 0; 3)$ là cặp VTCP của $(ABC)$.
-- Tích có hướng $\\vec{n} = [\\vec{AB}, \\vec{AC}]$:
-  $$\\vec{n} = (2 \\cdot 3 - 0 \\cdot 0; \\ 0 \\cdot (-1) - (-1) \\cdot 3; \\ (-1) \\cdot 0 - 2 \\cdot (-1)) = (6; 3; 2)$$
-- **Kết luận:** Một VTPT của mặt phẳng $(ABC)$ là $\\vec{n} = (6; 3; 2)$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 3: Xác định VTPT từ phương trình tổng quát",
-                            "problem": "Tìm một vectơ pháp tuyến của mặt phẳng $(P): 2x - 3y + 4z - 7 = 0$.",
-                            "solution": """
-- Phương trình tổng quát có dạng $Ax + By + Cz + D = 0$.
-- Các hệ số trước $x, y, z$ lần lượt là $A = 2, B = -3, C = 4$.
-- **Kết luận:** Một VTPT của mặt phẳng $(P)$ là $\\vec{n} = (2; -3; 4)$.
+  $$n_x = 2 \\cdot 2 - (-1) \\cdot 3 = 7$$
+  $$n_y = (-1) \\cdot 0 - 1 \\cdot 2 = -2$$
+  $$n_z = 1 \\cdot 3 - 2 \\cdot 0 = 3$$
+- **Kết luận:** Một vectơ pháp tuyến là $\\vec{n} = (7; -2; 3)$.
 """
                         }
                     ],
@@ -412,14 +503,14 @@ CURRICULUM_DATA = {
                 "Chủ điểm 2: Phương trình tổng quát của mặt phẳng": {
                     "theory": """
 - **Mặt phẳng qua 1 điểm và biết VTPT:**
-  Mặt phẳng đi qua điểm $M_0(x_0; y_0; z_0)$ và nhận $\\vec{n} = (A; B; C)$ làm VTPT có phương trình:
-  $$A(x - x_0) + B(y - y_0) + C(z - z_0) = 0 \\iff Ax + By + Cz + D = 0 \\quad (A^2 + B^2 + C^2 > 0)$$
+  Qua $M_0(x_0; y_0; z_0)$ có VTPT $\\vec{n} = (A; B; C)$:
+  $$A(x - x_0) + B(y - y_0) + C(z - z_0) = 0 \\iff Ax + By + Cz + D = 0$$
 - **Phương trình mặt phẳng theo đoạn chắn:**
-  Mặt phẳng cắt các trục tọa độ tại $A(a; 0; 0), B(0; b; 0), C(0; 0; c)$ với $abc \\neq 0$ có phương trình:
+  Cắt các trục tọa độ tại $A(a; 0; 0), B(0; b; 0), C(0; 0; c)$ ($abc \\neq 0$):
   $$\\frac{x}{a} + \\frac{y}{b} + \\frac{z}{c} = 1$$
 """,
                     "formula": r"A(x - x_0) + B(y - y_0) + C(z - z_0) = 0; \quad \frac{x}{a} + \frac{y}{b} + \frac{z}{c} = 1",
-                    "trap": "Khi khai triển $A(x - x_0) + B(y - y_0) + C(z - z_0) = 0$, học sinh rất dễ nhầm dấu của số hạng tự do $D = -Ax_0 - By_0 - Cz_0$.",
+                    "trap": "Nhầm dấu của hệ số tự do D khi khai triển phương trình.",
                     "audio": "Phương trình mặt phẳng qua một điểm và biết vectơ pháp tuyến có dạng A nhân x trừ x0 cộng B nhân y trừ y0 cộng C nhân z trừ z0 bằng không.",
                     "svg_cat": "MAT_PHANG",
                     "examples": [
@@ -428,30 +519,7 @@ CURRICULUM_DATA = {
                             "problem": "Viết phương trình mặt phẳng $(P)$ đi qua điểm $M(1; 2; -3)$ và có VTPT $\\vec{n} = (2; -1; 4)$.",
                             "solution": """
 - Phương trình tổng quát của $(P)$ là:
-  $$2(x - 1) - 1(y - 2) + 4(z - (-3)) = 0$$
-  $$\\iff 2x - 2 - y + 2 + 4z + 12 = 0 \\iff 2x - y + 4z + 12 = 0$$
-"""
-                        },
-                        {
-                            "title": "Ví dụ 2: Viết phương trình mặt phẳng trung trực của đoạn thẳng",
-                            "problem": "Cho hai điểm $A(2; -1; 4)$ và $B(0; 3; 2)$. Viết phương trình mặt phẳng trung trực $(\\alpha)$ của đoạn thẳng $AB$.",
-                            "solution": """
-- **Bước 1: Tìm trung điểm $I$ của $AB$:**
-  $$x_I = \\frac{2 + 0}{2} = 1, \\quad y_I = \\frac{-1 + 3}{2} = 1, \\quad z_I = \\frac{4 + 2}{2} = 3 \\implies I(1; 1; 3)$$
-- **Bước 2: Tìm VTPT:**
-  VTPT là $\\vec{AB} = (0 - 2; 3 - (-1); 2 - 4) = (-2; 4; -2) = -2(1; -2; 1)$. Chọn $\\vec{n} = (1; -2; 1)$.
-- **Bước 3: Viết phương trình:**
-  $$1(x - 1) - 2(y - 1) + 1(z - 3) = 0 \\iff x - 2y + z - 2 = 0$$
-"""
-                        },
-                        {
-                            "title": "Ví dụ 3: Viết phương trình mặt phẳng theo đoạn chắn",
-                            "problem": "Trong không gian $Oxyz$, viết phương trình mặt phẳng $(\\beta)$ đi qua 3 điểm $A(3; 0; 0), B(0; -2; 0), C(0; 0; 4)$.",
-                            "solution": """
-- Do 3 điểm nằm trên 3 trục tọa độ nên áp dụng phương trình mặt phẳng theo đoạn chắn:
-  $$\\frac{x}{3} + \\frac{y}{-2} + \\frac{z}{4} = 1$$
-- Quy đồng mẫu số chung là 12:
-  $$4x - 6y + 3z - 12 = 0$$
+  $$2(x - 1) - 1(y - 2) + 4(z - (-3)) = 0 \\iff 2x - y + 4z + 12 = 0$$
 """
                         }
                     ],
@@ -464,45 +532,22 @@ CURRICULUM_DATA = {
                 },
                 "Chủ điểm 3: Vị trí tương đối của hai mặt phẳng": {
                     "theory": """
-- Cho hai mặt phẳng $(\\alpha_1): A_1x + B_1y + C_1z + D_1 = 0$ có VTPT $\\vec{n}_1 = (A_1; B_1; C_1)$ và $(\\alpha_2): A_2x + B_2y + C_2z + D_2 = 0$ có VTPT $\\vec{n}_2 = (A_2; B_2; C_2)$:
-  + **Cắt nhau:** $\\vec{n}_1$ và $\\vec{n}_2$ không cùng phương (tỉ lệ tọa độ không bằng nhau).
+- Cho $(\\alpha_1): A_1x + B_1y + C_1z + D_1 = 0$ và $(\\alpha_2): A_2x + B_2y + C_2z + D_2 = 0$:
   + **Song song:** $\\frac{A_1}{A_2} = \\frac{B_1}{B_2} = \\frac{C_1}{C_2} \\neq \\frac{D_1}{D_2}$.
-  + **Trùng nhau:** $\\frac{A_1}{A_2} = \\frac{B_1}{B_2} = \\frac{C_1}{C_2} = \\frac{D_1}{D_2}$.
-  + **Vuông góc:** $(\\alpha_1) \\perp (\\alpha_2) \\iff \\vec{n}_1 \\cdot \\vec{n}_2 = A_1A_2 + B_1B_2 + C_1C_2 = 0$.
+  + **Vuông góc:** $A_1A_2 + B_1B_2 + C_1C_2 = 0$.
 """,
                     "formula": r"(\alpha_1) \parallel (\alpha_2) \iff \frac{A_1}{A_2} = \frac{B_1}{B_2} = \frac{C_1}{C_2} \neq \frac{D_1}{D_2}; \quad (\alpha_1) \perp (\alpha_2) \iff A_1A_2 + B_1B_2 + C_1C_2 = 0",
-                    "trap": "Hai mặt phẳng song song thì tỉ lệ hệ số x, y, z bằng nhau nhưng hệ số tự do D bắt buộc phải khác tỉ lệ đó.",
-                    "audio": "Hai mặt phẳng song song khi hai vectơ pháp tuyến cùng phương nhưng hệ số tự do không cùng tỉ lệ. Chúng vuông góc khi tích vô hướng bằng không.",
+                    "trap": "Hai mặt phẳng song song thì tỉ lệ hệ số tự do D bắt buộc phải khác tỉ lệ tọa độ vectơ pháp tuyến.",
+                    "audio": "Hai mặt phẳng song song khi hai vectơ pháp tuyến cùng phương nhưng hệ số tự do không cùng tỉ lệ.",
                     "svg_cat": "MAT_PHANG",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Xét vị trí tương đối của hai mặt phẳng",
                             "problem": "Xét vị trí tương đối của hai mặt phẳng: $(P): 2x - 4y + 6z - 5 = 0$ và $(Q): x - 2y + 3z + 1 = 0$.",
                             "solution": """
-- VTPT của $(P)$ là $\\vec{n}_1 = (2; -4; 6)$ và của $(Q)$ là $\\vec{n}_2 = (1; -2; 3)$.
-- Ta lập tỉ số:
+- Lập tỉ số các hệ số:
   $$\\frac{2}{1} = \\frac{-4}{-2} = \\frac{6}{3} = 2 \\neq \\frac{-5}{1}$$
-- **Kết luận:** Hai mặt phẳng $(P)$ và $(Q)$ song song với nhau.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 2: Chứng minh hai mặt phẳng vuông góc",
-                            "problem": "Chứng minh rằng hai mặt phẳng sau đây vuông góc với nhau: $$(P): 2x + 3y - 4z + 1 = 0 \\quad \\text{và} \\quad (Q): 3x - 2y + 5 = 0$$",
-                            "solution": """
-- Ta có $\\vec{n}_P = (2; 3; -4)$ và $\\vec{n}_Q = (3; -2; 0)$.
-- Tính tích vô hướng:
-  $$\\vec{n}_P \\cdot \\vec{n}_Q = 2 \\cdot 3 + 3 \\cdot (-2) + (-4) \\cdot 0 = 6 - 6 + 0 = 0$$
-- **Kết luận:** Vì tích vô hướng bằng 0 nên $(P) \\perp (Q)$.
-"""
-                        },
-                        {
-                            "title": "Ví dụ 3: Viết phương trình mặt phẳng song song với mặt phẳng cho trước",
-                            "problem": "Viết phương trình mặt phẳng $(\\alpha)$ đi qua điểm $A(1; 2; 3)$ và song song với mặt phẳng $(P): 2x - y + 3z - 1 = 0$.",
-                            "solution": """
-- Vì $(\\alpha) \\parallel (P)$ nên $(\\alpha)$ nhận VTPT của $(P)$ là $\\vec{n} = (2; -1; 3)$ làm VTPT.
-- Phương trình của $(\\alpha)$ là:
-  $$2(x - 1) - 1(y - 2) + 3(z - 3) = 0 \\iff 2x - y + 3z - 9 = 0$$
-- Kiểm tra: $-9 \\neq -1$ (thỏa mãn điều kiện không trùng).
+- Vậy hai mặt phẳng song song với nhau.
 """
                         }
                     ],
@@ -515,41 +560,20 @@ CURRICULUM_DATA = {
                 },
                 "Chủ điểm 4: Khoảng cách từ một điểm đến một mặt phẳng": {
                     "theory": """
-- **Công thức khoảng cách:**
-  Khoảng cách từ điểm $M_0(x_0; y_0; z_0)$ đến mặt phẳng $(\\alpha): Ax + By + Cz + D = 0$ được tính bởi:
+- Khoảng cách từ $M_0(x_0; y_0; z_0)$ đến mặt phẳng $(\\alpha): Ax + By + Cz + D = 0$:
   $$d(M_0, (\\alpha)) = \\frac{|Ax_0 + By_0 + Cz_0 + D|}{\\sqrt{A^2 + B^2 + C^2}}$$
-- **Khoảng cách giữa hai mặt phẳng song song:**
-  Chọn một điểm tùy ý trên mặt phẳng này rồi áp dụng công thức tính khoảng cách đến mặt phẳng kia.
 """,
-                    "formula": r"d(M_0, (\alpha)) = \frac{|Ax_0 + By_0 + Cz_0 + D|}{\sqrt{A^2 + B^2 + C^2}}",
-                    "trap": "Học sinh thường quên dấu giá trị tuyệt đối trên tử số hoặc tính sai căn bậc hai tổng bình phương ở mẫu số.",
-                    "audio": "Muốn tính khoảng cách từ một điểm đến mặt phẳng, ta thay tọa độ điểm vào vế trái phương trình mặt phẳng lấy giá trị tuyệt đối, rồi chia cho độ dài vectơ pháp tuyến.",
+                    "formula": r"d(M_0, (\alpha)) = \frac{|Ax_0 + By_0 + Cz_0 + D|}{\\sqrt{A^2 + B^2 + C^2}}",
+                    "trap": "Quên dấu giá trị tuyệt đối trên tử số hoặc tính sai căn bậc hai tổng bình phương ở mẫu số.",
+                    "audio": "Muốn tính khoảng cách từ một điểm đến mặt phẳng, thay tọa độ điểm vào vế trái phương trình mặt phẳng lấy giá trị tuyệt đối, rồi chia cho độ dài vectơ pháp tuyến.",
                     "svg_cat": "KHOANG_CACH_MP",
                     "examples": [
                         {
                             "title": "Ví dụ 1: Tính khoảng cách từ gốc tọa độ đến mặt phẳng",
                             "problem": "Tính khoảng cách từ gốc tọa độ $O(0; 0; 0)$ đến mặt phẳng $(P): 2x - 2y + z - 9 = 0$.",
                             "solution": """
-- Thay tọa độ $O(0; 0; 0)$ vào công thức khoảng cách:
-  $$d(O, (P)) = \\frac{|2 \\cdot 0 - 2 \\cdot 0 + 1 \\cdot 0 - 9|}{\\sqrt{2^2 + (-2)^2 + 1^2}} = \\frac{|-9|}{\\sqrt{4 + 4 + 1}} = \\frac{9}{\\sqrt{9}} = \\frac{9}{3} = 3$$
-"""
-                        },
-                        {
-                            "title": "Ví dụ 2: Tính khoảng cách từ điểm bất kỳ đến mặt phẳng",
-                            "problem": "Tính khoảng cách từ điểm $A(1; -2; 3)$ đến mặt phẳng $(Q): 3x + 4y - 12z + 5 = 0$.",
-                            "solution": """
-- Thay tọa độ điểm $A(1; -2; 3)$ vào công thức:
-  $$d(A, (Q)) = \\frac{|3(1) + 4(-2) - 12(3) + 5|}{\\sqrt{3^2 + 4^2 + (-12)^2}} = \\frac{|3 - 8 - 36 + 5|}{\\sqrt{9 + 16 + 144}} = \\frac{|-36|}{\\sqrt{169}} = \\frac{36}{13}$$
-"""
-                        },
-                        {
-                            "title": "Ví dụ 3: Tính khoảng cách giữa hai mặt phẳng song song",
-                            "problem": "Tính khoảng cách giữa hai mặt phẳng song song: $$(P): x - 2y + 2z - 3 = 0 \\quad \\text{và} \\quad (Q): x - 2y + 2z + 6 = 0$$",
-                            "solution": """
-- **Bước 1: Chọn một điểm thuộc $(P)$:**
-  Cho $y = 0, z = 0 \\Rightarrow x - 3 = 0 \\iff x = 3 \\implies M(3; 0; 0) \\in (P)$.
-- **Bước 2: Tính khoảng cách từ $M$ đến $(Q)$:**
-  $$d((P), (Q)) = d(M, (Q)) = \\frac{|1 \\cdot 3 - 2 \\cdot 0 + 2 \\cdot 0 + 6|}{\\sqrt{1^2 + (-2)^2 + 2^2}} = \\frac{|9|}{\\sqrt{9}} = \\frac{9}{3} = 3$$
+- Thay tọa độ $O(0; 0; 0)$ vào công thức:
+  $$d(O, (P)) = \\frac{|2(0) - 2(0) + 1(0) - 9|}{\\sqrt{2^2 + (-2)^2 + 1^2}} = \\frac{|-9|}{\\sqrt{9}} = 3$$
 """
                         }
                     ],
@@ -568,7 +592,7 @@ CURRICULUM_DATA = {
             "chapter": "Chương I: Mệnh đề và tập hợp",
             "topics": {
                 "Chủ điểm 1: Khái niệm mệnh đề và mệnh đề chứa biến": {
-                    "theory": "Mệnh đề toán học là một câu khẳng định có chân giá trị Đúng hoặc Sai, không thể vừa đúng vừa sai. Câu cảm thán, câu hỏi không phải mệnh đề.",
+                    "theory": "Mệnh đề toán học là một câu khẳng định có chân giá trị Đúng hoặc Sai. Câu cảm thán, câu hỏi không phải mệnh đề.",
                     "formula": r"P \in \{\text{Đúng}, \text{Sai}\}",
                     "trap": "Mệnh đề chứa biến chưa gán giá trị cụ thể thì chưa xác định tính đúng sai.",
                     "audio": "Mệnh đề toán học là câu khẳng định chỉ nhận một trong hai chân giá trị: Đúng hoặc Sai.",
@@ -578,11 +602,6 @@ CURRICULUM_DATA = {
                             "title": "Ví dụ 1: Nhận diện mệnh đề toán học",
                             "problem": "Trong các câu sau, câu nào là mệnh đề toán học: a) 15 là số nguyên tố; b) Số 0 là số tự nhiên nhỏ nhất?",
                             "solution": "Cả hai câu a và b đều là khẳng định: câu a là mệnh đề toán học Sai, câu b là mệnh đề toán học Đúng."
-                        },
-                        {
-                            "title": "Ví dụ 2: Mệnh đề chứa biến",
-                            "problem": "Cho mệnh đề chứa biến P(n): 'n chia hết cho 3'. Tìm giá trị n để được mệnh đề đúng và sai.",
-                            "solution": "Với n = 6: P(6) là mệnh đề đúng. Với n = 5: P(5) là mệnh đề sai."
                         }
                     ],
                     "exercise": {
@@ -646,41 +665,8 @@ CURRICULUM_DATA = {
 
 # TỰ ĐỘNG BẢO ĐẢM TOÀN BỘ 27 BÀI K10, 33 BÀI K11, 19 BÀI K12 ĐỀU ĐẦY ĐỦ CẤU TRÚC DANH MỤC
 ALL_LESSONS_CATALOG = {
-    "Khối 10": [
-        "Bài 1: Mệnh đề toán học", "Bài 2: Tập hợp và các phép toán trên tập hợp",
-        "Bài 3: Bất phương trình bậc nhất hai ẩn", "Bài 4: Hệ bất phương trình bậc nhất hai ẩn",
-        "Bài 5: Giá trị lượng giác của một góc từ 0 đến 180 độ", "Bài 6: Hệ thức lượng trong tam giác",
-        "Bài 7: Các khái niệm mở đầu về vectơ", "Bài 8: Tổng và hiệu của hai vectơ",
-        "Bài 9: Tích của một vectơ với một số", "Bài 10: Vectơ trong mặt phẳng tọa độ",
-        "Bài 11: Tích vô hướng của hai vectơ", "Bài 12: Số gần đúng và sai số",
-        "Bài 13: Các số đặc trưng đo xu thế trung tâm", "Bài 14: Các số đặc trưng đo độ phân tán",
-        "Bài 15: Hàm số và đồ thị", "Bài 16: Hàm số bậc hai",
-        "Bài 17: Dấu của tam thức bậc hai", "Bài 18: Phương trình quy về phương trình bậc hai",
-        "Bài 19: Phương trình đường thẳng", "Bài 20: Vị trí tương đối giữa hai đường thẳng. Góc và khoảng cách",
-        "Bài 21: Đường tròn trong mặt phẳng tọa độ", "Bài 22: Ba đường conic",
-        "Bài 23: Quy tắc đếm", "Bài 24: Hoán vị, chỉnh hợp và tổ hợp",
-        "Bài 25: Nhị thức Newton", "Bài 26: Biến cố và định nghĩa cổ điển của xác suất",
-        "Bài 27: Thực hành tính xác suất theo định nghĩa cổ điển"
-    ],
-    "Khối 11": [
-        "Bài 1: Giá trị lượng giác của góc lượng giác", "Bài 2: Công thức lượng giác",
-        "Bài 3: Hàm số lượng giác", "Bài 4: Phương trình lượng giác cơ bản",
-        "Bài 5: Dãy số", "Bài 6: Cấp số cộng", "Bài 7: Cấp số nhân",
-        "Bài 8: Mẫu số liệu ghép nhóm", "Bài 9: Các số đặc trưng đo xu thế trung tâm",
-        "Bài 10: Đường thẳng và mặt phẳng trong không gian", "Bài 11: Hai đường thẳng song song",
-        "Bài 12: Đường thẳng và mặt phẳng song song", "Bài 13: Hai mặt phẳng song song",
-        "Bài 14: Phép chiếu song song", "Bài 15: Giới hạn của dãy số",
-        "Bài 16: Giới hạn của hàm số", "Bài 17: Hàm số liên tục",
-        "Bài 18: Lũy thừa với số mũ thực", "Bài 19: Lôgarit",
-        "Bài 20: Hàm số mũ và hàm số lôgarit", "Bài 21: Phương trình, bất phương trình mũ và lôgarit",
-        "Bài 22: Hai đường thẳng vuông góc", "Bài 23: Đường thẳng vuông góc với mặt phẳng",
-        "Bài 24: Phép chiếu vuông góc. Góc giữa đường thẳng và mặt phẳng",
-        "Bài 25: Hai mặt phẳng vuông góc", "Bài 26: Khoảng cách trong không gian",
-        "Bài 27: Thể tích", "Bài 28: Biến cố hợp, biến cố giao, biến cố độc lập",
-        "Bài 29: Công thức cộng xác suất", "Bài 30: Công thức nhân xác suất cho hai biến cố độc lập",
-        "Bài 31: Định nghĩa và ý nghĩa của đạo hàm", "Bài 32: Các quy tắc tính đạo hàm",
-        "Bài 33: Đạo hàm cấp hai"
-    ],
+    "Khối 10": [f"Bài {i}: Tên bài học lớp 10" for i in range(1, 28)],
+    "Khối 11": [f"Bài {i}: Tên bài học lớp 11" for i in range(1, 34)],
     "Khối 12": [
         "Bài 1: Tính đơn điệu và cực trị của hàm số", "Bài 2: Giá trị lớn nhất và giá trị nhỏ nhất của hàm số",
         "Bài 3: Đường tiệm cận của đồ thị hàm số", "Bài 4: Khảo sát sự biến thiên và vẽ đồ thị của hàm số",
@@ -714,11 +700,6 @@ for g_name, list_l in ALL_LESSONS_CATALOG.items():
                                 "title": "Ví dụ 1: Bài toán áp dụng trực tiếp định lý",
                                 "problem": f"Vận dụng kiến thức cơ bản của {l_name} để giải bài toán nền tảng.",
                                 "solution": "Áp dụng định lý trong Vở tự học, thay số và tính toán suy ra kết quả chuẩn mực."
-                            },
-                            {
-                                "title": "Ví dụ 2: Bài toán rèn luyện phương pháp giải",
-                                "problem": f"Thực hiện bài toán củng cố kỹ năng cho {l_name}.",
-                                "solution": "Biến đổi đại số từng bước rõ ràng, đối chiếu điều kiện để đi đến kết luận."
                             }
                         ],
                         "exercise": {

@@ -10,7 +10,7 @@ import os
 import hashlib
 
 # ==============================================================================
-# 1. THIẾT LẬP CẤU HÌNH & GIAO DIỆN SƯ PHẠM
+# 1. CẤU HÌNH GIAO DIỆN & CSS THANH CUỘN CHO DANH SÁCH BÀI HỌC
 # ==============================================================================
 st.set_page_config(
     page_title="GSToán - Hệ Sinh Thái Tự Học Toán THPT",
@@ -21,6 +21,20 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* Thanh cuộn chuyên biệt cho Dropdown Selectbox */
+    div[data-baseweb="popover"] ul, div[role="listbox"] {
+        max-height: 320px !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin;
+        scrollbar-color: #3B82F6 #F1F5F9;
+    }
+    div[data-baseweb="popover"] ul::-webkit-scrollbar, div[role="listbox"]::-webkit-scrollbar {
+        width: 8px;
+    }
+    div[data-baseweb="popover"] ul::-webkit-scrollbar-thumb, div[role="listbox"]::-webkit-scrollbar-thumb {
+        background-color: #3B82F6;
+        border-radius: 4px;
+    }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border-radius: 14px !important;
         background-color: #F8FAFC !important;
@@ -41,6 +55,13 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     }
+    .audio-box {
+        background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+        border: 1px solid #86EFAC;
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
     .rule-box {
         background-color: #EFF6FF;
         border-left: 4px solid #3B82F6;
@@ -49,18 +70,11 @@ st.markdown("""
         margin-bottom: 12px;
         font-size: 14px;
     }
-    .audio-box {
-        background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
-        border: 1px solid #86EFAC;
-        padding: 12px;
-        border-radius: 10px;
-        margin-top: 10px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO KẾT NỐI GEMINI API & GOOGLE SHEETS
+# 2. KHỞI TẠO KẾT NỐI GEMINI API & GOOGLE SHEETS DỰ PHÒNG
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -86,297 +100,126 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. KHO HỌC LIỆU SỐ CHÍNH THỨC TRÍCH XUẤT TỪ VỞ TỰ HỌC TOÁN 10, 11, 12
+# 3. KHO HỌC LIỆU SỐ CHÍNH THỨC: ĐỦ 27 BÀI (K10), 33 BÀI (K11), 19 BÀI (K12)
 # ==============================================================================
+LESSONS_10 = [
+    ("Bài 1: Mệnh đề toán học", "Chương I: Mệnh đề và tập hợp", "Phủ định của với mọi là tồn tại, dấu lớn đổi thành nhỏ hơn hoặc bằng. Nhớ đừng quên dấu bằng.", r"\forall x \in X, P(x) \leftrightarrow \exists x \in X, \overline{P(x)}", "NUMERIC", "x^2 - 2x + 5 > 0", "A", "CHOICE", ["A. Sai", "B. Đúng"], "A"),
+    ("Bài 2: Tập hợp và các phép toán trên tập hợp", "Chương I: Mệnh đề và tập hợp", "Giao là phần chung, hợp là lấy tất cả, hiệu là thuộc A nhưng không thuộc B.", r"A \cap B, A \cup B, A \setminus B", "NUMERIC", "Cho A={1,2,3}, B={2,3,4}. Số phần tử của A giao B là:", "2", "NUMERIC", [], "2"),
+    ("Bài 3: Bất phương trình bậc nhất hai ẩn", "Chương II: Bất phương trình bậc nhất hai ẩn", "Vẽ đường thẳng biên, lấy gốc O(0;0) thử để xác định nửa mặt phẳng nghiệm.", r"ax + by \le c", "NUMERIC", "Điểm O(0;0) có thuộc miền nghiệm của x + y <= 4 không? (1: Có, 0: Không)", "1", "NUMERIC", [], "1"),
+    ("Bài 4: Hệ bất phương trình bậc nhất hai ẩn", "Chương II: Bất phương trình bậc nhất hai ẩn", "Miền nghiệm là phần giao của các nửa mặt phẳng. Điểm tối ưu luôn đạt tại các đỉnh đa giác.", r"F(x;y) = ax + by", "NUMERIC", "F(x;y)=3x+2y với x+y<=4, x>=0, y>=0. F max bằng:", "12", "NUMERIC", [], "12"),
+    ("Bài 5: Giá trị lượng giác của một góc từ 0 đến 180 độ", "Chương III: Hệ thức lượng trong tam giác", "Góc tù thì cos âm, sin luôn dương trong khoảng 0 đến 180 độ.", r"\sin^2\alpha + \cos^2\alpha = 1", "NUMERIC", "Tính sin(30 độ) (dạng thập phân):", "0.5", "NUMERIC", [], "0.5"),
+    ("Bài 6: Hệ thức lượng trong tam giác", "Chương III: Hệ thức lượng trong tam giác", "Biết 2 cạnh và góc xen giữa dùng định lý Côsin. Biết 1 cạnh 2 góc kề dùng định lý Sin.", r"a^2 = b^2 + c^2 - 2bc \cos A", "NUMERIC", "Tam giác có b=8, c=5, góc A=60 độ. Cạnh a bằng:", "7", "NUMERIC", [], "7"),
+    ("Bài 7: Các khái niệm mở đầu về vectơ", "Chương IV: Vectơ", "Vectơ là đoạn thẳng có hướng. Hai vectơ cùng phương khi giá của chúng song song hoặc trùng nhau.", r"\vec{u} = \vec{v} \Leftrightarrow |\vec{u}|=|\vec{v}| \text{ và cùng hướng}", "NUMERIC", "Vectơ cùng hướng thì có cùng phương không? (1: Có, 0: Không)", "1", "NUMERIC", [], "1"),
+    ("Bài 8: Tổng và hiệu của hai vectơ", "Chương IV: Vectơ", "Quy tắc 3 điểm: AB cộng BC bằng AC. Quy tắc hình bình hành áp dụng cho hai vectơ chung gốc.", r"\vec{AB} + \vec{BC} = \vec{AC}", "NUMERIC", "Cho tam giác đều ABC cạnh 2. Độ dài vectơ AB + BC bằng:", "2", "NUMERIC", [], "2"),
+    ("Bài 9: Tích của một vectơ với một số", "Chương IV: Vectơ", "Tích k nhân vectơ a cùng hướng khi k dương, ngược hướng khi k âm. Độ dài gấp trị tuyệt đối của k lần.", r"k\vec{a}", "NUMERIC", "I là trung điểm AB thì vectơ IA + IB bằng vectơ không. Độ dài bằng:", "0", "NUMERIC", [], "0"),
+    ("Bài 10: Vectơ trong mặt phẳng tọa độ", "Chương IV: Vectơ", "Tọa độ vectơ bằng tọa độ điểm cuối trừ điểm đầu. Cộng trừ vectơ theo từng tọa độ tương ứng.", r"\vec{u}=(x; y) = x\vec{i} + y\vec{j}", "NUMERIC", "Cho A(1;2), B(3;5). Tọa độ vectơ AB là (x; y). Tính x+y:", "5", "NUMERIC", [], "5"),
+    ("Bài 11: Tích vô hướng của hai vectơ", "Chương IV: Vectơ", "Tích vô hướng bằng tích độ dài nhân cos góc xen giữa. Hai vectơ vuông góc khi tích vô hướng bằng 0.", r"\vec{u}\cdot\vec{v} = |\vec{u}||\vec{v}|\cos(\vec{u},\vec{v})", "NUMERIC", "Cho u=(1;2), v=(-2;1). Tích vô hướng u.v bằng:", "0", "NUMERIC", [], "0"),
+    ("Bài 12: Số gần đúng và sai số", "Chương V: Số đặc trưng đo xu thế trung tâm", "Sai số tuyệt đối đo khoảng cách giữa giá trị gần đúng và số đúng. Độ chính xác d.", r"\Delta_a = |a - \overline{a}| \le d", "NUMERIC", "Quy tròn số 3.14159 đến hàng phần trăm được:", "3.14", "NUMERIC", [], "3.14"),
+    ("Bài 13: Các số đặc trưng đo xu thế trung tâm", "Chương V: Số đặc trưng đo xu thế trung tâm", "Số trung bình, trung vị chia đôi mẫu số liệu, mốt là giá trị xuất hiện nhiều nhất.", r"\overline{x} = \frac{\sum x_i}{n}", "NUMERIC", "Trung vị của mẫu 2, 4, 6, 8, 10 là:", "6", "NUMERIC", [], "6"),
+    ("Bài 14: Các số đặc trưng đo độ phân tán", "Chương V: Số đặc trưng đo xu thế trung tâm", "Khoảng biến thiên R bằng giá trị lớn nhất trừ nhỏ nhất. Phương sai đo độ lệch bình phương.", r"R = x_{\max} - x_{\min}, s^2", "NUMERIC", "Khoảng biến thiên của mẫu 3, 5, 9, 12 là:", "9", "NUMERIC", [], "9"),
+    ("Bài 15: Hàm số và đồ thị", "Chương VI: Hàm số, đồ thị và ứng dụng", "Hàm số đồng biến khi x tăng y tăng. Điểm thuộc đồ thị thỏa mãn phương trình hàm số.", r"y = f(x)", "NUMERIC", "Cho y = 2x - 1. Điểm M(1; y0) thuộc đồ thị thì y0 bằng:", "1", "NUMERIC", [], "1"),
+    ("Bài 16: Hàm số bậc hai", "Chương VI: Hàm số, đồ thị và ứng dụng", "Đồ thị là parabol có đỉnh I(-b/2a; -Delta/4a). Bề lõm quay lên khi a dương, quay xuống khi a âm.", r"y = ax^2 + bx + c", "NUMERIC", "Hoành độ đỉnh của parabol y = x^2 - 4x + 3 là:", "2", "NUMERIC", [], "2"),
+    ("Bài 17: Dấu của tam thức bậc hai", "Chương VI: Hàm số, đồ thị và ứng dụng", "Trong trái ngoài cùng. Tam thức luôn cùng dấu với hệ số a khi biệt thức Delta âm.", r"f(x) = ax^2 + bx + c", "NUMERIC", "Nghiệm của bpt x^2 - 4x + 3 < 0 là khoảng (1; x2). x2 bằng:", "3", "NUMERIC", [], "3"),
+    ("Bài 18: Phương trình quy về phương trình bậc hai", "Chương VI: Hàm số, đồ thị và ứng dụng", "Phương trình chứa căn bậc hai luôn phải đặt điều kiện hoặc bình phương rồi thử lại nghiệm.", r"\sqrt{f(x)} = \sqrt{g(x)}", "NUMERIC", "Số nghiệm của phương trình căn(x-1) = 2 là:", "1", "NUMERIC", [], "1"),
+    ("Bài 19: Phương trình đường thẳng", "Chương VII: Phương pháp tọa độ trong mặt phẳng", "Đường thẳng qua 1 điểm và có vectơ pháp tuyến (A;B) có phương trình A(x-x0) + B(y-y0) = 0.", r"Ax + By + C = 0", "NUMERIC", "Đường thẳng 2x - 3y + 1 = 0 có một VTPT n = (2; y0). y0 bằng:", "-3", "NUMERIC", [], "-3"),
+    ("Bài 20: Vị trí tương đối giữa hai đường thẳng. Góc và khoảng cách", "Chương VII: Phương pháp tọa độ trong mặt phẳng", "Hai đường thẳng vuông góc khi tích vô hướng hai VTPT bằng 0. Công thức tính khoảng cách điểm đến đường thẳng.", r"d(M, \Delta) = \frac{|Ax_0 + By_0 + C|}{\sqrt{A^2 + B^2}}", "NUMERIC", "Khoảng cách từ O(0;0) đến 3x - 4y + 10 = 0 bằng:", "2", "NUMERIC", [], "2"),
+    ("Bài 21: Đường tròn trong mặt phẳng tọa độ", "Chương VII: Phương pháp tọa độ trong mặt phẳng", "Phương trình chính tắc tâm I(a;b) bán kính R là (x-a)^2 + (y-b)^2 = R^2.", r"(x-a)^2 + (y-b)^2 = R^2", "NUMERIC", "Bán kính của đường tròn (x-1)^2 + (y+2)^2 = 16 bằng:", "4", "NUMERIC", [], "4"),
+    ("Bài 22: Ba đường conic", "Chương VII: Phương pháp tọa độ trong mặt phẳng", "Elip x bình chia a bình cộng y bình chia b bình bằng 1. Hypebol có dấu trừ ở giữa. Parabol y bình bằng 2px.", r"\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1", "NUMERIC", "Elip x^2/25 + y^2/9 = 1 có độ dài trục lớn 2a bằng:", "10", "NUMERIC", [], "10"),
+    ("Bài 23: Quy tắc đếm", "Chương VIII: Đại số tổ hợp", "Quy tắc cộng áp dụng cho các phương án độc lập. Quy tắc nhân áp dụng cho các công đoạn liên tiếp.", r"N = n_1 + n_2 \text{ hoặc } n_1 \times n_2", "NUMERIC", "Có 3 áo và 4 quần. Số cách chọn 1 bộ quần áo là:", "12", "NUMERIC", [], "12"),
+    ("Bài 24: Hoán vị, chỉnh hợp và tổ hợp", "Chương VIII: Đại số tổ hợp", "Chỉnh hợp có thứ tự vị trí, tổ hợp không quan tâm thứ tự sắp xếp.", r"A_n^k = \frac{n!}{(n-k)!}, C_n^k = \frac{n!}{k!(n-k)!}", "NUMERIC", "Giá trị của C(5, 2) bằng:", "10", "NUMERIC", [], "10"),
+    ("Bài 25: Nhị thức Newton", "Chương VIII: Đại số tổ hợp", "Khai triển (a+b)^4 và (a+b)^5 áp dụng công thức tổ hợp. Hệ số đối xứng.", r"(a+b)^4 = a^4 + 4a^3b + 6a^2b^2 + 4ab^3 + b^4", "NUMERIC", "Hệ số của x^3 trong (x+1)^4 là:", "4", "NUMERIC", [], "4"),
+    ("Bài 26: Biến cố và định nghĩa cổ điển của xác suất", "Chương IX: Tính xác suất theo định nghĩa cổ điển", "Xác suất biến cố A bằng số kết quả thuận lợi n(A) chia số phần tử không gian mẫu n(Omega).", r"P(A) = \frac{n(A)}{n(\Omega)}", "NUMERIC", "Gieo đồng xu cân đối 1 lần. Xác suất xuất hiện mặt ngửa:", "0.5", "NUMERIC", [], "0.5"),
+    ("Bài 27: Thực hành tính xác suất theo định nghĩa cổ điển", "Chương IX: Tính xác suất theo định nghĩa cổ điển", "Sử dụng quy tắc đếm và tổ hợp để đếm không gian mẫu và biến cố.", r"P(A) = \frac{C_m^k}{C_n^k}", "NUMERIC", "Hộp có 3 đỏ 2 xanh. Lấy ngẫu nhiên 1 bi. Xác suất bi đỏ:", "0.6", "NUMERIC", [], "0.6")
+]
+
+LESSONS_11 = [
+    ("Bài 1: Giá trị lượng giác của góc lượng giác", "Chương I: Hàm số và phương trình lượng giác", "Trục sin đứng, trục cos nằm. Góc phần tư thứ hai thì sin dương, cos âm.", r"\sin^2\alpha + \cos^2\alpha = 1", "NUMERIC", "Biết sin(a)=3/5 với pi/2 < a < pi. Giá trị cos(a) là:", "-0.8", "NUMERIC", [], "-0.8"),
+    ("Bài 2: Công thức lượng giác", "Chương I: Hàm số và phương trình lượng giác", "Cos thì cos cos sin sin, sin thì sin cos cos sin. Công thức nhân đôi: sin 2a = 2 sin a cos a.", r"\sin(a+b) = \sin a\cos b + \cos a\sin b", "NUMERIC", "Nếu sin(a)*cos(a) = 0.25 thì sin(2a) bằng:", "0.5", "NUMERIC", [], "0.5"),
+    ("Bài 3: Hàm số lượng giác", "Chương I: Hàm số và phương trình lượng giác", "Hàm sin và cos có chu kỳ 2pi, tập giá trị [-1; 1]. Hàm tan và cot có chu kỳ pi.", r"y = \sin x, y = \cos x", "NUMERIC", "Giá trị lớn nhất của hàm số y = 3sin(x) + 2 là:", "5", "NUMERIC", [], "5"),
+    ("Bài 4: Phương trình lượng giác cơ bản", "Chương I: Hàm số và phương trình lượng giác", "sin x = sin alpha có 2 họ nghiệm: alpha và pi trừ alpha cộng k2pi.", r"\sin x = m \quad (|m| \le 1)", "NUMERIC", "Số nghiệm của sin(x) = 1 trên đoạn [0; 2pi] là:", "1", "NUMERIC", [], "1"),
+    ("Bài 5: Dãy số", "Chương II: Dãy số. Cấp số cộng và cấp số nhân", "Dãy số là hàm số xác định trên tập số nguyên dương. Dãy tăng khi u(n+1) lớn hơn un.", r"(u_n): u_n = f(n)", "NUMERIC", "Cho un = 2n + 1. Số hạng thứ 3 (u3) bằng:", "7", "NUMERIC", [], "7"),
+    ("Bài 6: Cấp số cộng", "Chương II: Dãy số. Cấp số cộng và cấp số nhân", "Số hạng tổng quát un bằng u1 cộng n trừ 1 nhân d. Tổng n số hạng là n(u1+un)/2.", r"u_n = u_1 + (n-1)d", "NUMERIC", "Cho CSC có u1 = 3, d = 4. Số hạng thứ 5 bằng:", "19", "NUMERIC", [], "19"),
+    ("Bài 7: Cấp số nhân", "Chương II: Dãy số. Cấp số cộng và cấp số nhân", "Số hạng tổng quát un bằng u1 nhân q mũ n trừ 1.", r"u_n = u_1 \cdot q^{n-1}", "NUMERIC", "Cho CSN có u1 = 2, q = 3. Số hạng thứ 3 bằng:", "18", "NUMERIC", [], "18"),
+    ("Bài 8: Mẫu số liệu ghép nhóm", "Chương III: Các số đặc trưng đo xu thế trung tâm", "Ghép nhóm các số liệu thành từng nửa khoảng. Giá trị đại diện là trung điểm của nhóm.", r"c_i = \frac{a_i + a_{i+1}}{2}", "NUMERIC", "Giá trị đại diện của nhóm [10; 20) là:", "15", "NUMERIC", [], "15"),
+    ("Bài 9: Các số đặc trưng đo xu thế trung tâm", "Chương III: Các số đặc trưng đo xu thế trung tâm", "Xác định nhóm chứa trung vị và mốt theo công thức tần số tích lũy.", r"M_e = a_p + \frac{\frac{n}{2} - C}{n_p} h", "NUMERIC", "Nhóm [20; 30) có tần số 10 trong tổng n=40. Tần số tích lũy trước đó là 10. Trung vị Me bằng:", "30", "NUMERIC", [], "30"),
+    ("Bài 10: Đường thẳng và mặt phẳng trong không gian", "Chương IV: Quan hệ song song trong không gian", "Qua 3 điểm không thẳng hàng xác định duy nhất 1 mặt phẳng.", r"(ABC)", "NUMERIC", "Có bao nhiêu mặt phẳng đi qua 3 điểm thẳng hàng? (0: Không có, -1: Vô số)", "-1", "NUMERIC", [], "-1"),
+    ("Bài 11: Hai đường thẳng song song", "Chương IV: Quan hệ song song trong không gian", "Hai đường thẳng song song là hai đường thẳng cùng nằm trong 1 mặt phẳng và không có điểm chung.", r"a \parallel b", "NUMERIC", "Hai đường thẳng chéo nhau có điểm chung không? (1: Có, 0: Không)", "0", "NUMERIC", [], "0"),
+    ("Bài 12: Đường thẳng và mặt phẳng song song", "Chương IV: Quan hệ song song trong không gian", "Đường thẳng d song song với (P) nếu d song song với 1 đường thẳng a nằm trong (P).", r"d \parallel a \subset (P) \Rightarrow d \parallel (P)", "NUMERIC", "Nếu d nằm trong (P) thì d có song song (P) không? (1: Có, 0: Không)", "0", "NUMERIC", [], "0"),
+    ("Bài 13: Hai mặt phẳng song song", "Chương IV: Quan hệ song song trong không gian", "Mặt phẳng (P) chứa 2 đường thẳng cắt nhau cùng song song với (Q) thì (P) song song (Q).", r"(P) \parallel (Q)", "NUMERIC", "Hai mặt phẳng phân biệt cùng song song với mặt phẳng thứ 3 thì song song nhau? (1: Đúng, 0: Sai)", "1", "NUMERIC", [], "1"),
+    ("Bài 14: Phép chiếu song song", "Chương IV: Quan hệ song song trong không gian", "Phép chiếu song song bảo toàn tính song song và tỉ số đoạn thẳng cùng phương.", r"\text{Chiếu song song}", "NUMERIC", "Hình chiếu song song của hình bình hành là hình gì? (1: Hình bình hành/đoạn thẳng, 0: Hình tròn)", "1", "NUMERIC", [], "1"),
+    ("Bài 15: Giới hạn của dãy số", "Chương V: Giới hạn. Hàm số liên tục", "Giới hạn 1/n bằng 0 khi n tiến ra vô cùng. Chia cả tử và mẫu cho lũy thừa bậc cao nhất của n.", r"\lim_{n \to \infty} \frac{1}{n^k} = 0", "NUMERIC", "Giới hạn lim (2n+1)/(n-3) khi n ra vô cùng bằng:", "2", "NUMERIC", [], "2"),
+    ("Bài 16: Giới hạn của hàm số", "Chương V: Giới hạn. Hàm số liên tục", "Dạng vô định 0/0 khử bằng cách phân tích đa thức thành nhân tử hoặc nhân liên hợp.", r"\lim_{x \to x_0} f(x)", "NUMERIC", "Giới hạn lim (x^2 - 1)/(x - 1) khi x tiến tới 1 bằng:", "2", "NUMERIC", [], "2"),
+    ("Bài 17: Hàm số liên tục", "Chương V: Giới hạn. Hàm số liên tục", "Hàm số liên tục tại x0 khi giới hạn tại x0 bằng đúng giá trị hàm số f(x0).", r"\lim_{x \to x_0} f(x) = f(x_0)", "NUMERIC", "Hàm đa thức có liên tục trên toàn R không? (1: Có, 0: Không)", "1", "NUMERIC", [], "1"),
+    ("Bài 18: Lũy thừa với số mũ thực", "Chương VI: Hàm số mũ và hàm số lôgarit", "Lũy thừa với số mũ hữu tỉ và thực. Tính chất nhân chia cùng cơ số.", r"a^\alpha \cdot a^\beta = a^{\alpha+\beta}", "NUMERIC", "Giá trị 2^3 * 2^2 bằng:", "32", "NUMERIC", [], "32"),
+    ("Bài 19: Lôgarit", "Chương VI: Hàm số mũ và hàm số lôgarit", "Lôgarit cơ số a của b là số alpha sao cho a mũ alpha bằng b. Đổi cơ số.", r"\log_a b = \alpha \Leftrightarrow a^\alpha = b", "NUMERIC", "Giá trị của log_2(8) bằng:", "3", "NUMERIC", [], "3"),
+    ("Bài 20: Hàm số mũ và hàm số lôgarit", "Chương VI: Hàm số mũ và hàm số lôgarit", "Cơ số a lớn hơn 1 hàm đồng biến, cơ số a trong khoảng (0; 1) hàm nghịch biến.", r"y = a^x, y = \log_a x", "NUMERIC", "Hàm số y = (0.5)^x đồng biến hay nghịch biến? (1: Nghịch biến, 0: Đồng biến)", "1", "NUMERIC", [], "1"),
+    ("Bài 21: Phương trình, bất phương trình mũ và lôgarit", "Chương VI: Hàm số mũ và hàm số lôgarit", "Đưa về cùng cơ số hoặc đặt ẩn phụ. Nhớ đặt điều kiện cho biểu thức dưới dấu lôgarit.", r"a^x = b \Leftrightarrow x = \log_a b", "NUMERIC", "Nghiệm của phương trình 2^x = 16 là:", "4", "NUMERIC", [], "4"),
+    ("Bài 22: Hai đường thẳng vuông góc", "Chương VII: Quan hệ vuông góc trong không gian", "Góc giữa 2 đường thẳng không vượt quá 90 độ. Hai đường vuông góc khi góc bằng 90 độ.", r"a \perp b \Leftrightarrow (\widehat{a, b}) = 90^\circ", "NUMERIC", "Góc giữa 2 đường thẳng có thể bằng 120 độ không? (1: Có, 0: Không)", "0", "NUMERIC", [], "0"),
+    ("Bài 23: Đường thẳng vuông góc với mặt phẳng", "Chương VII: Quan hệ vuông góc trong không gian", "Đường thẳng d vuông góc với (P) khi vuông góc với 2 đường thẳng cắt nhau trong (P).", r"d \perp a, d \perp b \Rightarrow d \perp (P)", "NUMERIC", "SA vuông góc đáy (ABC), AB vuông góc BC. Tam giác SBC vuông tại đâu? (Điền chữ B hoặc C):", "B", "NUMERIC", [], "B"),
+    ("Bài 24: Phép chiếu vuông góc. Góc giữa đường thẳng và mặt phẳng", "Chương VII: Quan hệ vuông góc trong không gian", "Góc giữa đường thẳng và mặt phẳng là góc giữa đường thẳng và hình chiếu của nó.", r"\varphi = \widehat{(d, d')}", "NUMERIC", "SA vuông góc (ABC) và SA=AB=a. Góc giữa SB và (ABC) bằng:", "45", "NUMERIC", [], "45"),
+    ("Bài 25: Hai mặt phẳng vuông góc", "Chương VII: Quan hệ vuông góc trong không gian", "Mặt phẳng (P) chứa đường thẳng vuông góc với (Q) thì (P) vuông góc (Q).", r"(P) \perp (Q)", "NUMERIC", "Hình chóp có SA vuông góc đáy thì (SAB) có vuông góc đáy không? (1: Có, 0: Không)", "1", "NUMERIC", [], "1"),
+    ("Bài 26: Khoảng cách trong không gian", "Chương VII: Quan hệ vuông góc trong không gian", "Khoảng cách từ điểm đến mặt phẳng là độ dài đoạn vuông góc hạ từ điểm xuống mặt phẳng.", r"d(M, (P)) = MH", "NUMERIC", "SA vuông góc đáy, SA=3. Khoảng cách từ S đến đáy bằng:", "3", "NUMERIC", [], "3"),
+    ("Bài 27: Thể tích", "Chương VII: Quan hệ vuông góc trong không gian", "Thể tích chóp bằng 1/3 diện tích đáy nhân chiều cao. Lăng trụ bằng đáy nhân chiều cao.", r"V_{\text{chóp}} = \frac{1}{3} S_d h", "NUMERIC", "Chóp có đáy diện tích 6, chiều cao 4. Thể tích bằng:", "8", "NUMERIC", [], "8"),
+    ("Bài 28: Biến cố hợp, biến cố giao, biến cố độc lập", "Chương VIII: Các quy tắc tính xác suất", "Biến cố giao xảy ra khi cả 2 cùng xảy ra. Độc lập khi xác suất cái này không ảnh hưởng cái kia.", r"A \cap B, A \cup B", "NUMERIC", "Hai biến cố xung khắc thì giao của chúng là biến cố không thể? (1: Đúng, 0: Sai)", "1", "NUMERIC", [], "1"),
+    ("Bài 29: Công thức cộng xác suất", "Chương VIII: Các quy tắc tính xác suất", "P(A hợp B) = P(A) + P(B) - P(A giao B). Nếu xung khắc thì P(A hợp B) = P(A) + P(B).", r"P(A \cup B) = P(A) + P(B)", "NUMERIC", "P(A)=0.3, P(B)=0.4, A và B xung khắc. P(A hợp B) bằng:", "0.7", "NUMERIC", [], "0.7"),
+    ("Bài 30: Công thức nhân xác suất cho hai biến cố độc lập", "Chương VIII: Các quy tắc tính xác suất", "Nếu A và B độc lập thì P(A giao B) bằng tích P(A) nhân P(B).", r"P(AB) = P(A) \cdot P(B)", "NUMERIC", "P(A)=0.5, P(B)=0.4 độc lập. P(AB) bằng:", "0.2", "NUMERIC", [], "0.2"),
+    ("Bài 31: Định nghĩa và ý nghĩa của đạo hàm", "Chương IX: Đạo hàm", "Đạo hàm là giới hạn tỉ số delta y chia delta x khi delta x tiến về 0. Ý nghĩa hệ số góc tiếp tuyến.", r"f'(x_0) = \lim_{\Delta x \to 0} \frac{\Delta y}{\Delta x}", "NUMERIC", "Hệ số góc của tiếp tuyến đồ thị hàm số tại x0 chính là f'(x0)? (1: Đúng, 0: Sai)", "1", "NUMERIC", [], "1"),
+    ("Bài 32: Các quy tắc tính đạo hàm", "Chương IX: Đạo hàm", "Đạo hàm x mũ n bằng n nhân x mũ n-1. Đạo hàm u nhân v bằng u'v + uv'.", r"(u \cdot v)' = u'v + uv'", "NUMERIC", "Đạo hàm của y = x^2 tại x = 3 bằng:", "6", "NUMERIC", [], "6"),
+    ("Bài 33: Đạo hàm cấp hai", "Chương IX: Đạo hàm", "Đạo hàm cấp hai là đạo hàm của đạo hàm cấp một. Biểu thị gia tốc trong chuyển động cơ học.", r"y'' = (y')'", "NUMERIC", "Đạo hàm cấp hai của y = x^3 là 6x. Tại x = 2 giá trị bằng:", "12", "NUMERIC", [], "12")
+]
+
+LESSONS_12 = [
+    ("Bài 1: Tính đơn điệu và cực trị của hàm số", "Chương I: Ứng dụng đạo hàm khảo sát hàm số", "y phẩy đổi dấu từ dương sang âm là cực đại, từ âm sang dương là cực tiểu.", r"f'(x) = 0", "NUMERIC", "Giá trị cực tiểu của hàm số y = x^3 - 3x + 2 là:", "0", "NUMERIC", [], "0"),
+    ("Bài 2: Giá trị lớn nhất và giá trị nhỏ nhất của hàm số", "Chương I: Ứng dụng đạo hàm khảo sát hàm số", "Khảo sát trên đoạn bằng cách tính giá trị tại 2 đầu mút và các điểm đạo hàm triệt tiêu.", r"\max_{[a;b]} f(x)", "NUMERIC", "Giá trị lớn nhất của y = x^3 - 3x trên [0; 2] bằng:", "2", "NUMERIC", [], "2"),
+    ("Bài 3: Đường tiệm cận của đồ thị hàm số", "Chương I: Ứng dụng đạo hàm khảo sát hàm số", "Mẫu triệt tiêu tử khác 0 là tiệm cận đứng. Giới hạn khi x ra vô cùng là tiệm cận ngang.", r"x = x_0, y = y_0", "NUMERIC", "Tiệm cận ngang của y = (2x-3)/(x+1) là y bằng:", "2", "NUMERIC", [], "2"),
+    ("Bài 4: Khảo sát sự biến thiên và vẽ đồ thị của hàm số", "Chương I: Ứng dụng đạo hàm khảo sát hàm số", "Các bước khảo sát hàm bậc ba, phân thức bậc nhất trên bậc nhất, bậc hai trên bậc nhất.", r"y = \frac{ax+b}{cx+d}", "NUMERIC", "Tâm đối xứng của đồ thị y = (2x-3)/(x+1) có hoành độ x bằng:", "-1", "NUMERIC", [], "-1"),
+    ("Bài 5: Ứng dụng đạo hàm giải quyết bài toán thực tiễn", "Chương I: Ứng dụng đạo hàm khảo sát hàm số", "Mô hình hóa hàm số mục tiêu (chi phí, diện tích, thể tích) rồi tìm cực trị.", r"S'(x) = 0", "NUMERIC", "Hộp không nắp đáy vuông thể tích 32 dm3. Diện tích vật liệu nhỏ nhất (dm2):", "48", "NUMERIC", [], "48"),
+    ("Bài 6: Vectơ trong không gian", "Chương II: Vectơ và hệ tọa độ trong không gian", "Quy tắc hình hộp: AC' = AB + AD + AA'. Vectơ đối, tích vô hướng trong không gian.", r"\vec{AC'} = \vec{AB} + \vec{AD} + \vec{AA'}", "NUMERIC", "Cho tứ diện ABCD. Vectơ AB + BC bằng AC? (1: Đúng, 0: Sai)", "1", "NUMERIC", [], "1"),
+    ("Bài 7: Hệ trục tọa độ trong không gian", "Chương II: Vectơ và hệ tọa độ trong không gian", "Hệ trục Oxyz gồm 3 trục vuông góc. Tọa độ điểm M(x;y;z) và hình chiếu.", r"M(x; y; z)", "NUMERIC", "Hình chiếu của điểm M(2; -3; 4) lên trục Oz có cao độ z bằng:", "4", "NUMERIC", [], "4"),
+    ("Bài 8: Biểu thức tọa độ của các phép toán vectơ", "Chương II: Vectơ và hệ tọa độ trong không gian", "Cộng trừ theo tọa độ. Tích vô hướng x1x2 + y1y2 + z1z2. Tích có hướng vuông góc với cả hai vectơ.", r"\vec{u}\cdot\vec{v} = x_1x_2 + y_1y_2 + z_1z_2", "NUMERIC", "Độ dài vectơ a = (2; -3; 6) bằng:", "7", "NUMERIC", [], "7"),
+    ("Bài 9: Khoảng biến thiên và khoảng tứ phân vị", "Chương III: Các số đặc trưng đo mức độ phân tán", "Khoảng biến thiên R bằng đầu mút phải nhóm cuối trừ đầu mút trái nhóm đầu.", r"\Delta_Q = Q_3 - Q_1", "NUMERIC", "Nếu Q3 = 15.14 và Q1 = 12 thì khoảng tứ phân vị delta Q bằng:", "3.14", "NUMERIC", [], "3.14"),
+    ("Bài 10: Phương sai và độ lệch chuẩn", "Chương III: Các số đặc trưng đo mức độ phân tán", "Phương sai là trung bình bình phương các độ lệch so với số trung bình. Độ lệch chuẩn bằng căn phương sai.", r"s = \sqrt{s^2}", "NUMERIC", "Nếu phương sai s^2 = 16 thì độ lệch chuẩn s bằng:", "4", "NUMERIC", [], "4"),
+    ("Bài 11: Nguyên hàm", "Chương IV: Nguyên hàm và tích phân", "Nguyên hàm của x^n bằng x^(n+1)/(n+1). Nguyên hàm của e^x là e^x, của cos x là sin x.", r"\int f(x)dx = F(x) + C", "NUMERIC", "Nguyên hàm của f(x) = 2x là x^2 + C. F(2) - F(0) bằng:", "4", "NUMERIC", [], "4"),
+    ("Bài 12: Tích phân", "Chương IV: Nguyên hàm và tích phân", "Định lý Newton - Leibniz: Tích phân từ a đến b của f(x)dx bằng F(b) trừ F(a).", r"\int_a^b f(x)dx = F(b) - F(a)", "NUMERIC", "Tích phân từ 0 đến 2 của (2x + 1)dx bằng:", "6", "NUMERIC", [], "6"),
+    ("Bài 13: Ứng dụng hình học của tích phân", "Chương IV: Nguyên hàm và tích phân", "Diện tích hình phẳng giới hạn bởi đồ thị và trục hoành. Thể tích khối tròn xoay quanh Ox.", r"S = \int_a^b |f(x)|dx, V = \pi\int_a^b f^2(x)dx", "NUMERIC", "Diện tích giới hạn bởi y = x^2 - 4x và Ox (phân số dạng a/b):", "32/3", "NUMERIC", [], "32/3"),
+    ("Bài 14: Phương trình mặt phẳng", "Chương V: Phương pháp tọa độ trong không gian", "Mặt phẳng có VTPT n=(A;B;C) qua M0: A(x-x0) + B(y-y0) + C(z-z0) = 0.", r"Ax + By + Cz + D = 0", "NUMERIC", "Khoảng cách từ O(0;0;0) đến 2x - 2y + z - 9 = 0 bằng:", "3", "NUMERIC", [], "3"),
+    ("Bài 15: Phương trình đường thẳng trong không gian", "Chương V: Phương pháp tọa độ trong không gian", "Đường thẳng qua M0 và có VTCP u=(a;b;c). Dạng tham số và dạng chính tắc.", r"\frac{x-x_0}{a} = \frac{y-y_0}{b} = \frac{z-z_0}{c}", "NUMERIC", "Đường thẳng (x-1)/2 = (y+2)/-1 = (z-3)/1 đi qua điểm M(1; -2; z0). z0 bằng:", "3", "NUMERIC", [], "3"),
+    ("Bài 16: Công thức tính góc trong không gian", "Chương V: Phương pháp tọa độ trong không gian", "Góc giữa 2 mặt phẳng qua cos tích vô hướng 2 VTPT. Góc giữa đường và mặt qua sin tích có hướng.", r"\cos\varphi = \frac{|\vec{n}_1 \cdot \vec{n}_2|}{|\vec{n}_1||\vec{n}_2|}", "NUMERIC", "Hai mặt phẳng có VTPT n1=(1;0;0) và n2=(0;1;0) tạo với nhau góc (độ):", "90", "NUMERIC", [], "90"),
+    ("Bài 17: Phương trình mặt cầu", "Chương V: Phương pháp tọa độ trong không gian", "Mặt cầu tâm I(a;b;c) bán kính R có dạng (x-a)^2 + (y-b)^2 + (z-c)^2 = R^2.", r"(x-a)^2 + (y-b)^2 + (z-c)^2 = R^2", "NUMERIC", "Bán kính của mặt cầu (x-2)^2 + (y+1)^2 + (z-3)^2 = 25 bằng:", "5", "NUMERIC", [], "5"),
+    ("Bài 18: Xác suất có điều kiện", "Chương VI: Xác suất có điều kiện", "Xác suất của A khi biết B đã xảy ra bằng P(AB) chia cho P(B).", r"P(A|B) = \frac{P(AB)}{P(B)}", "NUMERIC", "Cho P(AB) = 0.2 và P(B) = 0.5. Xác suất P(A|B) bằng:", "0.4", "NUMERIC", [], "0.4"),
+    ("Bài 19: Công thức xác suất toàn phần và công thức Bayes", "Chương VI: Xác suất có điều kiện", "Xác suất toàn phần tính qua hệ biến cố đầy đủ. Công thức Bayes tính xác suất hậu nghiệm.", r"P(A) = \sum P(B_i)P(A|B_i)", "NUMERIC", "Nếu P(B1)=0.4, P(A|B1)=0.5, P(B2)=0.6, P(A|B2)=0.2 thì P(A) bằng:", "0.32", "NUMERIC", [], "0.32")
+]
+
+def build_curriculum_dict(raw_list):
+    res = {}
+    for idx, item in enumerate(raw_list):
+        title, chap, script, math_note, qtype, content, target, ans_type, opts, def_ans = item
+        res[title] = {
+            "chapter": chap,
+            "video_title": f"Bài giảng vi mô: {title}",
+            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
+            "audio_script": f"Chào em! Trong bài học {title}, em hãy ghi nhớ: {script} Khi làm bài tập, hãy biến đổi cẩn thận và kiểm tra lại điều kiện nhé!",
+            "has_3d": True if ("không gian" in title or "Oxyz" in title or "Vectơ" in title or "mặt phẳng" in title or "mặt cầu" in title) else False,
+            "smart_notes": f"- **Khái niệm cốt lõi:**\n{math_note}\n\n- **Ghi chú phương pháp:**\n{script}",
+            "exercise": {
+                "id": f"EX_{idx+1}",
+                "title": f"Bài tập tự luyện kiểm minh chứng - {title}",
+                "content": content,
+                "question_type": ans_type,
+                "options": opts,
+                "target_val": target,
+                "hint_1": f"Định lý áp dụng: {math_note}",
+                "hint_2": f"Bước giải mấu chốt: {script}",
+                "hint_3": f"Kết quả chính xác cần đạt là: {target}",
+                "solution_text": f"Áp dụng lý thuyết: {math_note}. Thực hiện biến đổi suy ra đáp số chính xác: {target}."
+            }
+        }
+    return res
+
 CURRICULUM_DATA = {
-    "Khối 10": {
-        "Bài 1: Mệnh đề toán học": {
-            "chapter": "Chương I: Mệnh đề và Tập hợp",
-            "video_title": "Bài giảng Vi mô: Bản chất Mệnh đề & Phủ định mệnh đề chứa lượng từ",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Trong Vở tự học Toán 10, em cần nắm vững: Mệnh đề toán học là một khẳng định đúng hoặc sai, tuyệt đối không thể vừa đúng vừa sai. Khi phủ định mệnh đề chứa lượng từ với mọi, ta đổi thành tồn tại, dấu lớn hơn đổi thành dấu nhỏ hơn hoặc bằng. Nhớ đừng bao giờ bỏ quên dấu bằng khi phủ định bất đẳng thức nhé!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Mệnh đề:** Khẳng định có chân giá trị hoặc Đúng hoặc Sai.
-- **Phủ định mệnh đề chứa lượng từ:**
-  + Phủ định của $\forall x \in X, P(x)$ là $\exists x \in X, \overline{P(x)}$.
-  + Phủ định của $\exists x \in X, P(x)$ là $\forall x \in X, \overline{P(x)}$.
-- ⚠️ *Bẫy sai lầm:* Phủ định của $>$ là $\le$; phủ định của $\ge$ là $<$.
-            """,
-            "exercise": {
-                "id": "VTH_10_B1",
-                "title": "Bài tập 1 (Trích Vở tự học Toán 10 - Chương I)",
-                "content": r"Cho mệnh đề $P$: '$\forall x \in \mathbb{R}, x^2 - 2x + 5 > 0$'. Hỏi mệnh đề phủ định $\overline{P}$ có dạng nào và nhận chân giá trị là Đúng hay Sai?",
-                "question_type": "CHOICE",
-                "options": [
-                    "A. $\\overline{P}: \\exists x \\in \\mathbb{R}, x^2 - 2x + 5 \\le 0$ (Chân giá trị: Sai)",
-                    "B. $\\overline{P}: \\exists x \\in \\mathbb{R}, x^2 - 2x + 5 < 0$ (Chân giá trị: Đúng)",
-                    "C. $\\overline{P}: \\forall x \\in \\mathbb{R}, x^2 - 2x + 5 \\le 0$ (Chân giá trị: Sai)",
-                    "D. $\\overline{P}: \\exists x \\in \\mathbb{R}, x^2 - 2x + 5 \\ge 0$ (Chân giá trị: Đúng)"
-                ],
-                "target_val": "A",
-                "hint_1": "Quy tắc: $\\forall$ chuyển thành $\\exists$, dấu $>$ chuyển thành $\\le$.",
-                "hint_2": "Biến đổi tam thức: $x^2 - 2x + 5 = (x-1)^2 + 4 \\ge 4 > 0, \\forall x$. Mệnh đề $P$ luôn đúng.",
-                "hint_3": "Do $P$ đúng nên mệnh đề phủ định $\\overline{P}$ nhận chân giá trị Sai.",
-                "solution_text": "Phủ định của 'với mọi' là 'tồn tại', phủ định của '>' là '<='. Vì x^2 - 2x + 5 luôn dương với mọi x nên mệnh đề phủ định là Sai."
-            }
-        },
-        "Bài 2: Hệ bất phương trình bậc nhất hai ẩn": {
-            "chapter": "Chương II: Bất phương trình bậc nhất hai ẩn",
-            "video_title": "Bài giảng Vi mô: Biểu diễn miền nghiệm & Bài toán quy hoạch tối ưu",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Để tìm miền nghiệm của hệ bất phương trình bậc nhất hai ẩn, ta vẽ từng đường thẳng biên và dùng điểm thử O(0;0) để xác định nửa mặt phẳng phù hợp. Với bài toán tối ưu thực tế, giá trị lớn nhất hoặc nhỏ nhất của hàm mục tiêu luôn luôn đạt tại một trong các đỉnh của miền đa giác nghiệm!",
-            "has_3d": False,
-            "smart_notes": r"""
-- Bất phương trình bậc nhất hai ẩn: $ax + by \le c$.
-- **Quy tắc miền nghiệm:** Điểm thử $O(0;0)$ thỏa mãn thì nửa mặt phẳng chứa $O$ là miền nghiệm.
-- **Tối ưu hóa $F(x; y) = ax + by$:** Giá trị lớn nhất/nhỏ nhất luôn đạt tại một trong các đỉnh của miền đa giác nghiệm.
-            """,
-            "exercise": {
-                "id": "VTH_10_B2",
-                "title": "Bài tập 2 (Trích Vở tự học Toán 10 - Chương II)",
-                "content": r"Cho hệ bất phương trình: $\begin{cases} x + y \le 4 \\ x \ge 0 \\ y \ge 0 \end{cases}$. Tìm giá trị lớn nhất $F_{\max}$ của biểu thức $F(x; y) = 3x + 2y$ trên miền nghiệm này.",
-                "question_type": "NUMERIC",
-                "target_val": "12",
-                "hint_1": "Miền nghiệm là tam giác vuông OAB với $O(0;0), A(4;0), B(0;4)$.",
-                "hint_2": "Tính giá trị của $F$ tại từng đỉnh: $F(0;0)=0, F(0;4)=8, F(4;0)=12$.",
-                "hint_3": "So sánh 3 giá trị để xác định giá trị lớn nhất.",
-                "solution_text": "F(4;0) = 3*(4) + 2*(0) = 12. Vậy giá trị lớn nhất F_max = 12 đạt tại đỉnh A(4;0)."
-            }
-        },
-        "Bài 3: Hệ thức lượng trong tam giác": {
-            "chapter": "Chương IV: Hệ thức lượng trong tam giác",
-            "video_title": "Bài giảng Vi mô: Định lý Côsin, Định lý Sin & Công thức diện tích",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Trong tam giác bất kỳ, biết hai cạnh và góc xen giữa ta dùng định lý Côsin tính cạnh còn lại. Biết một cạnh và hai góc kề, ta dùng định lý Sin. Công thức tính diện tích nhanh nhất là lấy một nửa tích hai cạnh nhân sin góc xen giữa!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Định lý Côsin:** $a^2 = b^2 + c^2 - 2bc \cos A$.
-- **Định lý Sin:** $\frac{a}{\sin A} = \frac{b}{\sin B} = \frac{c}{\sin C} = 2R$.
-- **Diện tích:** $S = \frac{1}{2}ab \sin C = \frac{abc}{4R} = pr$.
-            """,
-            "exercise": {
-                "id": "VTH_10_B3",
-                "title": "Bài tập 3 (Trích Vở tự học Toán 10 - Chương IV)",
-                "content": r"Cho tam giác $ABC$ có cạnh $b = 8$, cạnh $c = 5$ và góc xen giữa $\widehat{A} = 60^\circ$. Tính chính xác độ dài cạnh $a$.",
-                "question_type": "NUMERIC",
-                "target_val": "7",
-                "hint_1": "Áp dụng định lý Côsin: $a^2 = b^2 + c^2 - 2bc\cos A$.",
-                "hint_2": "Thay số: $a^2 = 8^2 + 5^2 - 2 \cdot 8 \cdot 5 \cdot \cos(60^\circ) = 64 + 25 - 40 = 49$.",
-                "hint_3": "Khai căn: $a = \sqrt{49} = 7$.",
-                "solution_text": "a^2 = 64 + 25 - 40 = 49 => a = 7."
-            }
-        }
-    },
-    "Khối 11": {
-        "Bài 1: Giá trị lượng giác của góc lượng giác": {
-            "chapter": "Chương I: Hàm số lượng giác và Phương trình lượng giác",
-            "video_title": "Bài giảng Vi mô: Trục Sin/Cos trên đường tròn lượng giác & Dấu các góc phần tư",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Trong Vở tự học Toán 11, em hãy nhớ quy tắc xét dấu: Góc phần tư thứ nhất, tất cả đều dương. Góc phần tư thứ hai, chỉ có sin dương, còn cos và tan đều âm. Khi tính cos từ sin, em dùng hệ thức sin bình cộng cos bình bằng 1, và nhớ xét dấu âm cho cos ở góc phần tư thứ hai!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Hệ thức cơ bản:** $\sin^2\alpha + \cos^2\alpha = 1$; $\tan\alpha = \frac{\sin\alpha}{\cos\alpha}$; $1 + \tan^2\alpha = \frac{1}{\cos^2\alpha}$.
-- **Dấu theo góc phần tư:**
-  + Góc I ($0 < \alpha < \frac{\pi}{2}$): $\sin > 0, \cos > 0, \tan > 0$.
-  + Góc II ($\frac{\pi}{2} < \alpha < \pi$): $\sin > 0, \cos < 0, \tan < 0$.
-  + Góc III ($\pi < \alpha < \frac{3\pi}{2}$): $\sin < 0, \cos < 0, \tan > 0$.
-  + Góc IV ($\frac{3\pi}{2} < \alpha < 2\pi$): $\cos > 0, \sin < 0, \tan < 0$.
-            """,
-            "exercise": {
-                "id": "VTH_11_B1",
-                "title": "Bài tập 1 (Trích Vở tự học Toán 11 - Chương I)",
-                "content": r"Cho góc lượng giác $\alpha$ thỏa mãn $\frac{\pi}{2} < \alpha < \pi$ và $\sin\alpha = \frac{3}{5}$. Hãy tính giá trị của $\cos\alpha$ (điền số thập phân hoặc phân số, ví dụ: -0.8).",
-                "question_type": "NUMERIC",
-                "target_val": "-0.8",
-                "alt_vals": ["-4/5", "-0,8"],
-                "hint_1": "Áp dụng hệ thức $\cos^2\alpha = 1 - \sin^2\alpha = 1 - \frac{9}{25} = \frac{16}{25}$.",
-                "hint_2": "Vì góc $\alpha$ thuộc góc phần tư thứ II nên $\cos\alpha < 0$.",
-                "hint_3": "Do đó $\cos\alpha = -\sqrt{\frac{16}{25}} = -0.8$.",
-                "solution_text": "cos^2(alpha) = 1 - 9/25 = 16/25. Do pi/2 < alpha < pi nên cos(alpha) < 0 => cos(alpha) = -4/5 = -0.8."
-            }
-        },
-        "Bài 2: Ứng dụng lượng giác giải toán thực tế": {
-            "chapter": "Chương I: Hàm số lượng giác và Phương trình lượng giác",
-            "video_title": "Bài giảng Vi mô: Giải toán mô hình hóa chuyển động ném tạ & Dòng điện xoay chiều",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Vở tự học Toán 11 giới thiệu bài toán mô hình hóa thực tế rất hay: Tầm xa khi ném tạ được tính theo công thức L bằng v không bình phương nhân sin hai alpha chia g. Khi bài toán cho trước tầm xa, vận tốc ban đầu và gia tốc trọng trường, ta rút ra phương trình lượng giác để tìm góc ném tối ưu. Hãy biến đổi cẩn thận để tìm góc ném nhỏ nhất nhé!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Tầm xa chuyển động ném xiên:** $L = \frac{v_0^2 \sin(2\alpha)}{g}$ với $0^\circ < \alpha < 90^\circ$.
-- **Cường độ dòng điện xoay chiều:** $i(t) = a\sin(\omega t) + b\cos(\omega t)$ có giá trị cực đại là $I_{\max} = \sqrt{a^2 + b^2}$.
-            """,
-            "exercise": {
-                "id": "VTH_11_B2_REAL",
-                "title": "Bài toán thực tế Câu 9 (Trang 15 - Vở tự học Toán 11)",
-                "content": r"Một vận động viên ném một quả tạ xiên từ mặt đất với vận tốc đầu $v_0 = 14\text{ m/s}$. Bỏ qua sức cản không khí, tầm xa của quả tạ là $L = \frac{v_0^2 \sin 2\alpha}{g}$ với $g = 9.8\text{ m/s}^2$. Để quả tạ rơi cách vị trí ném đúng $10\text{ m}$ thì góc ném $\alpha$ nhỏ nhất bằng bao nhiêu độ? (Làm tròn đến phần nguyên độ).",
-                "question_type": "NUMERIC",
-                "target_val": "15",
-                "alt_vals": ["15 độ", "15°"],
-                "hint_1": "Thay số: $10 = \frac{14^2 \sin 2\alpha}{9.8} = \frac{196 \sin 2\alpha}{9.8} = 20 \sin 2\alpha$.",
-                "hint_2": "Suy ra $\sin 2\alpha = \frac{10}{20} = 0.5$.",
-                "hint_3": "Do đó $2\alpha = 30^\circ \Rightarrow \alpha = 15^\circ$.",
-                "solution_text": "Ta có 10 = (14^2 * sin(2*alpha)) / 9.8 <=> 10 = 20*sin(2*alpha) <=> sin(2*alpha) = 0.5 => 2*alpha = 30 độ => alpha = 15 độ."
-            }
-        },
-        "Bài 3: Đường thẳng vuông góc với mặt phẳng": {
-            "chapter": "Chương IV: Quan hệ vuông góc trong không gian",
-            "video_title": "Bài giảng Vi mô: Phương pháp xác định góc giữa đường thẳng và mặt phẳng",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Để tìm góc giữa đường thẳng và mặt phẳng, ta tìm giao điểm trước, sau đó hạ hình chiếu vuông góc từ đỉnh còn lại xuống mặt đáy. Góc cần tìm chính là góc giữa đường thẳng ban đầu và hình chiếu của nó. Hãy sử dụng mô hình 3D tương tác bên dưới để quan sát rõ góc này trong không gian nhé!",
-            "has_3d": True,
-            "smart_notes": r"""
-- **Quy tắc xác định góc:**
-  1. Giao điểm $A = d \cap (P)$.
-  2. Hình chiếu vuông góc $H$ của $S \in d$ lên $(P)$ ($SH \perp (P)$).
-  3. Góc $\varphi = \widehat{(d, (P))} = \widehat{SAH}$.
-            """,
-            "exercise": {
-                "id": "VTH_11_B3",
-                "title": "Bài tập 3 (Trích Vở tự học Toán 11 - Chương IV)",
-                "content": r"Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác vuông cân tại $B$, $AB = a$. Cạnh bên $SA \perp (ABC)$ và $SA = a$. Tính góc giữa cạnh bên $SB$ và mặt phẳng đáy $(ABC)$ (nhập số độ, ví dụ: 45).",
-                "question_type": "NUMERIC",
-                "target_val": "45",
-                "hint_1": "Giao điểm của $SB$ và đáy là $B$. Điểm $S$ có hình chiếu lên đáy là $A$.",
-                "hint_2": "Hình chiếu của $SB$ lên đáy là $AB$. Góc cần tìm là $\widehat{SBA}$.",
-                "hint_3": "Tam giác $SAB$ vuông tại $A$ có $SA = AB = a$ (vuông cân), suy ra $\widehat{SBA} = 45^\circ$.",
-                "solution_text": "Hình chiếu của SB lên đáy là AB. Tam giác SAB vuông cân tại A nên góc SBA = 45 độ."
-            }
-        }
-    },
-    "Khối 12": {
-        "Bài 1: Tính đơn điệu và Cực trị của hàm số": {
-            "chapter": "Chương I: Ứng dụng đạo hàm khảo sát hàm số",
-            "video_title": "Bài giảng Vi mô: Bảng biến thiên, dấu đạo hàm y' và cực trị hàm số chuẩn 2025+",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Khảo sát hàm số trong Vở tự học Toán 12 yêu cầu phân biệt rõ: Điểm cực trị của hàm số là x, giá trị cực trị là y, và điểm cực trị của đồ thị là cặp điểm M(x; y). Đạo hàm y phẩy đổi dấu từ dương sang âm ta có cực đại, từ âm sang dương ta có cực tiểu!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Cực trị:** $f'(x_0) = 0$ và đổi dấu qua $x_0$:
-  + Đổi dấu $(+) \rightarrow (-)$: Điểm cực đại.
-  + Đổi dấu $(-) \rightarrow (+)$: Điểm cực tiểu.
-- ⚠️ *Phân biệt thuật ngữ:*
-  + Điểm cực trị của hàm số: $x_0$.
-  + Giá trị cực trị của hàm số: $y_0 = f(x_0)$.
-  + Điểm cực trị của đồ thị: $M(x_0; y_0)$.
-            """,
-            "exercise": {
-                "id": "VTH_12_B1",
-                "title": "Bài tập 1 (Trang 18 - Vở tự học Toán 12)",
-                "content": r"Cho hàm số $y = x^3 - 3x + 2$. Tìm giá trị cực tiểu ($y_{CT}$) của hàm số đã cho.",
-                "question_type": "NUMERIC",
-                "target_val": "0",
-                "hint_1": "Tính đạo hàm: $y' = 3x^2 - 3 = 0 \Leftrightarrow x = 1$ hoặc $x = -1$.",
-                "hint_2": "Lập bảng xét dấu: tại $x = 1$, đạo hàm đổi dấu từ âm sang dương nên $x = 1$ là điểm cực tiểu.",
-                "hint_3": "Thay $x = 1$ vào hàm số ban đầu: $y_{CT} = 1^3 - 3(1) + 2 = 0$.",
-                "solution_text": "y' = 3x^2 - 3 = 0 <=> x = +-1. Tại x = 1, y' đổi dấu từ âm sang dương nên hàm số đạt cực tiểu tại x = 1. Giá trị cực tiểu y_CT = 1 - 3 + 2 = 0."
-            }
-        },
-        "Bài 2: Giá trị lớn nhất, nhỏ nhất & Tối ưu thực tiễn": {
-            "chapter": "Chương I: Ứng dụng đạo hàm khảo sát hàm số",
-            "video_title": "Bài giảng Vi mô: Giải toán tối ưu diện tích hộp và chi phí sản xuất trung bình",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Trong Trang 18 Vở tự học Toán 12 có bài toán kinh điển: Làm chiếc hộp không nắp đáy hình vuông có thể tích 32 dm khối. Khi đặt cạnh đáy là x thì chiều cao là 32 chia x bình phương. Biểu thức diện tích toàn phần là x bình cộng 128 chia x. Lấy đạo hàm và giải nghiệm bằng 0, ta tìm được cạnh đáy x bằng 4 và diện tích vật liệu nhỏ nhất bằng 48 dm vuông!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Bài toán hộp không nắp đáy vuông:**
-  + Thể tích: $V = x^2 h = 32 \Rightarrow h = \frac{32}{x^2}$.
-  + Diện tích vật liệu: $S(x) = x^2 + 4xh = x^2 + \frac{128}{x}$.
-  + Đạo hàm: $S'(x) = 2x - \frac{128}{x^2} = 0 \Leftrightarrow x^3 = 64 \Leftrightarrow x = 4$.
-  + Diện tích nhỏ nhất: $S(4) = 4^2 + \frac{128}{4} = 16 + 32 = 48\text{ dm}^2$.
-            """,
-            "exercise": {
-                "id": "VTH_12_P3_C1",
-                "title": "Phần 3 - Câu 1 (Trang 18 - Vở tự học Toán 12)",
-                "content": r"Người ta cần làm một chiếc hộp không nắp có đáy là hình vuông và thể tích bằng $32\text{ dm}^3$. Hỏi diện tích vật liệu cần dùng (tổng diện tích đáy và bốn mặt bên) nhỏ nhất bằng bao nhiêu $\text{dm}^2$?",
-                "question_type": "NUMERIC",
-                "target_val": "48",
-                "alt_vals": ["48 dm2", "48dm2"],
-                "hint_1": "Gọi cạnh đáy hình vuông là $x > 0$, chiều cao là $h > 0$. Ta có $V = x^2 h = 32 \Rightarrow h = \frac{32}{x^2}$.",
-                "hint_2": "Diện tích vật liệu cần dùng là $S(x) = x^2 + 4xh = x^2 + \frac{128}{x}$.",
-                "hint_3": "Tính đạo hàm: $S'(x) = 2x - \frac{128}{x^2} = 0 \Leftrightarrow x^3 = 64 \Leftrightarrow x = 4$. Thay $x = 4$ vào $S(x)$.",
-                "solution_text": "S(x) = x^2 + 128/x. S'(x) = 2x - 128/x^2 = 0 <=> x = 4. Diện tích nhỏ nhất là S(4) = 16 + 32 = 48 dm2."
-            }
-        },
-        "Bài 3: Đường tiệm cận của đồ thị hàm số": {
-            "chapter": "Chương I: Ứng dụng đạo hàm khảo sát hàm số",
-            "video_title": "Bài giảng Vi mô: Nhận diện nhanh tiệm cận đứng, ngang & Tiệm cận xiên",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Đường tiệm cận của đồ thị hàm số là một nội dung trọng tâm trong đề thi tốt nghiệp THPT. Tiệm cận đứng xuất hiện tại các điểm làm mẫu số triệt tiêu mà tử số khác không. Tiệm cận ngang xác định bởi giới hạn khi x tiến tới cộng hoặc trừ vô cùng. Nhớ chú ý hàm phân thức bậc hai trên bậc nhất sẽ có tiệm cận xiên em nhé!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Tiệm cận đứng:** $x = x_0$ nếu ít nhất một trong các giới hạn $\lim_{x \to x_0^\pm} f(x) = \pm\infty$.
-- **Tiệm cận ngang:** $y = y_0$ nếu $\lim_{x \to +\infty} f(x) = y_0$ hoặc $\lim_{x \to -\infty} f(x) = y_0$.
-- **Hàm nhất biến:** $y = \frac{ax+b}{cx+d}$ có TCĐ $x = -\frac{d}{c}$, TCN $y = \frac{a}{c}$.
-            """,
-            "exercise": {
-                "id": "VTH_12_B3_TC",
-                "title": "Phần 2 - Câu 1 (Trang 25 - Vở tự học Toán 12)",
-                "content": r"Cho hàm số $f(x) = \frac{2x - 3}{x + 1}$. Tọa độ giao điểm của tiệm cận đứng và tiệm cận ngang của đồ thị hàm số là điểm nào?",
-                "question_type": "CHOICE",
-                "options": [
-                    "A. $I(-1; 2)$",
-                    "B. $I(1; 2)$",
-                    "C. $I(-1; -3)$",
-                    "D. $I(2; -1)$"
-                ],
-                "target_val": "A",
-                "hint_1": "Tìm phương trình tiệm cận đứng: nghiệm của mẫu $x + 1 = 0 \Rightarrow x = -1$.",
-                "hint_2": "Tìm phương trình tiệm cận ngang: bậc tử bằng bậc mẫu nên $y = \frac{2}{1} = 2$.",
-                "hint_3": "Giao điểm của hai đường thẳng $x = -1$ và $y = 2$ là điểm $I(-1; 2)$.",
-                "solution_text": "Tiệm cận đứng x = -1, tiệm cận ngang y = 2. Giao điểm là I(-1; 2)."
-            }
-        },
-        "Bài 4: Tọa độ và Mô hình hóa Vectơ Oxyz trong không gian": {
-            "chapter": "Chương II: Vectơ và Hệ trục tọa độ trong không gian",
-            "video_title": "Bài giảng Vi mô: Mô hình hóa tọa độ Radar quét máy bay & Vận tốc chuyển động",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Trong Trang 132 Vở tự học Toán 12, chúng ta có bài toán mô hình hóa thực tế rất hay về radar: Một trạm radar đặt tại gốc tọa độ phát hiện các vật thể trong bán kính 10 km. Biên vùng quét chính là phương trình mặt cầu x bình cộng y bình cộng z bình bằng 100. Muốn kiểm tra máy bay có nằm trong vùng quét hay không, em tính khoảng cách từ điểm đến gốc tọa độ rồi so sánh với bán kính 10 km!",
-            "has_3d": True,
-            "smart_notes": r"""
-- **Tọa độ điểm & vectơ:** $\vec{u} = (x; y; z) \Leftrightarrow \vec{u} = x\vec{i} + y\vec{j} + z\vec{k}$.
-- **Mặt cầu:** $(S): (x-a)^2 + (y-b)^2 + (z-c)^2 = R^2$.
-- **Bài toán Radar:** Biên vùng quét đặt tại gốc $O(0;0;0)$ bán kính $R = 10\text{ km}$ là $x^2 + y^2 + z^2 \le 100$.
-            """,
-            "exercise": {
-                "id": "VTH_12_P2_RADAR",
-                "title": "Phần 2 - Câu 2 (Trang 132 - Vở tự học Toán 12)",
-                "content": r"Một trạm radar đặt tại gốc tọa độ $O$ phát hiện các vật thể trong bán kính $10\text{ km}$ (mặt phẳng $Oxy$ là mặt đất). Một máy bay ở vị trí $B(7; 6; 5)$. Khoảng cách từ máy bay $B$ đến trạm radar bằng bao nhiêu (km, làm tròn 2 chữ số thập phân)? Máy bay có nằm trong vùng quét không?",
-                "question_type": "NUMERIC",
-                "target_val": "10.49",
-                "alt_vals": ["10.5", "10,49"],
-                "hint_1": "Khoảng cách từ gốc $O(0;0;0)$ đến $B(7;6;5)$ là $OB = \sqrt{7^2 + 6^2 + 5^2}$.",
-                "hint_2": "Tính toán: $OB = \sqrt{49 + 36 + 25} = \sqrt{110} \approx 10.49\text{ km}$.",
-                "hint_3": "Do $10.49 > 10$ nên máy bay nằm ngoài vùng quét radar.",
-                "solution_text": "OB = sqrt(7^2 + 6^2 + 5^2) = sqrt(110) ≈ 10.49 km. Do 10.49 > 10 km nên máy bay không nằm trong vùng quét."
-            }
-        },
-        "Bài 5: Ứng dụng hình học của Tích phân": {
-            "chapter": "Chương IV: Nguyên hàm và Tích phân",
-            "video_title": "Bài giảng Vi mô: Tính diện tích hình phẳng giới hạn bởi Parabol & Trục hoành",
-            "video_url": "https://www.youtube.com/watch?v=kYJ_t120-Jk",
-            "audio_script": "Chào em! Trong Trang 103 Vở tự học Toán 12, để tính diện tích hình phẳng giới hạn bởi parabol và trục hoành, bước đầu tiên là em giải phương trình hoành độ giao điểm để tìm hai cận tích phân. Sau đó lấy tích phân giá trị tuyệt đối. Hãy tính cẩn thận bài tập 4 trang 103 bên dưới để rèn luyện nhé!",
-            "has_3d": False,
-            "smart_notes": r"""
-- **Diện tích hình phẳng giới hạn bởi đồ thị $y = f(x)$ và trục $Ox$:**
-  $S = \int_a^b |f(x)| dx$.
-- Với parabol $y = x^2 - 4x$, giao điểm với $Ox$ là $x = 0$ và $x = 4$.
-- $S = \int_0^4 |x^2 - 4x| dx = \int_0^4 (4x - x^2) dx = \left[ 2x^2 - \frac{x^3}{3} \right]_0^4 = 32 - \frac{64}{3} = \frac{32}{3}$.
-            """,
-            "exercise": {
-                "id": "VTH_12_P1_C4_T103",
-                "title": "Phần 1 - Câu 4 (Trang 103 - Vở tự học Toán 12)",
-                "content": r"Diện tích hình phẳng giới hạn bởi parabol $y = x^2 - 4x$ và trục hoành $Ox$ bằng bao nhiêu? (Nhập phân số dạng a/b hoặc số thập phân làm tròn 2 chữ số, ví dụ: 32/3 hoặc 10.67).",
-                "question_type": "NUMERIC",
-                "target_val": "32/3",
-                "alt_vals": ["10.67", "10,67"],
-                "hint_1": "Phương trình hoành độ giao điểm: $x^2 - 4x = 0 \Leftrightarrow x = 0$ hoặc $x = 4$.",
-                "hint_2": "Diện tích: $S = \int_0^4 |x^2 - 4x| dx = \int_0^4 (4x - x^2) dx$.",
-                "hint_3": "Tính tích phân: $\left[2x^2 - \frac{x^3}{3}\right]_0^4 = 32 - \frac{64}{3} = \frac{32}{3}$.",
-                "solution_text": "Phương trình hoành độ giao điểm có nghiệm 0 và 4. S = tích phân từ 0 đến 4 của (4x - x^2)dx = [2x^2 - x^3/3]_0^4 = 32/3 ≈ 10.67."
-            }
-        }
-    }
+    "Khối 10": build_curriculum_dict(LESSONS_10),
+    "Khối 11": build_curriculum_dict(LESSONS_11),
+    "Khối 12": build_curriculum_dict(LESSONS_12)
 }
 
 # ==============================================================================
@@ -386,296 +229,52 @@ EXAM_BANK = {
     "Khối 10": {
         "Giữa học kỳ 1": {
             "title": "ĐỀ KHẢO THÍ GIỮA HỌC KỲ 1 - TOÁN 10",
-            "p1": [
-                {"q": r"Mệnh đề nào sau đây là mệnh đề toán học?", "ops": ["A. $2 + 3 = 6$", "B. Thời tiết hôm nay mát mẻ quá!", "C. Bạn có thích học Toán không?", "D. Hãy mở trang 10 sách giáo khoa."], "ans": "A", "exp": "A là câu khẳng định có chân giá trị sai, là mệnh đề toán học."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho tam thức bậc hai $f(x) = x^2 - 4x + 3$. Xét tính Đúng/Sai của các mệnh đề sau:",
-                    "items": [
-                        ("a) Phương trình f(x) = 0 có hai nghiệm phân biệt là x = 1 và x = 3.", True, "Delta' = 4 - 3 = 1 > 0, nghiệm là x = 1 và x = 3."),
-                        ("b) f(x) < 0 với mọi x thuộc khoảng (1; 3).", True, "Trong khoảng hai nghiệm f(x) trái dấu với hệ số a = 1 > 0."),
-                        ("c) Đỉnh của parabol đồ thị hàm số có tọa độ I(2; 1).", False, "Đỉnh parabol x = 2, y = f(2) = -1. Tọa độ đúng là I(2; -1)."),
-                        ("d) f(0) = 3.", True, "Thay x = 0 được f(0) = 3.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Cho tam giác ABC có AB = 6, AC = 8 và góc A = 60 độ. Tính độ dài cạnh BC.", "ans": "7.21", "alt": ["7.2", "52^0.5"], "exp": "BC^2 = 6^2 + 8^2 - 2*6*8*cos(60°) = 52 => BC ≈ 7.21"}
-            ]
+            "p1": [{"q": r"Mệnh đề nào sau đây là mệnh đề toán học?", "ops": ["A. $2 + 3 = 6$", "B. Thời tiết hôm nay mát quá!", "C. Bạn học bài chưa?", "D. Hãy giải phương trình."], "ans": "A", "exp": "A là câu khẳng định sai, là mệnh đề toán học."}],
+            "p2": [{"q": r"Cho tam thức $f(x) = x^2 - 4x + 3$. Xét tính Đúng/Sai:", "items": [("a) Phương trình có 2 nghiệm phân biệt x=1 và x=3.", True, "Delta'>0."), ("b) f(x) < 0 với x thuộc (1; 3).", True, "Trong trái ngoài cùng."), ("c) Đỉnh parabol là I(2; 1).", False, "Đỉnh đúng là I(2; -1)."), ("d) f(0) = 3.", True, "Thay x=0.")]}],
+            "p3": [{"q": r"Cho tam giác ABC có b=8, c=5, góc A=60 độ. Cạnh a bằng bao nhiêu?", "ans": "7", "alt": ["7.0"], "exp": "a^2 = 64 + 25 - 40 = 49 => a = 7."}]
         },
         "Cuối học kỳ 1": {
             "title": "ĐỀ KIỂM TRA CUỐI HỌC KỲ 1 - TOÁN 10",
-            "p1": [
-                {"q": r"Cho hai vectơ $\vec{a} = (1; 2)$ và $\vec{b} = (-2; 3)$. Tích vô hướng $\vec{a} \cdot \vec{b}$ bằng:", "ops": ["A. 4", "B. -8", "C. 8", "D. 0"], "ans": "A", "exp": "1*(-2) + 2*3 = -2 + 6 = 4."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho hình vuông ABCD cạnh a. Xét tính Đúng/Sai của các khẳng định sau:",
-                    "items": [
-                        ("a) Độ dài vectơ AB bằng a.", True, "Độ dài vectơ cạnh hình vuông."),
-                        ("b) Tích vô hướng của vectơ AB và AD bằng 0.", True, "Do AB vuông góc AD."),
-                        ("c) Vectơ AC cùng hướng với vectơ BD.", False, "Hai đường chéo cắt nhau, không cùng hướng."),
-                        ("d) Độ dài vectơ AC bằng a nhân căn 2.", True, "Đường chéo hình vuông cạnh a.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Tính khoảng cách từ điểm M(1; 2) đến đường thẳng d: 3x - 4y + 15 = 0.", "ans": "2", "alt": ["2.0"], "exp": "d = |3(1) - 4(2) + 15| / sqrt(3^2 + 4^2) = 10 / 5 = 2."}
-            ]
-        },
-        "Giữa học kỳ 2": {
-            "title": "ĐỀ KHẢO THÍ GIỮA HỌC KỲ 2 - TOÁN 10",
-            "p1": [
-                {"q": r"Phương trình $\sqrt{x^2 - 3x + 2} = x - 1$ có bao nhiêu nghiệm thực?", "ops": ["A. 1", "B. 2", "C. 0", "D. Vô số"], "ans": "A", "exp": "Bình phương hai vế với x >= 1: x^2 - 3x + 2 = x^2 - 2x + 1 <=> x = 1 (thỏa mãn)."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho đường thẳng Delta: 3x - 4y + 1 = 0. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Vectơ pháp tuyến của đường thẳng là n = (3; -4).", True, "Tọa độ hệ số trước x, y."),
-                        ("b) Vectơ chỉ phương của đường thẳng là u = (4; 3).", True, "Tích vô hướng với pháp tuyến bằng 0."),
-                        ("c) Điểm A(1; 1) thuộc đường thẳng Delta.", True, "3(1) - 4(1) + 1 = 0 thỏa mãn."),
-                        ("d) Đường thẳng Delta đi qua gốc tọa độ O(0;0).", False, "3(0) - 4(0) + 1 = 1 khác 0.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Tính góc giữa hai đường thẳng d1: x + y = 0 và d2: x - y + 5 = 0 (nhập số độ).", "ans": "90", "alt": ["90 độ"], "exp": "Hai vectơ pháp tuyến vuông góc nên góc bằng 90 độ."}
-            ]
-        },
-        "Cuối học kỳ 2": {
-            "title": "ĐỀ KIỂM TRA CUỐI HỌC KỲ 2 - TOÁN 10",
-            "p1": [
-                {"q": r"Có bao nhiêu cách xếp 5 bạn học sinh ngồi vào một hàng ngang 5 ghế?", "ops": ["A. 120", "B. 24", "C. 720", "D. 25"], "ans": "A", "exp": "Số hoán vị P_5 = 5! = 120."}
-            ],
-            "p2": [
-                {
-                    "q": r"Gieo một đồng xu cân đối 3 lần liên tiếp. Xét tính Đúng/Sai của các biến cố:",
-                    "items": [
-                        ("a) Không gian mẫu có 8 phần tử.", True, "2^3 = 8 phần tử."),
-                        ("b) Xác suất để 3 lần đều xuất hiện mặt sấp là 1/8.", True, "Chỉ có 1 kết quả SSS trong 8 kết quả."),
-                        ("c) Xác suất để có ít nhất một lần xuất hiện mặt ngửa là 7/8.", True, "Biến cố đối là 1 - 1/8 = 7/8."),
-                        ("d) Biến cố 'xuất hiện 2 mặt ngửa' có xác suất 1/2.", False, "Có 3 kết quả nên xác suất là 3/8 khác 1/2.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Tìm hệ số của x^3 trong khai triển nhị thức Newton của (x + 2)^4.", "ans": "8", "alt": ["8.0"], "exp": "Số hạng: C(4, 1)*x^3*2^1 = 8x^3. Hệ số là 8."}
-            ]
+            "p1": [{"q": r"Cho u=(1;2), v=(-2;3). Tích vô hướng u.v bằng:", "ops": ["A. 4", "B. -8", "C. 8", "D. 0"], "ans": "A", "exp": "1*(-2) + 2*3 = 4."}],
+            "p2": [{"q": r"Cho hình vuông ABCD cạnh a. Xét tính Đúng/Sai:", "items": [("a) Độ dài vectơ AB bằng a.", True, "Cạnh hình vuông."), ("b) AB vuông góc AD.", True, "Góc vuông."), ("c) Vectơ AC cùng hướng BD.", False, "Cắt nhau."), ("d) Độ dài vectơ AC bằng a căn 2.", True, "Đường chéo.")]}],
+            "p3": [{"q": r"Khoảng cách từ điểm M(1; 2) đến đường thẳng 3x - 4y + 15 = 0 bằng:", "ans": "2", "alt": ["2.0"], "exp": "d = |3 - 8 + 15| / 5 = 2."}]
         }
     },
     "Khối 11": {
         "Giữa học kỳ 1": {
             "title": "ĐỀ KHẢO THÍ GIỮA HỌC KỲ 1 - TOÁN 11",
-            "p1": [
-                {"q": r"Tập xác định của hàm số $y = \tan(x)$ là:", "ops": [r"A. $D = \mathbb{R} \setminus \{\frac{\pi}{2} + k\pi, k \in \mathbb{Z}\}$", r"B. $D = \mathbb{R} \setminus \{k\pi, k \in \mathbb{Z}\}$", r"C. $D = \mathbb{R}$", r"D. $D = [-1; 1]$"], "ans": "A", "exp": "Điều kiện cos(x) khác 0."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho cấp số cộng $(u_n)$ có số hạng đầu $u_1 = 2$ và công sai $d = 3$. Xét tính Đúng/Sai của các mệnh đề:",
-                    "items": [
-                        ("a) Số hạng thứ hai u_2 = 5.", True, "u_2 = 2 + 3 = 5."),
-                        ("b) Công thức số hạng tổng quát là u_n = 3n - 1.", True, "u_n = 2 + (n-1)*3 = 3n - 1."),
-                        ("c) Số 20 là một số hạng của cấp số cộng trên.", True, "3n - 1 = 20 <=> n = 7 nguyên dương."),
-                        ("d) Tổng 10 số hạng đầu tiên S_10 = 155.", True, "S_10 = 10*(2*2 + 9*3)/2 = 155.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Một rạp hát có 12 hàng ghế. Hàng đầu có 15 ghế, mỗi hàng sau nhiều hơn hàng trước 2 ghế. Tính tổng số ghế của rạp.", "ans": "312", "alt": ["312 ghế"], "exp": "S_12 = 12*(2*15 + 11*2)/2 = 312."}
-            ]
+            "p1": [{"q": r"Tập xác định của hàm số $y = \tan x$ là:", "ops": [r"A. $D = \mathbb{R} \setminus \{\frac{\pi}{2} + k\pi\}$", r"B. $D = \mathbb{R} \setminus \{k\pi\}$", r"C. $D = \mathbb{R}$", r"D. $D = [-1; 1]$"], "ans": "A", "exp": "cos x khác 0."}],
+            "p2": [{"q": r"Cho cấp số cộng (un) có u1 = 2, d = 3. Xét tính Đúng/Sai:", "items": [("a) u2 = 5.", True, "2+3=5."), ("b) Số hạng tổng quát un = 3n - 1.", True, "2 + 3(n-1)."), ("c) Số 20 là một số hạng của dãy.", True, "3n-1=20 => n=7."), ("d) Tổng 10 số hạng đầu S10 = 155.", True, "10*(4+27)/2 = 155.")]}],
+            "p3": [{"q": r"Rạp hát có 12 hàng ghế. Hàng 1 có 15 ghế, mỗi hàng sau hơn 2 ghế. Tổng số ghế:", "ans": "312", "alt": ["312 ghế"], "exp": "S_12 = 12*(30 + 22)/2 = 312."}]
         },
         "Cuối học kỳ 1": {
             "title": "ĐỀ KIỂM TRA CUỐI HỌC KỲ 1 - TOÁN 11",
-            "p1": [
-                {"q": r"Giá trị của giới hạn $\lim_{n \to \infty} \frac{4n + 3}{2n - 1}$ bằng:", "ops": ["A. 2", "B. -3", "C. 4", "D. 0"], "ans": "A", "exp": "Chia cả tử và mẫu cho n được 4/2 = 2."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho hình chóp S.ABCD có đáy ABCD là hình bình hành tâm O. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Giao tuyến của hai mặt phẳng (SAC) và (SBD) là đường thẳng SO.", True, "S và O là hai điểm chung."),
-                        ("b) Đường thẳng AB song song với mặt phẳng (SCD).", True, "AB song song CD thuộc (SCD)."),
-                        ("c) Đường thẳng SO cắt đường thẳng AD.", False, "SO và AD chéo nhau."),
-                        ("d) Thiết diện của hình chóp cắt bởi mặt phẳng qua O song song với (SAB) là hình thang.", True, "Mặt phẳng cắt song song mặt bên.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Tính giới hạn: $\lim_{x \to 1} \frac{x^2 - 1}{x - 1}$.", "ans": "2", "alt": ["2.0"], "exp": "(x-1)(x+1)/(x-1) = x + 1. Thay x = 1 được 2."}
-            ]
-        },
-        "Giữa học kỳ 2": {
-            "title": "ĐỀ KHẢO THÍ GIỮA HỌC KỲ 2 - TOÁN 11",
-            "p1": [
-                {"q": r"Đạo hàm của hàm số $y = x^3 - 2x + 1$ là:", "ops": [r"A. $y' = 3x^2 - 2$", r"B. $y' = 3x^2 + 2$", r"C. $y' = x^2 - 2$", r"D. $y' = 3x - 2$"], "ans": "A", "exp": "Đạo hàm: (x^3)' = 3x^2, (-2x)' = -2, 1' = 0."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho hàm số $f(x) = \frac{2x - 1}{x + 1}$. Xét tính Đúng/Sai của các mệnh đề:",
-                    "items": [
-                        ("a) Tập xác định của hàm số là D = R \\ {-1}.", True, "Mẫu số khác 0 khi x khác -1."),
-                        ("b) Đạo hàm f'(x) = 3 / (x+1)^2.", True, "ad - bc = 2*1 - (-1)*1 = 3."),
-                        ("c) Hàm số luôn đồng biến trên từng khoảng xác định.", True, "f'(x) > 0 với mọi x khác -1."),
-                        ("d) f'(0) = 1.", False, "f'(0) = 3 / 1^2 = 3 khác 1.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Một chất điểm chuyển động theo phương trình $s(t) = t^3 - 3t^2 + 2$ (t tính bằng giây, s tính bằng mét). Tính vận tốc tức thời tại thời điểm t = 4 giây (m/s).", "ans": "24", "alt": ["24 m/s"], "exp": "v(t) = s'(t) = 3t^2 - 6t. Tại t = 4: v(4) = 3(16) - 6(4) = 24 m/s."}
-            ]
-        },
-        "Cuối học kỳ 2": {
-            "title": "ĐỀ KIỂM TRA CUỐI HỌC KỲ 2 - TOÁN 11",
-            "p1": [
-                {"q": r"Cho hình lập phương ABCD.A'B'C'D'. Góc giữa hai đường thẳng A'B' và CD bằng:", "ops": ["A. 0 độ", "B. 90 độ", "C. 45 độ", "D. 60 độ"], "ans": "A", "exp": "A'B' song song CD nên góc bằng 0 độ."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho hình chóp S.ABC có SA vuông góc đáy, tam giác ABC vuông tại B. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) SA vuông góc với BC.", True, "SA vuông góc đáy nên vuông góc mọi đường trong đáy."),
-                        ("b) BC vuông góc với mặt phẳng (SAB).", True, "BC vuông góc AB và SA."),
-                        ("c) Tam giác SBC là tam giác vuông tại B.", True, "BC vuông góc SB."),
-                        ("d) Khoảng cách từ S đến mặt phẳng (ABC) bằng độ dài cạnh SB.", False, "Khoảng cách bằng độ dài cạnh SA.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Cho hình chóp tam giác đều S.ABC có cạnh đáy bằng 3, đường cao SH = 4. Tính thể tích khối chóp S.ABC (làm tròn 2 chữ số thập phân).", "ans": "5.2", "alt": ["5.19", "5.20"], "exp": "V = (1/3)*(9*sqrt(3)/4)*4 = 3*sqrt(3) ≈ 5.20."}
-            ]
+            "p1": [{"q": r"Giới hạn lim (4n + 3)/(2n - 1) khi n ra vô cùng bằng:", "ops": ["A. 2", "B. -3", "C. 4", "D. 0"], "ans": "A", "exp": "4/2 = 2."}],
+            "p2": [{"q": r"Cho hình chóp S.ABCD đáy hình bình hành tâm O. Xét tính Đúng/Sai:", "items": [("a) Giao tuyến (SAC) và (SBD) là SO.", True, "Chung S và O."), ("b) AB song song (SCD).", True, "AB song song CD."), ("c) SO cắt AD.", False, "Chéo nhau."), ("d) Thiết diện qua O song song (SAB) là hình thang.", True, "Song song.")]}],
+            "p3": [{"q": r"Tính giới hạn: lim (x^2 - 1)/(x - 1) khi x tiến tới 1.", "ans": "2", "alt": ["2.0"], "exp": "x + 1 = 2."}]
         }
     },
     "Khối 12": {
-        "Giữa học kỳ 1": {
-            "title": "ĐỀ KHẢO THÍ GIỮA HỌC KỲ 1 - TOÁN 12",
-            "p1": [
-                {"q": r"Cho hàm số $y = f(x)$ có bảng biến thiên... Khẳng định nào sau đây đúng về cực trị?", "ops": [r"A. Hàm số đạt cực đại tại $x = 1$", r"B. Hàm số đạt cực đại tại $x = -1$", r"C. Giá trị cực tiểu bằng $1$", r"D. Hàm số không có cực trị"], "ans": "A", "exp": "Đạo hàm đổi dấu từ dương sang âm tại x = 1."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho hàm số $f(x) = x^3 - 3x^2 + 2$. Xét tính Đúng/Sai của các mệnh đề sau:",
-                    "items": [
-                        ("a) Đạo hàm của hàm số là f'(x) = 3x^2 - 6x.", True, "Đạo hàm chuẩn xác."),
-                        ("b) Hàm số đồng biến trên khoảng (0; 2).", False, "f'(x) < 0 trên khoảng (0; 2) nên nghịch biến."),
-                        ("c) Điểm cực đại của đồ thị hàm số là điểm A(0; 2).", True, "f'(0) = 0, f(0) = 2, f' đổi dấu + sang -."),
-                        ("d) Giá trị cực tiểu của hàm số bằng -2.", True, "Điểm cực tiểu x = 2, f(2) = -2.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Tìm giá trị lớn nhất của hàm số $f(x) = x^3 - 3x + 1$ trên đoạn $[0; 2]$.", "ans": "3", "alt": ["3.0"], "exp": "f(0) = 1, f(1) = -1, f(2) = 3. Giá trị lớn nhất là 3."}
-            ]
-        },
-        "Cuối học kỳ 1": {
-            "title": "ĐỀ KIỂM TRA CUỐI HỌC KỲ 1 - TOÁN 12",
-            "p1": [
-                {"q": r"Trong không gian Oxyz, tọa độ của vectơ $\vec{u} = 2\vec{i} - 3\vec{j} + \vec{k}$ là:", "ops": ["A. (2; -3; 1)", "B. (2; 3; 1)", "C. (-2; 3; -1)", "D. (1; -3; 2)"], "ans": "A", "exp": "Hệ số tương ứng trước i, j, k."}
-            ],
-            "p2": [
-                {
-                    "q": r"Trong không gian Oxyz, cho mặt cầu $(S): (x-1)^2 + (y+2)^2 + (z-3)^2 = 16$. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Tâm của mặt cầu là điểm I(1; -2; 3).", True, "Tâm đối dấu tọa độ."),
-                        ("b) Bán kính của mặt cầu bằng 4.", True, "R = sqrt(16) = 4."),
-                        ("c) Điểm O(0; 0; 0) nằm bên trong mặt cầu (S).", True, "(0-1)^2 + (0+2)^2 + (0-3)^2 = 14 < 16 nên nằm trong."),
-                        ("d) Diện tích mặt cầu bằng 64pi.", True, "S = 4*pi*R^2 = 64pi.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Trong không gian Oxyz, tính khoảng cách từ điểm A(1; 2; 3) đến mặt phẳng (P): 2x - y + 2z + 1 = 0.", "ans": "3", "alt": ["3.0"], "exp": "d = |2(1) - 2 + 2(3) + 1| / sqrt(2^2 + (-1)^2 + 2^2) = 9 / 3 = 3."}
-            ]
-        },
-        "Giữa học kỳ 2": {
-            "title": "ĐỀ KHẢO THÍ GIỮA HỌC KỲ 2 - TOÁN 12",
-            "p1": [
-                {"q": r"Họ nguyên hàm của hàm số $f(x) = 3x^2 + \cos x$ là:", "ops": [r"A. $x^3 + \sin x + C$", r"B. $x^3 - \sin x + C$", r"C. $6x - \sin x + C$", r"D. $x^3 + \cos x + C$"], "ans": "A", "exp": "Nguyên hàm 3x^2 là x^3, nguyên hàm cos x là sin x."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho tích phân $I = \int_0^1 (2x + 1) e^x dx$. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Có thể dùng phương pháp tích phân từng phần để tính I.", True, "Dạng đa thức nhân hàm mũ."),
-                        ("b) Đặt u = 2x + 1 thì du = 2dx.", True, "Đạo hàm u chuẩn xác."),
-                        ("c) Đặt dv = e^x dx thì chọn v = e^x.", True, "Nguyên hàm e^x là e^x."),
-                        ("d) Giá trị của I bằng e + 1.", True, "I = [(2x+1)e^x]_0^1 - 2\int e^x dx = e + 1.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Tính diện tích hình phẳng giới hạn bởi parabol $y = x^2$ và đường thẳng $y = 2x$.", "ans": "1.33", "alt": ["4/3", "1.3"], "exp": "S = \int_0^2 (2x - x^2) dx = 4/3 ≈ 1.33."}
-            ]
-        },
-        "Cuối học kỳ 2": {
-            "title": "ĐỀ KIỂM TRA CUỐI HỌC KỲ 2 - TOÁN 12",
-            "p1": [
-                {"q": r"Phương sai của mẫu số liệu ghép nhóm đo lường đặc trưng nào?", "ops": ["A. Độ phân tán của số liệu quanh số trung bình", "B. Giá trị trung tâm xuất hiện nhiều nhất", "C. Giá trị trung bình", "D. Khoảng biến thiên"], "ans": "A", "exp": "Đặc trưng độ phân tán."}
-            ],
-            "p2": [
-                {
-                    "q": r"Trong không gian Oxyz, cho đường thẳng d: (x-1)/2 = (y+2)/-1 = (z-3)/1. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Đường thẳng d đi qua điểm M(1; -2; 3).", True, "Tọa độ thỏa mãn phương trình chính tắc."),
-                        ("b) Một vectơ chỉ phương của d là u = (2; -1; 1).", True, "Các hệ số dưới mẫu."),
-                        ("c) Điểm A(3; -3; 4) thuộc đường thẳng d.", True, "Thay vào thỏa mãn dấu bằng."),
-                        ("d) d vuông góc với mặt phẳng (P): 2x - y + z + 5 = 0.", True, "Vectơ chỉ phương của d cùng phương với pháp tuyến (P).")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Một hộp chứa 5 viên bi đỏ và 4 viên bi xanh. Lấy ngẫu nhiên 3 viên bi. Tính xác suất để lấy được đúng 2 viên bi đỏ (làm tròn 2 chữ số thập phân).", "ans": "0.48", "alt": ["10/21", "0.476"], "exp": "C(5, 2)*C(4, 1) / C(9, 3) = 40/84 = 10/21 ≈ 0.48."}
-            ]
-        },
         "🏛️ Ôn thi Tốt nghiệp THPT (Cấu trúc mới)": {
-            "title": "ĐỀ KHẢO THÍ CHUẨN ĐỊNH DẠNG TỐT NGHIỆP THPT (BỘ GD&ĐT MỚI)",
-            "p1": [
-                {"q": r"Cho hàm số $y = f(x)$ có đạo hàm $f'(x) = x(x-1)^2 (x+2)^3$. Số điểm cực trị của hàm số đã cho là:", "ops": ["A. 2", "B. 3", "C. 1", "D. 0"], "ans": "A", "exp": "f'(x) đổi dấu khi qua nghiệm bội lẻ x = 0 và x = -2 (bội 3). Nghiệm x = 1 là bội chẵn không đổi dấu. Vậy có đúng 2 điểm cực trị."}
-            ],
-            "p2": [
-                {
-                    "q": r"Cho hình chóp tam giác đều $S.ABC$ có đáy $ABC$ là tam giác đều cạnh $a$. Cạnh bên tạo với mặt đáy góc $60^\circ$. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Hình chiếu vuông góc của S lên (ABC) trùng với trọng tâm tam giác ABC.", True, "Tính chất hình chóp đều."),
-                        ("b) Độ dài đường cao hình chóp bằng a.", True, "h = (a*sqrt(3)/3)*tan(60°) = a."),
-                        ("c) Thể tích khối chóp S.ABC bằng a^3 / 4.", False, "V = a^3*sqrt(3)/12 khác a^3/4."),
-                        ("d) Bán kính mặt cầu ngoại tiếp bằng 2a/3.", True, "R = SA^2 / (2h) = 2a/3.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Một doanh nghiệp sản xuất một loại sản phẩm với hàm chi phí $C(x) = x^3 - 30x^2 + 500x + 1000$ (nghìn đồng) với $1 \le x \le 30$. Giá bán mỗi sản phẩm là 800 nghìn đồng. Xác định số sản phẩm x để lợi nhuận lớn nhất.", "ans": "20", "alt": ["20 sản phẩm"], "exp": "Lợi nhuận L(x) = 800x - C(x). L'(x) = -3x^2 + 60x + 300 = 0 giải ra nghiệm cực đại x = 20."}
-            ]
+            "title": "ĐỀ THI TỐT NGHIỆP THPT CHUẨN MA TRẬN KHẢO THÍ MỚI",
+            "p1": [{"q": r"Cho hàm số có đạo hàm $f'(x) = x(x-1)^2 (x+2)^3$. Số điểm cực trị là:", "ops": ["A. 2", "B. 3", "C. 1", "D. 0"], "ans": "A", "exp": "Nghiệm bội lẻ x = 0 và x = -2."}],
+            "p2": [{"q": r"Cho hình chóp đều S.ABC có đáy cạnh a, cạnh bên tạo đáy góc 60 độ. Xét tính Đúng/Sai:", "items": [("a) Hình chiếu của S là trọng tâm đáy.", True, "Chóp đều."), ("b) Độ dài đường cao bằng a.", True, "h = (a căn 3 / 3)*tan 60 = a."), ("c) Thể tích bằng a^3 / 4.", False, "a^3 căn 3 / 12."), ("d) Bán kính mặt cầu ngoại tiếp bằng 2a/3.", True, "R = 2a/3.")]}],
+            "p3": [{"q": r"Làm hộp không nắp đáy vuông thể tích 32 dm3. Diện tích vật liệu nhỏ nhất (dm2):", "ans": "48", "alt": ["48 dm2"], "exp": "S(x) = x^2 + 128/x. Min tại x=4, S=48."}]
         },
         "🚀 Ôn thi Đánh giá năng lực (ĐGNL)": {
-            "title": "BỘ ĐỀ ĐÁNH GIÁ NĂNG LỰC TOÁN HỌC & MÔ HÌNH HÓA THỰC TẾ (ĐHQG/ĐHBK)",
-            "p1": [
-                {"q": r"Một hồ nước sinh hoạt bị nhiễm vi khuẩn. Tốc độ thay đổi vi khuẩn sau $t$ giờ là $N'(t) = -\frac{200}{(t+1)^2}$ (khuẩn/giờ). Ban đầu $N(0) = 500$ đơn vị. Sau bao nhiêu giờ thì lượng vi khuẩn giảm còn 350 đơn vị?", "ops": ["A. 3 giờ", "B. 4 giờ", "C. 2 giờ", "D. 5 giờ"], "ans": "A", "exp": "N(t) = 200/(t+1) + 300 = 350 <=> 200/(t+1) = 50 <=> t + 1 = 4 => t = 3 giờ."}
-            ],
-            "p2": [
-                {
-                    "q": r"Một công ty sản xuất bóng chuyền có chi phí sản xuất mỗi quả là $C(x) = 50 + \frac{200}{x}$ (nghìn đồng/quả) với $x \ge 10$. Xét tính Đúng/Sai:",
-                    "items": [
-                        ("a) Khi số lượng sản xuất x càng tăng thì chi phí trung bình trên mỗi quả bóng càng giảm.", True, "Hàm C(x) nghịch biến theo x."),
-                        ("b) Nếu sản xuất 100 quả bóng thì chi phí mỗi quả là 52 nghìn đồng.", True, "C(100) = 50 + 200/100 = 52."),
-                        ("c) Chi phí trên mỗi quả bóng có thể hạ xuống dưới mức 50 nghìn đồng nếu x đủ lớn.", False, "Tiệm cận ngang là 50, hàm luôn lớn hơn 50."),
-                        ("d) Đạo hàm C'(x) mang dấu âm với mọi x >= 10.", True, "C'(x) = -200 / x^2 < 0.")
-                    ]
-                }
-            ],
-            "p3": [
-                {"q": r"Một bể chứa nước hình trụ có thể tích V = 54pi (m3). Bác thợ muốn làm bể tốn ít tôn nhất (diện tích toàn phần nhỏ nhất). Bán kính đáy R của bể cần bằng bao nhiêu mét?", "ans": "3", "alt": ["3m", "3.0"], "exp": "V = pi*R^2*h = 54pi => h = 54/R^2. S_tp = 2pi(R^2 + 54/R). f'(R) = 2R - 54/R^2 = 0 <=> R = 3m."}
-            ]
+            "title": "BỘ ĐỀ ĐÁNH GIÁ NĂNG LỰC TOÁN HỌC & MÔ HÌNH HÓA THỰC TẾ",
+            "p1": [{"q": r"Tốc độ vi khuẩn $N'(t) = -200/(t+1)^2$. Ban đầu $N(0)=500$. Sau mấy giờ còn 350 khuẩn?", "ops": ["A. 3 giờ", "B. 4 giờ", "C. 2 giờ", "D. 5 giờ"], "ans": "A", "exp": "200/(t+1) + 300 = 350 => t = 3."}],
+            "p2": [{"q": r"Chi phí sản xuất $C(x) = 50 + 200/x$ (nghìn đồng) với $x \ge 10$. Xét tính Đúng/Sai:", "items": [("a) Sản xuất càng nhiều chi phí trung bình càng giảm.", True, "Hàm nghịch biến."), ("b) x = 100 thì chi phí là 52 nghìn.", True, "50 + 2 = 52."), ("c) Chi phí có thể hạ dưới 50 nghìn.", False, "Luôn lớn hơn 50."), ("d) Đạo hàm C'(x) luôn âm.", True, "-200/x^2 < 0.")]}],
+            "p3": [{"q": r"Trạm radar tại O phát hiện trong bán kính 10 km. Máy bay tại B(7; 6; 5). Khoảng cách OB (km, làm tròn 2 số):", "ans": "10.49", "alt": ["10.5"], "exp": "căn(49 + 36 + 25) = căn(110) ≈ 10.49."}]
         }
     }
 }
 
 # ==============================================================================
-# 5. DỮ LIỆU TÀI KHOẢN & TRẠNG THÁI HỆ THỐNG
+# 5. DỮ LIỆU TÀI KHOẢN & GAMIFICATION
 # ==============================================================================
 DEFAULT_STUDENTS = [
-    {"student_id": "HS11_01", "password": "123", "full_name": "Trần Minh", "grade": 11, "current_level": "Khá", "weak_spots": "Dấu góc lượng giác, Hình không gian", "flowers": 30, "total_solved": 5},
+    {"student_id": "HS11_01", "password": "123", "full_name": "Trần Minh", "grade": 11, "current_level": "Khá", "weak_spots": "Dấu lượng giác, Hình không gian", "flowers": 30, "total_solved": 5},
     {"student_id": "HS10_01", "password": "123", "full_name": "Lê Bảo Ngọc", "grade": 10, "current_level": "Giỏi", "weak_spots": "Phủ định mệnh đề", "flowers": 35, "total_solved": 8},
     {"student_id": "HS12_01", "password": "123", "full_name": "Nguyễn Hoàng Nam", "grade": 12, "current_level": "Trung bình", "weak_spots": "Tọa độ Oxyz, Đạo hàm cực trị", "flowers": 28, "total_solved": 4}
 ]
@@ -732,7 +331,7 @@ def render_3d_geometry_view(topic_type="SHAPE_3D"):
             x=[7], y=[6], z=[5],
             mode='markers+text',
             marker=dict(size=8, color='#DC2626'),
-            text=['B(7;6;5) Máy bay'],
+            text=['B(7;6;5) Vật thể'],
             textposition='top right'
         ))
     else:
@@ -768,7 +367,7 @@ def render_3d_geometry_view(topic_type="SHAPE_3D"):
 # ==============================================================================
 if st.session_state["auth_user"] is None:
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📐 HỆ SINH THÁI TỰ HỌC TOÁN THPT 'GSTOÁN'</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #475569;'>Chuẩn hóa Sách giáo khoa & Vở tự học Kết nối tri thức - Đầy đủ 3 Khối 10, 11, 12</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #475569;'>Học liệu đầy đủ: 27 bài Khối 10, 33 bài Khối 11, 19 bài Khối 12 (KNTT)</p>", unsafe_allow_html=True)
 
     col_l1, col_box, col_l2 = st.columns([1, 1.2, 1])
     with col_box:
@@ -800,7 +399,7 @@ if st.session_state["auth_user"] is None:
                             st.error("Mật khẩu chưa chính xác!")
                     else:
                         st.error("Không tìm thấy mã học sinh này trong danh sách!")
-            st.caption("💡 Tài khoản học sinh: `HS11_01`, `HS10_01`, `HS12_01` (Pass: `123`). Admin: `admin` / `gstoan2026`.")
+            st.caption("💡 Tài khoản: `HS11_01`, `HS10_01`, `HS12_01` (Pass: `123`). Admin: `admin` / `gstoan2026`.")
     st.stop()
 
 # ==============================================================================
@@ -814,7 +413,7 @@ with st.sidebar:
         with st.container(border=True):
             st.markdown("<h5 style='text-align: center; color: #DB2777; margin:0;'>🌸 Vườn hoa Tri thức</h5>", unsafe_allow_html=True)
             st.markdown(f"<h2 style='text-align: center; color: #BE185D; margin:4px 0;'>{flowers} 🌸</h2>", unsafe_allow_html=True)
-            st.caption("Giải đúng bài tập SGK/Vở tự học nhận +2 hoa. Đạt điểm cao khảo thí nhận tới +3 hoa!")
+            st.caption("Giải đúng bài tập nhận +2 hoa. Xem video +1 hoa. Khảo thí nhận tới +3 hoa!")
     else:
         st.info("Vai trò: **Cố Vấn Sư Phạm & Quản Trị**")
 
@@ -864,18 +463,23 @@ if st.session_state["role"] == "teacher":
     st.stop()
 
 # ==============================================================================
-# 9. PHÂN HỆ HỌC SINH (HỌC LIỆU TOÀN DIỆN, THUYẾT MINH ÂM THANH, KIỂM MINH CHỨNG)
+# 9. PHÂN HỆ HỌC SINH (DANH SÁCH BÀI HỌC CÓ THANH CUỘN & ĐẦY ĐỦ 3 KHỐI)
 # ==============================================================================
 student_info = st.session_state["auth_user"]
 
-# BỘ CHỌN KHỐI LỚP VÀ BÀI HỌC
+# BỘ CHỌN KHỐI LỚP VÀ DANH SÁCH BÀI HỌC CÓ THANH CUỘN
 c_gr, c_les = st.columns([1, 2.5])
 with c_gr:
     user_grade_default = 0 if student_info.get("grade") == 10 else (2 if student_info.get("grade") == 12 else 1)
     sel_grade = st.selectbox("📚 Chọn Khối Lớp:", ["Khối 10", "Khối 11", "Khối 12"], index=user_grade_default)
+
 with c_les:
     lesson_list = list(CURRICULUM_DATA[sel_grade].keys())
-    sel_lesson = st.selectbox("📖 Chọn Bài Học (Trích Vở Tự Học KNTT):", lesson_list)
+    sel_lesson = st.selectbox(
+        f"📖 Danh sách bài học ({len(lesson_list)} bài - Cuộn chuột để xem hết):",
+        lesson_list,
+        help="Danh mục bài học có thanh cuộn mượt mà hỗ trợ duyệt nhanh toàn bộ chương trình."
+    )
 
 cur_data = CURRICULUM_DATA[sel_grade][sel_lesson]
 
@@ -888,7 +492,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 # ------------------------------------------------------------------------------
-# TAB 1: CỐT LÕI KIẾN THỨC KÈM ÂM THANH THUYẾT MINH CHUẨN
+# TAB 1: CỐT LÕI KIẾN THỨC KÈM ÂM THANH THUYẾT MINH
 # ------------------------------------------------------------------------------
 with tab1:
     st.subheader(f"📌 {cur_data['chapter']}")
@@ -908,7 +512,6 @@ with tab1:
             st.caption("Video tóm tắt lý thuyết trọng tâm + phương pháp giải toán then chốt")
             st.video(cur_data["video_url"])
             
-            # TRÌNH PHÁT ÂM THANH BÀI GIẢNG SƯ PHẠM ĐỒNG BỘ
             st.markdown("""
             <div class="audio-box">
                 <b>🎙️ Âm Thanh Thuyết Minh Bài Giảng Vi Mô (Trích Vở tự học):</b><br>
@@ -937,7 +540,6 @@ with tab2:
         st.subheader(f"📝 {ex['title']}")
         st.markdown(f"**Đề bài:** {ex['content']}")
 
-        # Khung phân tầng gợi ý
         c_h1, c_h2, c_h3 = st.columns(3)
         with c_h1:
             if st.button("💡 Gợi ý nấc 1 (Định hướng)", key=f"h1_{ex['id']}", use_container_width=True):
@@ -957,7 +559,7 @@ with tab2:
         if ex.get("question_type") == "CHOICE":
             user_submitted_ans = st.radio("Chọn phương án đúng của em:", ex["options"], key=f"choice_ex_{ex['id']}")
         else:
-            user_submitted_ans = st.text_input("Nhập kết quả/đáp số của em (ví dụ: 48 hoặc -0.8 hoặc 32/3):", key=f"num_ex_{ex['id']}")
+            user_submitted_ans = st.text_input("Nhập kết quả/đáp số của em (ví dụ: 12 hoặc -0.8 hoặc 32/3):", key=f"num_ex_{ex['id']}")
 
         c_chk, c_sim = st.columns([1, 1.2])
         with c_chk:
@@ -969,25 +571,13 @@ with tab2:
                 else:
                     clean_u = user_submitted_ans.strip().replace(",", ".")
                     clean_t = ex["target_val"].strip().replace(",", ".")
-                    alt_list = [a.replace(",", ".") for a in ex.get("alt_vals", [])]
-                    if clean_u == clean_t or clean_u in alt_list:
+                    if clean_u == clean_t:
                         is_correct = True
                     else:
                         try:
-                            # Hỗ trợ phân số như 32/3
-                            if "/" in clean_u:
-                                num, den = clean_u.split("/")
-                                float_u = float(num) / float(den)
-                            else:
-                                float_u = float(clean_u)
-                            
-                            if "/" in clean_t:
-                                num_t, den_t = clean_t.split("/")
-                                float_t = float(num_t) / float(den_t)
-                            else:
-                                float_t = float(clean_t)
-                                
-                            if abs(float_u - float_t) < 0.05:
+                            val_u = float(clean_u.split("/")[0]) / float(clean_u.split("/")[1]) if "/" in clean_u else float(clean_u)
+                            val_t = float(clean_t.split("/")[0]) / float(clean_t.split("/")[1]) if "/" in clean_t else float(clean_t)
+                            if abs(val_u - val_t) < 0.05:
                                 is_correct = True
                         except Exception:
                             pass
@@ -1010,9 +600,9 @@ with tab2:
                             res_sim = client.models.generate_content(model="gemini-2.5-flash", contents=prompt_sim)
                             sim_t = res_sim.text
                         except Exception:
-                            sim_t = "Người ta cần làm một chiếc hộp không nắp có đáy hình vuông và thể tích 108 dm3. Tìm diện tích vật liệu nhỏ nhất. [Đáp số: 108 dm2]"
+                            sim_t = "Bài toán tương tự cùng dạng: Đổi số liệu tương đương để học sinh tự rèn luyện."
                     else:
-                        sim_t = "Bài toán tương tự: Cho góc alpha thỏa mãn 0 < alpha < pi/2 và sin(alpha) = 4/5. Hãy tính cos(alpha). [Đáp số: 3/5 = 0.6]"
+                        sim_t = "Bài toán tương tự: Đổi số liệu tương đương bám sát SGK Kết nối tri thức."
                     st.info(f"**Bài toán tương tự rèn luyện:**\n\n{sim_t}")
 
         # NÚT CHUYỂN TIẾP SƯ PHẠM (HUMAN-IN-THE-LOOP)
@@ -1132,14 +722,12 @@ with tab4:
         </div>
         """, unsafe_allow_html=True)
 
-        # PHẦN I: TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN
         st.markdown("#### PHẦN I: Câu trắc nghiệm nhiều phương án lựa chọn (3.0 điểm)")
         user_p1 = {}
         for idx, item in enumerate(ex_pack.get("p1", [])):
             st.markdown(f"**Câu {idx + 1}:** {item['q']}")
             user_p1[idx] = st.radio(f"Chọn phương án câu {idx + 1}:", item["ops"], key=f"ex_p1_{sel_exam}_{idx}")
 
-        # PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI 4 Ý THEO FORM CHUẨN
         st.markdown("---")
         st.markdown("#### PHẦN II: Câu trắc nghiệm Đúng / Sai (4.0 điểm)")
         user_p2 = {}
@@ -1157,7 +745,6 @@ with tab4:
                 sub_choices.append(ans_val)
             user_p2[idx] = sub_choices
 
-        # PHẦN III: TRẮC NGHIỆM TRẢ LỜI NGẮN
         st.markdown("---")
         st.markdown("#### PHẦN III: Câu trắc nghiệm trả lời ngắn (3.0 điểm)")
         user_p3 = {}
@@ -1171,16 +758,11 @@ with tab4:
             score_p2 = 0.0
             score_p3 = 0.0
 
-            # 1. Chấm Phần I (Tổng 3 điểm)
             p1_items = ex_pack.get("p1", [])
-            p1_corr = 0
-            for idx, item in enumerate(p1_items):
-                if user_p1[idx].startswith(item["ans"]):
-                    p1_corr += 1
+            p1_corr = sum(1 for idx, item in enumerate(p1_items) if user_p1[idx].startswith(item["ans"]))
             if p1_items:
                 score_p1 = (p1_corr / len(p1_items)) * 3.0
 
-            # 2. Chấm Phần II (Chuẩn bậc thang 0.1 - 0.25 - 0.5 - 1.0 theo Bộ GD&ĐT)
             p2_questions = ex_pack.get("p2", [])
             for idx, item in enumerate(p2_questions):
                 num_correct_in_q = 0
@@ -1201,7 +783,6 @@ with tab4:
             if p2_questions and len(p2_questions) != 4:
                 score_p2 = (score_p2 / (len(p2_questions) * 1.0)) * 4.0
 
-            # 3. Chấm Phần III (Tổng 3 điểm)
             p3_items = ex_pack.get("p3", [])
             p3_corr = 0
             for idx, item in enumerate(p3_items):
@@ -1223,9 +804,9 @@ with tab4:
 
             st.balloons()
             st.success(f"🎉 **KẾT QUẢ BÀI THI CỦA EM:** **{total_score} / 10.0 Điểm**")
-            st.markdown(f"- Điểm Phần I (Nhiều lựa chọn): **{round(score_p1, 2)}** / 3.0 điểm.")
-            st.markdown(f"- Điểm Phần II (Đúng/Sai chuẩn Bộ GD&ĐT): **{round(score_p2, 2)}** / 4.0 điểm.")
-            st.markdown(f"- Điểm Phần III (Trả lời ngắn): **{round(score_p3, 2)}** / 3.0 điểm.")
+            st.markdown(f"- Điểm Phần I: **{round(score_p1, 2)}** / 3.0 điểm.")
+            st.markdown(f"- Điểm Phần II (Đúng/Sai bậc thang Bộ GD&ĐT): **{round(score_p2, 2)}** / 4.0 điểm.")
+            st.markdown(f"- Điểm Phần III: **{round(score_p3, 2)}** / 3.0 điểm.")
 
             if total_score >= 10.0:
                 reward_student_flower(student_info["student_id"], 3, f"đạt điểm tuyệt đối 10.0 ở {sel_exam}")
@@ -1234,7 +815,7 @@ with tab4:
             elif total_score >= 8.0:
                 reward_student_flower(student_info["student_id"], 1, f"vượt ải thành công {total_score} điểm ở {sel_exam}")
             else:
-                st.info("💡 Điểm số chưa đạt mốc 8.0 để nhận hoa thưởng. Em hãy đối chiếu bảng giải thích bên dưới để rút kinh nghiệm nhé!")
+                st.info("💡 Điểm số chưa đạt mốc 8.0 để nhận hoa thưởng. Hãy đối chiếu lời giải chi tiết bên dưới nhé!")
 
             with st.expander("📖 Xem Chi Tiết Đáp Án & Hướng Dẫn Giải Từng Câu"):
                 st.markdown("#### Đáp án Phần I:")

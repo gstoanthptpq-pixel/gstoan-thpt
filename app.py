@@ -223,10 +223,10 @@ def reward_student_flower(student_id, earned, reason):
             break
 
 # ==============================================================================
-# HÀM AI SINH ĐỀ TƯƠNG TỰ VÀ ĐỀ NÂNG CAO (MODEL: gemini-2.0-flash)
+# HÀM AI SINH ĐỀ TƯƠNG TỰ VÀ ĐỀ NÂNG CAO (MODEL: gemini-3.8-flash)
 # ==============================================================================
 def generate_similar_exercise_ai(base_problem):
-    """Sử dụng Gemini 2.0 Flash để sinh đề bài tương tự cùng dạng."""
+    """Sử dụng Gemini 3.8 Flash để sinh đề bài tương tự cùng dạng."""
     if not client:
         return None
     try:
@@ -242,7 +242,7 @@ def generate_similar_exercise_ai(base_problem):
             "}"
         )
         resp = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3.8-flash',
             contents=prompt
         )
         text_resp = resp.text.strip()
@@ -273,7 +273,7 @@ def generate_advanced_exercise_ai(lesson_title):
             "}"
         )
         resp = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3.8-flash',
             contents=prompt
         )
         text_resp = resp.text.strip()
@@ -629,7 +629,7 @@ with tab2:
                 exercise_counter += 1
 
 # ------------------------------------------------------------------------------
-# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (MODEL: gemini-2.0-flash)
+# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (MODEL: gemini-3.8-flash)
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Sư Phạm")
@@ -700,9 +700,9 @@ with tab3:
                     elif not image_to_process:
                         contents.append("Học sinh chưa cung cấp ảnh bài làm hoặc câu hỏi, hãy nhắc nhở em gửi ảnh hoặc nội dung cần giải đáp.")
 
-                    # Gọi model chính thức gemini-2.0-flash
+                    # Gọi model chính thức gemini-3.8-flash theo yêu cầu mới nhất
                     response = client.models.generate_content(
-                        model='gemini-2.0-flash',
+                        model='gemini-3.8-flash',
                         contents=contents
                     )
                     

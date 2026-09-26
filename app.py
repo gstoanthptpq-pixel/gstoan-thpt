@@ -103,24 +103,31 @@ try:
 except Exception:
     pass
 
+import time
+
 def call_gemini_safe(contents_payload):
-    """Cơ chế Fallback thông minh: Thử lần lượt các model ổn định để tránh nghẽn mạng."""
+    """Gọi đúng model gemini-3.8-flash hiện hành và tự động thử lại nếu server quá tải."""
     if not client:
         return None
-    models_to_try = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    # Sử dụng đúng tên model mà Google yêu cầu
+    target_model = 'gemini-3.8-flash'
     last_err = ""
-    for m in models_to_try:
+    
+    # Tự động thử lại tối đa 3 lần nếu gặp quá tải (503) hoặc lỗi mạng tạm thời
+    for attempt in range(3):
         try:
             res = client.models.generate_content(
-                model=m,
+                model=target_model,
                 contents=contents_payload
             )
             if res and res.text:
                 return res.text
         except Exception as e:
             last_err = str(e)
+            time.sleep(1.5)  # Nghỉ 1.5 giây rồi thử lại
             continue
-    raise Exception(f"Không thể kết nối đến AI sau khi thử các model: {last_err}")
+            
+    raise Exception(f"Máy chủ AI đang phản hồi: {last_err}")
 
 def get_lecture_audio(text_script, audio_id):
     filename = f"lecture_{audio_id}.mp3"

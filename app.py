@@ -189,11 +189,9 @@ if "students_db" not in st.session_state:
         {"student_id": "HS10_01", "password": "123", "full_name": "Lê Ngọc", "grade": 10, "flowers": 35}
     ]
 
-# Lưu trữ các bài tập tự luyện tương tự được AI sinh động
 if "dynamic_similar_exercises" not in st.session_state:
     st.session_state["dynamic_similar_exercises"] = {}
 
-# Lưu trữ bài tập nâng cao do AI sinh động
 if "advanced_exercise_data" not in st.session_state:
     st.session_state["advanced_exercise_data"] = {}
 
@@ -225,10 +223,10 @@ def reward_student_flower(student_id, earned, reason):
             break
 
 # ==============================================================================
-# HÀM AI SINH ĐỀ TƯƠNG TỰ VÀ ĐỀ NÂNG CAO
+# HÀM AI SINH ĐỀ TƯƠNG TỰ VÀ ĐỀ NÂNG CAO (MODEL: gemini-2.0-flash)
 # ==============================================================================
 def generate_similar_exercise_ai(base_problem):
-    """Sử dụng Gemini để sinh một đề bài tương tự dạng với số liệu khác."""
+    """Sử dụng Gemini 2.0 Flash để sinh đề bài tương tự cùng dạng."""
     if not client:
         return None
     try:
@@ -244,7 +242,7 @@ def generate_similar_exercise_ai(base_problem):
             "}"
         )
         resp = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=prompt
         )
         text_resp = resp.text.strip()
@@ -275,7 +273,7 @@ def generate_advanced_exercise_ai(lesson_title):
             "}"
         )
         resp = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=prompt
         )
         text_resp = resp.text.strip()
@@ -482,9 +480,6 @@ with tab2:
     st.subheader(f"📝 Không Gian Tự Luyện Toán Học — {sel_lesson}")
     st.caption("Hệ thống phát sinh bài tập rèn luyện tương tự cho TẤT CẢ ví dụ minh họa. Em hãy tự giải ra nháp, nhập đáp số và nộp bài để nhận phản hồi tức thì.")
 
-    # --------------------------------------------------------------------------
-    # NÚT ĐỀ NÂNG CAO (VẬN DỤNG / MÔ HÌNH HÓA TOÁN HỌC)
-    # --------------------------------------------------------------------------
     col_adv_btn, col_adv_space = st.columns([1.5, 2.5])
     with col_adv_btn:
         if st.button("🚀 Thử Sức: Tạo Đề Nâng Cao (Vận Dụng / Mô Hình Hóa)", use_container_width=True):
@@ -499,7 +494,6 @@ with tab2:
             else:
                 st.warning("Cần cấu hình Gemini API Key để phát sinh bài toán nâng cao.")
 
-    # Hiển thị khối đề nâng cao nếu đã được tạo
     if sel_lesson in st.session_state["advanced_exercise_data"]:
         adv_obj = st.session_state["advanced_exercise_data"][sel_lesson]
         st.markdown("""
@@ -542,9 +536,6 @@ with tab2:
 
         st.markdown("---")
 
-    # --------------------------------------------------------------------------
-    # DUYỆT TẤT CẢ CÁC VÍ DỤ MINH HỌA VÀ TẠO BÀI TẬP TƯƠNG TỰ TƯƠNG ỨNG
-    # --------------------------------------------------------------------------
     all_topics_in_lesson = cur_lesson_obj.get("topics", {})
     exercise_counter = 1
 
@@ -553,7 +544,6 @@ with tab2:
         topic_examples = t_content.get("examples", [])
         
         if not topic_examples:
-            # Nếu chủ điểm có sẵn bài kiểm minh chứng mặc định
             def_ex = t_content.get("exercise", {})
             if def_ex:
                 with st.container(border=True):
@@ -571,8 +561,6 @@ with tab2:
         else:
             for ex_idx, ex_item in enumerate(topic_examples):
                 ex_key_id = f"{sel_lesson}_{t_name}_{ex_idx}"
-                
-                # Kiểm tra xem bài này đã được nhấn nút "Tạo đề tương tự mới" chưa
                 active_exercise = st.session_state["dynamic_similar_exercises"].get(ex_key_id)
                 
                 with st.container(border=True):
@@ -591,13 +579,11 @@ with tab2:
                                 st.warning("Cần API Key để tạo đề tương tự.")
 
                     if active_exercise:
-                        # Hiển thị đề bài tương tự do AI sinh ra
                         st.info("✨ *Đề bài tương tự do AI phát sinh:*")
                         st.markdown(f"**Đề bài:**\n\n{active_exercise.get('problem')}")
                         target_ans_val = str(active_exercise.get("answer", "")).strip()
                         hint_val = active_exercise.get("hint", "")
                     else:
-                        # Mặc định: Lấy đề bài gốc của ví dụ yêu cầu học sinh tự giải lại để kiểm chứng
                         st.markdown(f"**Đề bài:**\n\n{ex_item['problem']}")
                         target_ans_val = ""
                         hint_val = ex_item["solution"]
@@ -627,7 +613,6 @@ with tab2:
                                     except Exception:
                                         pass
                             else:
-                                # Kiểm tra xem đáp số có xuất hiện trong phần kết quả lời giải mẫu không
                                 if len(user_norm) >= 1 and user_norm in hint_val.lower():
                                     is_match = True
 
@@ -644,13 +629,12 @@ with tab2:
                 exercise_counter += 1
 
 # ------------------------------------------------------------------------------
-# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (GOM GỌN TẢI / DÁN ẢNH LÀM 1 NÚT)
+# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (MODEL: gemini-2.0-flash)
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Sư Phạm")
     st.caption("Chụp ảnh, tải file hoặc dán ảnh bài giải viết tay để Thầy/Cô AI chỉ rõ từng bước sai sót mà không giải hộ.")
 
-    # Gom nút Tải ảnh và Dán ảnh làm một
     inp_mode = st.radio(
         "Chọn phương thức nạp bài làm:",
         [
@@ -716,8 +700,9 @@ with tab3:
                     elif not image_to_process:
                         contents.append("Học sinh chưa cung cấp ảnh bài làm hoặc câu hỏi, hãy nhắc nhở em gửi ảnh hoặc nội dung cần giải đáp.")
 
+                    # Gọi model chính thức gemini-2.0-flash
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-2.0-flash',
                         contents=contents
                     )
                     

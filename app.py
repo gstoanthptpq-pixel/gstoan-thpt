@@ -194,7 +194,6 @@ def sync_flower_to_sheets(student_id, student_name, earned, total_flowers, reaso
                 "Tổng hoa hiện tại": total_flowers,
                 "Lí do tích lũy": reason
             }])
-            # Ghi nối dữ liệu vào sheet 'FlowerLogs'
             existing_df = conn.read(worksheet="FlowerLogs", ttl=0)
             updated_df = pd.concat([existing_df, log_data], ignore_index=True)
             conn.update(worksheet="FlowerLogs", data=updated_df)
@@ -251,7 +250,6 @@ if st.session_state["auth_user"] is None:
 with st.sidebar:
     st.markdown(f"### 👤 {st.session_state['auth_user']['full_name']}")
     
-    # Nút chuyển Theme
     theme_choice = st.radio("🎨 Chế độ hiển thị:", ["Sáng ☀️", "Tối 🌙"], index=(1 if is_dark else 0))
     selected_mode = "Tối" if "Tối" in theme_choice else "Sáng"
     if selected_mode != st.session_state["theme_mode"]:
@@ -275,7 +273,6 @@ if st.session_state["role"] == "teacher":
     st.title("👩‍🏫 Bảng Điều Khiển Giáo Viên (Dashboard Quản Lý)")
     st.info("Chào mừng Thầy/Cô! Dưới đây là bảng theo dõi tiến độ tự học của học sinh.")
     
-    # Hiển thị bảng tổng hợp học sinh
     df_students = pd.DataFrame(st.session_state["students_db"])
     st.dataframe(df_students[["student_id", "full_name", "grade", "flowers"]], use_container_width=True)
     
@@ -306,13 +303,12 @@ if not grade_dict:
     st.warning(f"Dữ liệu của {sel_grade} đang được đồng bộ hóa. Vui lòng kiểm tra lại file data tương ứng!")
     st.stop()
 
-# Lọc bài học theo từ khóa tìm kiếm (nếu có)
+# Lọc bài học theo từ khóa tìm kiếm
 all_lessons = list(grade_dict.keys())
 if search_kw.strip():
     filtered_lessons = []
     kw_lower = search_kw.strip().lower()
     for l_name, l_data in grade_dict.items():
-        # Kiểm tra từ khóa trong tên bài hoặc trong tên các chủ điểm
         if kw_lower in l_name.lower() or any(kw_lower in t.lower() for t in l_data.get("topics", {}).keys()):
             filtered_lessons.append(l_name)
     lesson_list = filtered_lessons if filtered_lessons else all_lessons
@@ -440,51 +436,103 @@ with tab2:
                     st.error("❌ Kết quả chưa chính xác! Em hãy xem lại Ví dụ minh họa và thử giải lại ra nháp nhé.")
 
 # ------------------------------------------------------------------------------
-# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (PROMPT THỊ GIÁC CHUẨN XÁC)
+# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (HỖ TRỢ CAMERA, UPLOAD FILE & DÁN CLIPBOARD)
 # ------------------------------------------------------------------------------
 with tab3:
-    st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Giọng Nói")
-    st.caption("Chụp ảnh bài giải viết tay hoặc nhập nội dung em đang gặp vướng mắc để Thầy/Cô AI chỉ ra từng bước sai sót.")
-    
-    inp_mode = st.radio("Phương thức tương tác:", ["📸 Chụp vở nháp qua Camera", "✍️ Nhập câu hỏi chữ"], horizontal=True)
-    
-    uploaded_image = None
-    if inp_mode == "📸 Chụp vở nháp qua Camera":
-        uploaded_image = st.camera_input("Chụp ảnh trang vở nháp của em:")
-    
-    user_q = st.text_area("Ghi chú thêm câu hỏi của em (nếu có):", placeholder="Ví dụ: Thầy cô xem giúp em bị sai từ dòng nào trong bước tính đạo hàm...")
-    
+    st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Sư Phạm")
+    st.caption("Chụp ảnh, tải file hoặc dán ảnh bài giải viết tay để Thầy/Cô AI chỉ rõ từng bước sai sót mà không giải hộ.")
+
+    inp_mode = st.radio(
+        "Chọn phương thức nạp bài làm:",
+        [
+            "📸 Chụp qua Camera", 
+            "📁 Tải ảnh từ thiết bị (Upload)", 
+            "📋 Dán ảnh từ Clipboard (Ctrl + V)", 
+            "✍️ Chỉ gửi câu hỏi chữ"
+        ],
+        horizontal=True
+    )
+
+    image_to_process = None
+
+    if inp_mode == "📸 Chụp qua Camera":
+        cam_image = st.camera_input("Chụp ảnh trang vở nháp của em:")
+        if cam_image:
+            image_to_process = Image.open(cam_image)
+
+    elif inp_mode == "📁 Tải ảnh từ thiết bị (Upload)":
+        uploaded_file = st.file_uploader(
+            "Chọn file ảnh bài làm (PNG, JPG, JPEG, WEBP):", 
+            type=["png", "jpg", "jpeg", "webp"],
+            help="Hỗ trợ ảnh chụp từ điện thoại hoặc ảnh chụp màn hình máy tính"
+        )
+        if uploaded_file:
+            image_to_process = Image.open(uploaded_file)
+            st.image(image_to_process, caption="Ảnh bài làm đã tải lên", use_container_width=True)
+
+    elif inp_mode == "📋 Dán ảnh từ Clipboard (Ctrl + V)":
+        st.markdown("""
+        <div style="background-color: #F1F5F9; border: 2px dashed #94A3B8; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 10px;">
+            <p style="margin: 0; color: #334155; font-weight: 500;">
+                📋 <b>Cách dán ảnh nhanh:</b> Chụp ảnh màn hình (phím <i>Print Screen</i> hoặc <i>Shift + Win + S</i>), sau đó thả/dán trực tiếp vào ô bên dưới.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        paste_file = st.file_uploader(
+            "Dán hoặc thả ảnh bài làm vào đây:", 
+            type=["png", "jpg", "jpeg", "webp"],
+            key="paste_uploader",
+            label_visibility="collapsed"
+        )
+        if paste_file:
+            image_to_process = Image.open(paste_file)
+            st.image(image_to_process, caption="Ảnh bài làm từ bộ nhớ tạm", use_container_width=True)
+
+    user_q = st.text_area(
+        "Ghi chú thêm câu hỏi hoặc thắc mắc của em:", 
+        placeholder="Ví dụ: Thầy/cô xem giúp em bị sai từ dòng nào trong bước đặt ẩn phụ/tính đạo hàm này ạ..."
+    )
+
     if st.button("🚀 Gửi Bài Nhờ Gia Sư AI Soi Bài", use_container_width=True):
         if client:
             try:
-                system_vision_prompt = (
-                    f"Bạn là Thầy/Cô giáo dạy Toán cấp THPT chuẩn mực sư phạm. Học sinh đang tự học bài: '{sel_lesson}', chủ điểm: '{sel_topic}'. "
-                    "Nhiệm vụ của bạn khi phân tích bài làm của học sinh:\n"
-                    "1. Kiểm tra từng dòng biến đổi trong bài làm của học sinh (qua ảnh hoặc mô tả).\n"
-                    "2. Nếu có lỗi sai: CHỈ RÕ CHÍNH XÁC học sinh bị sai từ dòng thứ mấy, nguyên nhân sai (sai dấu, nhầm công thức, quên điều kiện hay tính toán nhầm).\n"
-                    "3. Gợi ý hướng giải quyết tiếp theo để học sinh tự sửa, TUYỆT ĐỐI KHÔNG giải hộ toàn bộ bài hay đưa ngay đáp án cuối cùng.\n"
-                    "4. Sử dụng ngôn từ động viên, chuẩn mực và định dạng công thức bằng LaTeX rõ ràng."
-                )
-                
-                contents = [system_vision_prompt]
-                if uploaded_image:
-                    img = Image.open(uploaded_image)
-                    contents.append(img)
-                if user_q.strip():
-                    contents.append(f"Câu hỏi của học sinh: {user_q}")
-                elif not uploaded_image:
-                    contents.append("Học sinh chưa đính kèm ảnh hay câu hỏi, hãy nhắc nhở em chụp ảnh bài làm.")
+                with st.spinner("Thầy/Cô AI đang đọc bài làm và phân tích từng bước giải của em..."):
+                    system_vision_prompt = (
+                        f"Bạn là Thầy/Cô giáo dạy Toán cấp THPT với phương pháp sư phạm mẫu mực. "
+                        f"Học sinh đang tự học bài: '{sel_lesson}', chủ điểm: '{sel_topic}'.\n\n"
+                        "NHIỆM VỤ SƯ PHẠM KHI SOI BÀI VIẾT TAY:\n"
+                        "1. Đọc và phiên dịch cẩn thận các dòng viết tay hoặc phương trình toán học trong ảnh.\n"
+                        "2. Kiểm tra tính đúng đắn theo từng bước logic, biến đổi công thức và tính toán số học.\n"
+                        "3. NẾU CÓ LỖI SAI: Hãy CHỈ RÕ CHÍNH XÁC học sinh bị sai từ dòng thứ mấy, phân tích nguyên nhân sai "
+                        "(sai dấu, áp dụng sai công thức, quên điều kiện xác định hay nhầm lẫn số học).\n"
+                        "4. GỢI Ý HƯỚNG GIẢI TIẾP THEO để học sinh tự làm lại. TUYỆT ĐỐI KHÔNG giải thay toàn bộ bài hay viết sẵn đáp số cuối cùng.\n"
+                        "5. NẾU BÀI LÀM ĐÃ ĐÚNG: Hãy khen ngợi tinh thần tự học của học sinh và khuyến khích em thử sức với các bài tập nâng cao.\n"
+                        "6. Luôn trình bày các biểu thức toán học bằng định dạng LaTeX chuẩn mực ($...$ hoặc $$...$$)."
+                    )
 
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=contents
-                )
-                st.success("### ✍️ Lời Khuyên & Nhận Xét Từ Thầy/Cô AI:")
-                st.markdown(response.text)
+                    contents = [system_vision_prompt]
+                    if image_to_process:
+                        contents.append(image_to_process)
+                    if user_q.strip():
+                        contents.append(f"Ghi chú thắc mắc của học sinh: {user_q}")
+                    elif not image_to_process:
+                        contents.append("Học sinh chưa cung cấp ảnh bài làm hoặc câu hỏi, hãy nhắc nhở em gửi ảnh hoặc nội dung cần giải đáp.")
+
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=contents
+                    )
+                    
+                    st.success("### ✍️ Lời Khuyên & Nhận Xét Từ Thầy/Cô AI:")
+                    st.markdown(response.text)
+                    
+                    # Tặng hoa khích lệ tinh thần tự học
+                    reward_student_flower(student_info["student_id"], 1, "tích cực chụp bài hỏi Thầy/Cô AI")
             except Exception as e:
                 st.error("Không thể kết nối đến Trợ lý AI lúc này. Vui lòng kiểm tra lại cấu hình Gemini API Key.")
         else:
-            st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ trong Secrets).")
+            st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ trong mục Secrets).")
 
 # ------------------------------------------------------------------------------
 # TAB 5: PHÒNG KHẢO THÍ CHUẨN MA TRẬN

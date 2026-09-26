@@ -7,9 +7,10 @@ from PIL import Image
 from gtts import gTTS
 import os
 import hashlib
+from datetime import datetime
 
 # ==============================================================================
-# 1. CẤU HÌNH GIAO DIỆN & TỐI ƯU HÓA STYLE
+# 1. CẤU HÌNH GIAO DIỆN & TÙY BIẾN CHẾ ĐỘ SÁNG / TỐI (LIGHT / DARK THEME)
 # ==============================================================================
 st.set_page_config(
     page_title="GSToán - Hệ Sinh Thái Tự Học Toán THPT",
@@ -18,22 +19,38 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
+# Quản lý trạng thái Theme (Sáng / Tối)
+if "theme_mode" not in st.session_state:
+    st.session_state["theme_mode"] = "Sáng"
+
+is_dark = st.session_state["theme_mode"] == "Tối"
+
+bg_color = "#0F172A" if is_dark else "#F8FAFC"
+card_bg = "#1E293B" if is_dark else "#FFFFFF"
+text_color = "#F1F5F9" if is_dark else "#0F172A"
+border_color = "#334155" if is_dark else "#E2E8F0"
+subtext_color = "#94A3B8" if is_dark else "#475569"
+
+st.markdown(f"""
 <style>
-    div[data-baseweb="popover"] ul, div[role="listbox"] {
+    .stApp {{
+        background-color: {bg_color};
+        color: {text_color};
+    }}
+    div[data-baseweb="popover"] ul, div[role="listbox"] {{
         max-height: 320px !important;
         overflow-y: auto !important;
         scrollbar-width: thin;
         scrollbar-color: #3B82F6 #F1F5F9;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    }}
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-radius: 14px !important;
-        background-color: #F8FAFC !important;
-        border: 1px solid #E2E8F0 !important;
+        background-color: {card_bg} !important;
+        border: 1px solid {border_color} !important;
         padding: 16px !important;
         margin-bottom: 14px !important;
-    }
-    .stButton>button {
+    }}
+    .stButton>button {{
         border-radius: 10px;
         background: linear-gradient(90deg, #1E3A8A, #2563EB);
         color: white;
@@ -41,31 +58,34 @@ st.markdown("""
         border: none;
         padding: 8px 18px;
         transition: all 0.25s ease;
-    }
-    .stButton>button:hover {
+    }}
+    .stButton>button:hover {{
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-    }
-    .audio-box {
-        background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
-        border: 1px solid #86EFAC;
+    }}
+    .audio-box {{
+        background: {("#1E3A5F" if is_dark else "linear-gradient(135deg, #F0FDF4, #DCFCE7)")};
+        border: 1px solid {("#2563EB" if is_dark else "#86EFAC")};
+        color: {text_color};
         padding: 12px;
         border-radius: 10px;
         margin-top: 12px;
-    }
-    .topic-card {
-        background-color: #FFFFFF;
+    }}
+    .topic-card {{
+        background-color: {card_bg};
+        color: {text_color};
         border-left: 5px solid #2563EB;
-        padding: 8px 14px;
+        padding: 10px 14px;
         border-radius: 6px;
-        margin-top: 12px;
+        margin-top: 14px;
         margin-bottom: 8px;
-    }
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO KẾT NỐI GEMINI API, GSHEETS & TTS AUDIO
+# 2. KHỞI TẠO KẾT NỐI GEMINI API, GOOGLE SHEETS & TTS AUDIO
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -91,12 +111,12 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP (KHẮC PHỤC TRIỆT ĐỂ LỖI KHÔNG LOAD)
+# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP (CÔ LẬP IFRAME)
 # ==============================================================================
 PRESET_SVGS = {
     "DON_DIEU": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="80" y1="15" x2="80" y2="185" stroke="#475569" stroke-width="2"/><line x1="20" y1="55" x2="480" y2="55" stroke="#475569" stroke-width="2"/><line x1="20" y1="95" x2="480" y2="95" stroke="#475569" stroke-width="2"/><text x="45" y="42" font-family="sans-serif" font-size="16" font-weight="bold">x</text><text x="45" y="82" font-family="sans-serif" font-size="16" font-weight="bold">y'</text><text x="45" y="145" font-family="sans-serif" font-size="16" font-weight="bold">y</text><text x="210" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₁</text><text x="330" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₂</text><text x="215" y="82" font-family="sans-serif" font-size="16">0</text><text x="335" y="82" font-family="sans-serif" font-size="16">0</text><text x="150" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><text x="270" y="82" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text><text x="390" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><line x1="110" y1="165" x2="200" y2="115" stroke="#2563EB" stroke-width="3"/><line x1="230" y1="115" x2="320" y2="165" stroke="#DC2626" stroke-width="3"/><line x1="350" y1="165" x2="440" y2="115" stroke="#2563EB" stroke-width="3"/></svg>""",
     "TAP_HOP": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><circle cx="210" cy="100" r="70" fill="#93C5FD" fill-opacity="0.5" stroke="#2563EB" stroke-width="2"/><circle cx="290" cy="100" r="70" fill="#FCA5A5" fill-opacity="0.5" stroke="#DC2626" stroke-width="2"/><text x="165" y="105" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E40AF">Tập A</text><text x="315" y="105" font-family="sans-serif" font-size="16" font-weight="bold" fill="#991B1B">Tập B</text><text x="235" y="105" font-family="sans-serif" font-size="15" font-weight="bold" fill="#047857">A ∩ B</text></svg>""",
-    "VECTOR": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><defs><marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2563EB"/></marker></defs><line x1="100" y1="150" x2="380" y2="50" stroke="#2563EB" stroke-width="4" marker-end="url(#arrow)"/><circle cx="100" cy="150" r="5" fill="#DC2626"/><text x="80" y="170" font-family="sans-serif" font-size="16" font-weight="bold">A (Điểm đầu)</text><text x="400" y="45" font-family="sans-serif" font-size="16" font-weight="bold">B (Điểm cuối)</text><text x="220" y="90" font-family="sans-serif" font-size="18" font-weight="bold" fill="#2563EB">Vectơ u = AB</text></svg>""",
+    "VECTOR": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><defs><marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2563EB"/></marker></defs><line x1="100" y1="150" x2="380" y2="50" stroke="#2563EB" stroke-width="4" marker-end="url(#arrow)"/><circle cx="100" cy="150" r="5" fill="#DC2626"/><text x="80" y="170" font-family="sans-serif" font-size="16" font-weight="bold">A</text><text x="400" y="45" font-family="sans-serif" font-size="16" font-weight="bold">B</text><text x="220" y="90" font-family="sans-serif" font-size="18" font-weight="bold" fill="#2563EB">Vectơ u = AB</text></svg>""",
     "LUONG_GIAC": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="140" y1="100" x2="360" y2="100" stroke="#334155" stroke-width="2"/><line x1="250" y1="190" x2="250" y2="10" stroke="#334155" stroke-width="2"/><circle cx="250" cy="100" r="75" fill="none" stroke="#0284C7" stroke-width="2"/><text x="365" y="105" font-family="sans-serif" font-size="14" font-weight="bold" fill="#2563EB">Cos (+)</text><text x="255" y="23" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Sin (+)</text><line x1="250" y1="100" x2="303" y2="47" stroke="#D97706" stroke-width="2.5"/><circle cx="303" cy="47" r="4.5" fill="#D97706"/><text x="312" y="47" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309">M(cosα; sinα)</text></svg>""",
     "DAY_SO": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><defs><marker id="arr_ds" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#DC2626"/></marker></defs><line x1="50" y1="120" x2="450" y2="120" stroke="#475569" stroke-width="3"/><circle cx="100" cy="120" r="6" fill="#2563EB"/><text x="90" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₁</text><circle cx="200" cy="120" r="6" fill="#2563EB"/><text x="190" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₂</text><circle cx="300" cy="120" r="6" fill="#2563EB"/><text x="290" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₃</text><circle cx="400" cy="120" r="6" fill="#2563EB"/><text x="390" y="150" font-family="sans-serif" font-size="16" font-weight="bold">u₄</text><path d="M 100 105 Q 150 50 195 105" fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="4" marker-end="url(#arr_ds)"/><path d="M 200 105 Q 250 50 295 105" fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="4" marker-end="url(#arr_ds)"/><text x="235" y="70" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">+ d (CSC) / × q (CSN)</text></svg>""",
     "HINH_KHONG_GIAN": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><polygon points="170,160 350,160 290,110" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/><line x1="250" y1="25" x2="250" y2="135" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="4"/><line x1="250" y1="25" x2="170" y2="160" stroke="#1E293B" stroke-width="2"/><line x1="250" y1="25" x2="350" y2="160" stroke="#1E293B" stroke-width="2"/><line x1="250" y1="25" x2="290" y2="110" stroke="#1E293B" stroke-width="2" stroke-dasharray="3"/><text x="245" y="18" font-family="sans-serif" font-size="15" font-weight="bold" fill="#DC2626">S</text><text x="155" y="170" font-family="sans-serif" font-size="14" font-weight="bold">A</text><text x="360" y="170" font-family="sans-serif" font-size="14" font-weight="bold">B</text><text x="295" y="100" font-family="sans-serif" font-size="14" font-weight="bold">C</text><text x="255" y="150" font-family="sans-serif" font-size="12" font-weight="bold" fill="#DC2626">H</text></svg>""",
@@ -149,7 +169,7 @@ except Exception:
     pass
 
 # ==============================================================================
-# 5. QUẢN LÝ TÀI KHOẢN VÀ GAMIFICATION (VƯỜN HOA TRI THỨC)
+# 5. QUẢN LÝ TÀI KHOẢN VÀ ĐỒNG BỘ GOOGLE SHEETS
 # ==============================================================================
 if "auth_user" not in st.session_state:
     st.session_state["auth_user"] = None
@@ -162,6 +182,25 @@ if "students_db" not in st.session_state:
         {"student_id": "HS10_01", "password": "123", "full_name": "Lê Ngọc", "grade": 10, "flowers": 35}
     ]
 
+def sync_flower_to_sheets(student_id, student_name, earned, total_flowers, reason):
+    """Ghi nhận nhật ký tích lũy hoa lên Google Sheets nếu đã cấu hình kết nối."""
+    if conn:
+        try:
+            log_data = pd.DataFrame([{
+                "Thời gian": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Mã HS": student_id,
+                "Họ và Tên": student_name,
+                "Số hoa nhận": earned,
+                "Tổng hoa hiện tại": total_flowers,
+                "Lí do tích lũy": reason
+            }])
+            # Ghi nối dữ liệu vào sheet 'FlowerLogs'
+            existing_df = conn.read(worksheet="FlowerLogs", ttl=0)
+            updated_df = pd.concat([existing_df, log_data], ignore_index=True)
+            conn.update(worksheet="FlowerLogs", data=updated_df)
+        except Exception:
+            pass
+
 def reward_student_flower(student_id, earned, reason):
     for s in st.session_state["students_db"]:
         if s["student_id"] == student_id:
@@ -169,21 +208,22 @@ def reward_student_flower(student_id, earned, reason):
             st.toast(f"🌸 Tuyệt vời! Em nhận được +{earned} Bông hoa vì: {reason}!")
             if st.session_state["auth_user"] and st.session_state["auth_user"]["student_id"] == student_id:
                 st.session_state["auth_user"]["flowers"] = s["flowers"]
+            sync_flower_to_sheets(student_id, s.get("full_name", ""), earned, s["flowers"], reason)
             break
 
 # ==============================================================================
 # 6. MÀN HÌNH ĐĂNG NHẬP
 # ==============================================================================
 if st.session_state["auth_user"] is None:
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📐 HỆ SINH THÁI TỰ HỌC TOÁN THPT 'GSTOÁN'</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #475569;'>Chuẩn hóa 100% Chủ điểm SGK & Vở tự học Kết nối tri thức (Khối 10, 11, 12)</p>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center; color: #2563EB;'>📐 HỆ SINH THÁI TỰ HỌC TOÁN THPT 'GSTOÁN'</h2>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; color: {subtext_color};'>Chuẩn hóa 100% Chủ điểm SGK & Vở tự học Kết nối tri thức (Khối 10, 11, 12)</p>", unsafe_allow_html=True)
     
     col_l1, col_box, col_l2 = st.columns([1, 1.2, 1])
     with col_box:
         with st.container(border=True):
             st.markdown("### 🔐 Cổng Đăng Nhập")
             login_role = st.radio("Vai trò:", ["👨‍🎓 Học sinh", "👩‍🏫 Giáo viên (Admin)"], horizontal=True)
-            user_input = st.text_input("Tài khoản / Mã học sinh:", value="HS12_01")
+            user_input = st.text_input("Tài khoản / Mã học sinh:", value="HS11_01")
             pass_input = st.text_input("Mật khẩu:", type="password", value="123")
 
             if st.button("Đăng Nhập Ngay", use_container_width=True):
@@ -202,35 +242,59 @@ if st.session_state["auth_user"] is None:
                         st.rerun()
                     else:
                         st.error("Sai mã học sinh hoặc mật khẩu!")
-            st.caption("💡 Tài khoản HS mẫu: `HS12_01`, `HS11_01`, `HS10_01` (Mật khẩu: `123`). Admin: `admin` / `123`.")
+            st.caption("💡 Mẫu: `HS10_01`, `HS11_01`, `HS12_01` (Pass: `123`). Admin: `admin` / `123`.")
     st.stop()
 
 # ==============================================================================
-# 7. THANH ĐIỀU HƯỚNG BÊN (SIDEBAR)
+# 7. THANH ĐIỀU HƯỚNG BÊN (SIDEBAR) & CHUYỂN GIAO DIỆN SÁNG / TỐI
 # ==============================================================================
 with st.sidebar:
     st.markdown(f"### 👤 {st.session_state['auth_user']['full_name']}")
+    
+    # Nút chuyển Theme
+    theme_choice = st.radio("🎨 Chế độ hiển thị:", ["Sáng ☀️", "Tối 🌙"], index=(1 if is_dark else 0))
+    selected_mode = "Tối" if "Tối" in theme_choice else "Sáng"
+    if selected_mode != st.session_state["theme_mode"]:
+        st.session_state["theme_mode"] = selected_mode
+        st.rerun()
+
     if st.session_state["role"] == "student":
         st.caption(f"Mã định danh: **{st.session_state['auth_user']['student_id']}**")
         flowers = st.session_state['auth_user'].get('flowers', 30)
         with st.container(border=True):
             st.markdown("<h5 style='text-align: center; color: #DB2777; margin:0;'>🌸 Vườn hoa Tri thức</h5>", unsafe_allow_html=True)
             st.markdown(f"<h2 style='text-align: center; color: #BE185D; margin:4px 0;'>{flowers} 🌸</h2>", unsafe_allow_html=True)
-            st.caption("Giải đúng BT +2 hoa. Nghe bài giảng +1 hoa. Khảo thí +3 hoa!")
+            st.caption("Giải đúng BT +2 hoa. Nghe giảng +1 hoa. Khảo thí +3 hoa!")
+            
     if st.button("🚪 Đăng xuất", use_container_width=True):
         st.session_state["auth_user"] = None
         st.session_state["role"] = None
         st.rerun()
 
 if st.session_state["role"] == "teacher":
-    st.title("👩‍🏫 Bảng Điều Khiển Giáo viên")
-    st.info("Chào mừng Thầy/Cô! Phân hệ Quản lý đang chạy ở trạng thái sẵn sàng.")
+    st.title("👩‍🏫 Bảng Điều Khiển Giáo Viên (Dashboard Quản Lý)")
+    st.info("Chào mừng Thầy/Cô! Dưới đây là bảng theo dõi tiến độ tự học của học sinh.")
+    
+    # Hiển thị bảng tổng hợp học sinh
+    df_students = pd.DataFrame(st.session_state["students_db"])
+    st.dataframe(df_students[["student_id", "full_name", "grade", "flowers"]], use_container_width=True)
+    
+    if conn:
+        try:
+            logs = conn.read(worksheet="FlowerLogs", ttl=0)
+            st.markdown("#### 📜 Nhật Ký Hoạt Động Tự Học Trực Tuyến")
+            st.dataframe(logs, use_container_width=True)
+        except Exception:
+            st.caption("Chưa có kết nối bảng ghi nhật ký Google Sheets.")
     st.stop()
 
 # ==============================================================================
-# 8. PHÂN HỆ HỌC SINH (5 TABS CHUẨN SƯ PHẠM)
+# 8. PHÂN HỆ HỌC SINH (5 TABS & TÌM KIẾM NHANH)
 # ==============================================================================
 student_info = st.session_state["auth_user"]
+
+# Thanh tìm kiếm nhanh toàn khóa học
+search_kw = st.text_input("🔍 Tìm kiếm nhanh bài học, chủ điểm (Ví dụ: 'Simpson', 'Đạo hàm', 'Tọa độ'):", "")
 
 c_gr, c_les, c_top = st.columns([1, 1.8, 1.8])
 with c_gr:
@@ -242,8 +306,22 @@ if not grade_dict:
     st.warning(f"Dữ liệu của {sel_grade} đang được đồng bộ hóa. Vui lòng kiểm tra lại file data tương ứng!")
     st.stop()
 
+# Lọc bài học theo từ khóa tìm kiếm (nếu có)
+all_lessons = list(grade_dict.keys())
+if search_kw.strip():
+    filtered_lessons = []
+    kw_lower = search_kw.strip().lower()
+    for l_name, l_data in grade_dict.items():
+        # Kiểm tra từ khóa trong tên bài hoặc trong tên các chủ điểm
+        if kw_lower in l_name.lower() or any(kw_lower in t.lower() for t in l_data.get("topics", {}).keys()):
+            filtered_lessons.append(l_name)
+    lesson_list = filtered_lessons if filtered_lessons else all_lessons
+    if not filtered_lessons:
+        st.info("Không tìm thấy bài học trùng khớp, hiển thị danh mục mặc định.")
+else:
+    lesson_list = all_lessons
+
 with c_les:
-    lesson_list = list(grade_dict.keys())
     sel_lesson = st.selectbox(f"📖 Bài học ({len(lesson_list)} bài):", lesson_list)
 
 cur_lesson_obj = grade_dict[sel_lesson]
@@ -304,7 +382,7 @@ with tab1:
             st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
 # ------------------------------------------------------------------------------
-# TAB 2: VÍ DỤ MINH HỌA (LOAD TOÀN BỘ CÁC VÍ DỤ CỦA TỪNG CHỦ ĐIỂM)
+# TAB 2: VÍ DỤ MINH HỌA (LOAD ĐẦY ĐỦ TẤT CẢ VÍ DỤ CỦA MỌI CHỦ ĐIỂM)
 # ------------------------------------------------------------------------------
 with tab_ex:
     st.subheader(f"💡 Toàn Bộ Ví Dụ Minh Họa Chuẩn Mực — {sel_lesson}")
@@ -319,7 +397,6 @@ with tab_ex:
                 st.info("Chủ điểm này đang được đồng bộ hóa ví dụ.")
             else:
                 for idx, ex_item in enumerate(topic_examples):
-                    # Mở sẵn ví dụ đầu tiên của chủ điểm đang được chọn ở selectbox bên trên
                     is_default_open = (t_name == sel_topic and idx == 0)
                     with st.expander(f"📌 {ex_item['title']}", expanded=is_default_open):
                         st.markdown(f"**Đề bài yêu cầu:**\n\n{ex_item['problem']}")
@@ -358,30 +435,56 @@ with tab2:
                 if is_correct:
                     st.balloons()
                     st.success("🎉 CHÍNH XÁC 100%! Em đã tự giải đúng bài tập và xứng đáng nhận thưởng +2 Bông hoa Tri thức!")
-                    reward_student_flower(student_info["student_id"], 2, "tự lực giải đúng bài tập")
+                    reward_student_flower(student_info["student_id"], 2, "tự lực giải đúng bài tập kiểm minh chứng")
                 else:
                     st.error("❌ Kết quả chưa chính xác! Em hãy xem lại Ví dụ minh họa và thử giải lại ra nháp nhé.")
 
 # ------------------------------------------------------------------------------
-# TAB 4: TRỢ LÝ AI SOI BÀI VỞ
+# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (PROMPT THỊ GIÁC CHUẨN XÁC)
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Giọng Nói")
-    st.caption("Chụp ảnh bài làm hoặc dùng Mic để hỏi AI về các bước đang vướng mắc.")
-    inp_mode = st.radio("Phương thức hỏi:", ["📸 Chụp vở nháp qua Camera", "🎙️ Hỏi qua Mic", "✍️ Nhập câu hỏi"], horizontal=True)
-    user_q = st.text_area("Nội dung em cần hỏi thầy cô AI:", placeholder="Ví dụ: Em chưa hiểu bước đổi cận trong bài tích phân...")
-    if st.button("🚀 Gửi Câu Hỏi Nhờ Gia Sư AI Giải Đáp", use_container_width=True):
-        if client and user_q.strip():
+    st.caption("Chụp ảnh bài giải viết tay hoặc nhập nội dung em đang gặp vướng mắc để Thầy/Cô AI chỉ ra từng bước sai sót.")
+    
+    inp_mode = st.radio("Phương thức tương tác:", ["📸 Chụp vở nháp qua Camera", "✍️ Nhập câu hỏi chữ"], horizontal=True)
+    
+    uploaded_image = None
+    if inp_mode == "📸 Chụp vở nháp qua Camera":
+        uploaded_image = st.camera_input("Chụp ảnh trang vở nháp của em:")
+    
+    user_q = st.text_area("Ghi chú thêm câu hỏi của em (nếu có):", placeholder="Ví dụ: Thầy cô xem giúp em bị sai từ dòng nào trong bước tính đạo hàm...")
+    
+    if st.button("🚀 Gửi Bài Nhờ Gia Sư AI Soi Bài", use_container_width=True):
+        if client:
             try:
+                system_vision_prompt = (
+                    f"Bạn là Thầy/Cô giáo dạy Toán cấp THPT chuẩn mực sư phạm. Học sinh đang tự học bài: '{sel_lesson}', chủ điểm: '{sel_topic}'. "
+                    "Nhiệm vụ của bạn khi phân tích bài làm của học sinh:\n"
+                    "1. Kiểm tra từng dòng biến đổi trong bài làm của học sinh (qua ảnh hoặc mô tả).\n"
+                    "2. Nếu có lỗi sai: CHỈ RÕ CHÍNH XÁC học sinh bị sai từ dòng thứ mấy, nguyên nhân sai (sai dấu, nhầm công thức, quên điều kiện hay tính toán nhầm).\n"
+                    "3. Gợi ý hướng giải quyết tiếp theo để học sinh tự sửa, TUYỆT ĐỐI KHÔNG giải hộ toàn bộ bài hay đưa ngay đáp án cuối cùng.\n"
+                    "4. Sử dụng ngôn từ động viên, chuẩn mực và định dạng công thức bằng LaTeX rõ ràng."
+                )
+                
+                contents = [system_vision_prompt]
+                if uploaded_image:
+                    img = Image.open(uploaded_image)
+                    contents.append(img)
+                if user_q.strip():
+                    contents.append(f"Câu hỏi của học sinh: {user_q}")
+                elif not uploaded_image:
+                    contents.append("Học sinh chưa đính kèm ảnh hay câu hỏi, hãy nhắc nhở em chụp ảnh bài làm.")
+
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
-                    contents=f"Em là học sinh đang học bài {sel_lesson}, chủ điểm {sel_topic}. Em hỏi: {user_q}. Thầy cô hãy giải thích ngắn gọn, sư phạm và dễ hiểu."
+                    contents=contents
                 )
-                st.success(response.text)
-            except Exception:
-                st.error("Không thể kết nối đến Trợ lý AI lúc này. Vui lòng kiểm tra lại cấu hình API Key.")
+                st.success("### ✍️ Lời Khuyên & Nhận Xét Từ Thầy/Cô AI:")
+                st.markdown(response.text)
+            except Exception as e:
+                st.error("Không thể kết nối đến Trợ lý AI lúc này. Vui lòng kiểm tra lại cấu hình Gemini API Key.")
         else:
-            st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ).")
+            st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ trong Secrets).")
 
 # ------------------------------------------------------------------------------
 # TAB 5: PHÒNG KHẢO THÍ CHUẨN MA TRẬN
@@ -390,11 +493,11 @@ with tab4:
     st.subheader(f"🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa ({sel_grade})")
     st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo.")
     with st.container(border=True):
-        st.markdown(f"### 📋 Đề Khảo Thí Định Kỳ — {sel_grade}")
+        st.markdown(f"### 📋 Đề Khảo Thí Định Kỳ — {sel_lesson}")
         st.markdown("#### PHẦN I: Câu trắc nghiệm nhiều phương án lựa chọn")
         st.markdown(f"**Câu 1:** Vận dụng kiến thức trọng tâm của bài {sel_lesson}, khẳng định nào sau đây là đúng?")
         st.radio("Chọn phương án đúng:", ["A. Đáp án đúng theo định nghĩa SGK", "B. Khẳng định sai điều kiện", "C. Nhầm lẫn dấu toán học", "D. Thiếu trường hợp ngoại lai"], key="ex_p1")
         if st.button("📤 Nộp Bài Khảo Thí & Chấm Điểm", use_container_width=True):
             st.balloons()
             st.success("🎉 **KẾT QUẢ BÀI THI CỦA EM:** **10.0 / 10.0 Điểm**")
-            reward_student_flower(student_info["student_id"], 3, "đạt điểm xuất sắc khảo thí")
+            reward_student_flower(student_info["student_id"], 3, "đạt điểm xuất sắc bài khảo thí định kỳ")

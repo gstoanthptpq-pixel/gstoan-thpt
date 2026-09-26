@@ -8,7 +8,11 @@ from gtts import gTTS
 import os
 import hashlib
 import json
+import io
 from datetime import datetime
+from docx import Document
+from docx.shared import Inches, Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 # ==============================================================================
 # 1. CẤU HÌNH GIAO DIỆN & TÙY BIẾN CHẾ ĐỘ SÁNG / TỐI (LIGHT / DARK THEME)
@@ -40,8 +44,6 @@ st.markdown(f"""
     div[data-baseweb="popover"] ul, div[role="listbox"] {{
         max-height: 320px !important;
         overflow-y: auto !important;
-        scrollbar-width: thin;
-        scrollbar-color: #3B82F6 #F1F5F9;
     }}
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-radius: 14px !important;
@@ -63,14 +65,6 @@ st.markdown(f"""
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     }}
-    .audio-box {{
-        background: {("#1E3A5F" if is_dark else "linear-gradient(135deg, #F0FDF4, #DCFCE7)")};
-        border: 1px solid {("#2563EB" if is_dark else "#86EFAC")};
-        color: {text_color};
-        padding: 12px;
-        border-radius: 10px;
-        margin-top: 12px;
-    }}
     .topic-card {{
         background-color: {card_bg};
         color: {text_color};
@@ -79,25 +73,27 @@ st.markdown(f"""
         border-radius: 6px;
         margin-top: 14px;
         margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }}
-    .adv-box {{
-        background: {("#312E81" if is_dark else "linear-gradient(135deg, #EEF2FF, #E0E7FF)")};
-        border: 1px solid #6366F1;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 16px;
+    .exam-nav-done {{
+        background-color: #16A34A !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }}
+    .exam-nav-doing {{
+        background-color: #E2E8F0 !important;
+        color: #1E293B !important;
+        border-radius: 8px !important;
     }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO KẾT NỐI GEMINI API, GOOGLE SHEETS & TTS AUDIO
+# 2. KHỞI TẠO KẾT NỐI GEMINI API, GSHEETS & HÀM DỰ PHÒNG MODEL (CHỐNG LỖI 503 / 404)
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
     try:
-        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"].strip())
     except Exception:
         pass
 
@@ -106,6 +102,25 @@ try:
     conn = st.connection("gsheets", type=GSheetsConnection)
 except Exception:
     pass
+
+def call_gemini_safe(contents_payload):
+    """Cơ chế Fallback thông minh: Thử lần lượt các model ổn định để tránh nghẽn mạng."""
+    if not client:
+        return None
+    models_to_try = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+    last_err = ""
+    for m in models_to_try:
+        try:
+            res = client.models.generate_content(
+                model=m,
+                contents=contents_payload
+            )
+            if res and res.text:
+                return res.text
+        except Exception as e:
+            last_err = str(e)
+            continue
+    raise Exception(f"Không thể kết nối đến AI sau khi thử các model: {last_err}")
 
 def get_lecture_audio(text_script, audio_id):
     filename = f"lecture_{audio_id}.mp3"
@@ -118,7 +133,7 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP (CÔ LẬP IFRAME)
+# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP
 # ==============================================================================
 PRESET_SVGS = {
     "DON_DIEU": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="80" y1="15" x2="80" y2="185" stroke="#475569" stroke-width="2"/><line x1="20" y1="55" x2="480" y2="55" stroke="#475569" stroke-width="2"/><line x1="20" y1="95" x2="480" y2="95" stroke="#475569" stroke-width="2"/><text x="45" y="42" font-family="sans-serif" font-size="16" font-weight="bold">x</text><text x="45" y="82" font-family="sans-serif" font-size="16" font-weight="bold">y'</text><text x="45" y="145" font-family="sans-serif" font-size="16" font-weight="bold">y</text><text x="210" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₁</text><text x="330" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₂</text><text x="215" y="82" font-family="sans-serif" font-size="16">0</text><text x="335" y="82" font-family="sans-serif" font-size="16">0</text><text x="150" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><text x="270" y="82" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text><text x="390" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><line x1="110" y1="165" x2="200" y2="115" stroke="#2563EB" stroke-width="3"/><line x1="230" y1="115" x2="320" y2="165" stroke="#DC2626" stroke-width="3"/><line x1="350" y1="165" x2="440" y2="115" stroke="#2563EB" stroke-width="3"/></svg>""",
@@ -195,6 +210,16 @@ if "dynamic_similar_exercises" not in st.session_state:
 if "advanced_exercise_data" not in st.session_state:
     st.session_state["advanced_exercise_data"] = {}
 
+# Session lưu trữ trạng thái khảo thí Tab 5
+if "generated_exam" not in st.session_state:
+    st.session_state["generated_exam"] = None
+if "current_exam_idx" not in st.session_state:
+    st.session_state["current_exam_idx"] = 0
+if "user_exam_answers" not in st.session_state:
+    st.session_state["user_exam_answers"] = {}
+if "exam_submitted_result" not in st.session_state:
+    st.session_state["exam_submitted_result"] = None
+
 def sync_flower_to_sheets(student_id, student_name, earned, total_flowers, reason):
     if conn:
         try:
@@ -223,67 +248,131 @@ def reward_student_flower(student_id, earned, reason):
             break
 
 # ==============================================================================
-# HÀM AI SINH ĐỀ TƯƠNG TỰ VÀ ĐỀ NÂNG CAO (MODEL: gemini-3.8-flash)
+# HÀM AI SINH ĐỀ TƯƠNG TỰ, ĐỀ NÂNG CAO VÀ ĐỀ THI ĐỊNH KỲ (FALLBACK SAFE)
 # ==============================================================================
 def generate_similar_exercise_ai(base_problem):
-    """Sử dụng Gemini 3.8 Flash để sinh đề bài tương tự cùng dạng."""
-    if not client:
-        return None
+    prompt = (
+        f"Dựa vào bài toán gốc sau: '{base_problem}'.\n"
+        "Hãy phát sinh 1 bài toán TƯƠNG TỰ CÙNG DẠNG, chỉ thay đổi số liệu hoặc ngữ cảnh đơn giản, "
+        "sao cho đáp số cuối cùng là MỘT CON SỐ cụ thể (hoặc số nguyên, hoặc số thập phân đơn giản).\n"
+        "Trả về kết quả duy nhất ở định dạng JSON chuẩn (không dùng markdown):\n"
+        "{\n"
+        '  "problem": "Nội dung đề bài mới",\n'
+        '  "answer": "đáp số cuối cùng (chỉ ghi số)",\n'
+        '  "hint": "Gợi ý hoặc tóm tắt cách giải ngắn gọn"\n'
+        "}"
+    )
     try:
-        prompt = (
-            f"Dựa vào bài toán gốc sau: '{base_problem}'.\n"
-            "Hãy phát sinh 1 bài toán TƯƠNG TỰ CÙNG DẠNG, chỉ thay đổi số liệu hoặc ngữ cảnh đơn giản, "
-            "sao cho đáp số cuối cùng là MỘT CON SỐ cụ thể (hoặc số nguyên, hoặc số thập phân đơn giản).\n"
-            "Trả về kết quả duy nhất ở định dạng JSON chuẩn (không dùng markdown khác):\n"
-            "{\n"
-            '  "problem": "Nội dung đề bài mới",\n'
-            '  "answer": "đáp số cuối cùng (chỉ ghi số)",\n'
-            '  "hint": "Gợi ý hoặc tóm tắt cách giải ngắn gọn"\n'
-            "}"
-        )
-        resp = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=prompt
-        )
-        text_resp = resp.text.strip()
-        if text_resp.startswith("```json"):
-            text_resp = text_resp[7:]
-        if text_resp.endswith("```"):
-            text_resp = text_resp[:-3]
-        return json.loads(text_resp.strip())
+        raw_text = call_gemini_safe([prompt])
+        t = raw_text.strip()
+        if t.startswith("```json"):
+            t = t[7:]
+        if t.endswith("```"):
+            t = t[:-3]
+        return json.loads(t.strip())
     except Exception:
         return None
 
 def generate_advanced_exercise_ai(lesson_title):
-    """Sinh bài toán Vận dụng, Vận dụng cao hoặc Mô hình hóa thực tế."""
-    if not client:
-        return None
+    prompt = (
+        f"Bạn là chuyên gia ra đề thi Toán THPT chương trình GDPT 2018 bộ Kết nối tri thức.\n"
+        f"Thuộc bài học: '{lesson_title}'.\n"
+        "Hãy sáng tạo 1 bài toán ở mức độ VẬN DỤNG, VẬN DỤNG CAO hoặc MÔ HÌNH HÓA TOÁN HỌC THỰC TẾ "
+        "(bài toán tối ưu, lợi nhuận, chuyển động thực tế, xác suất, hình học thực tế...).\n"
+        "Yêu cầu: Kết quả làm tròn đến 1 chữ số thập phân hoặc là số nguyên.\n"
+        "Trả về duy nhất định dạng JSON chuẩn:\n"
+        "{\n"
+        '  "problem": "Nội dung đề bài mô hình hóa/vận dụng cao",\n'
+        '  "answer": "đáp số số học (chỉ ghi số)",\n'
+        '  "guide": "Lời giải chi tiết từng bước chuẩn mực sư phạm"\n'
+        "}"
+    )
     try:
-        prompt = (
-            f"Bạn là chuyên gia ra đề thi Toán THPT chương trình GDPT 2018 bộ Kết nối tri thức.\n"
-            f"Thuộc bài học: '{lesson_title}'.\n"
-            "Hãy sáng tạo 1 bài toán ở mức độ VẬN DỤNG, VẬN DỤNG CAO hoặc MÔ HÌNH HÓA TOÁN HỌC THỰC TẾ "
-            "(bài toán tối ưu chi phí, lợi nhuận, chuyển động thực tế, hình học thực nghiệm, xác suất thực tế...).\n"
-            "Yêu cầu: Kết quả bài toán có thể làm tròn đến 1 chữ số thập phân hoặc là số nguyên.\n"
-            "Trả về duy nhất định dạng JSON chuẩn:\n"
-            "{\n"
-            '  "problem": "Nội dung đề bài bài toán mô hình hóa/vận dụng cao",\n'
-            '  "answer": "đáp số số học (chỉ ghi số)",\n'
-            '  "guide": "Lời giải chi tiết từng bước chuẩn mực sư phạm"\n'
-            "}"
-        )
-        resp = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=prompt
-        )
-        text_resp = resp.text.strip()
-        if text_resp.startswith("```json"):
-            text_resp = text_resp[7:]
-        if text_resp.endswith("```"):
-            text_resp = text_resp[:-3]
-        return json.loads(text_resp.strip())
+        raw_text = call_gemini_safe([prompt])
+        t = raw_text.strip()
+        if t.startswith("```json"):
+            t = t[7:]
+        if t.endswith("```"):
+            t = t[:-3]
+        return json.loads(t.strip())
     except Exception:
         return None
+
+def generate_custom_full_exam(grade, term, n_p1, n_p2, n_p3, n_mod):
+    """Sinh toàn bộ đề thi chuẩn định dạng mới GDPT 2018 theo ma trận người dùng tùy chọn."""
+    prompt = (
+        f"Bạn là chuyên gia khảo thí môn Toán THPT Chương trình GDPT 2018 (Bộ sách Kết nối tri thức).\n"
+        f"Hãy tạo 1 đề thi môn Toán dành cho {grade}, kỳ thi: {term}.\n"
+        f"Cấu trúc số lượng câu hỏi:\n"
+        f"- PHẦN I: Gồm {n_p1} câu hỏi trắc nghiệm nhiều phương án lựa chọn (A, B, C, D), có duy nhất 1 đáp án đúng.\n"
+        f"- PHẦN II: Gồm {n_p2} câu trắc nghiệm Đúng/Sai. Mỗi câu có 4 lệnh hỏi a, b, c, d.\n"
+        f"- PHẦN III: Gồm {n_p3} câu trắc nghiệm trả lời ngắn (trong đó có {n_mod} câu bài toán thực tế mô hình hóa). "
+        f"Đáp số bắt buộc phải là số thực (nếu là số thập phân làm tròn đến 1 chữ số thập phân).\n\n"
+        "Trả về DUY NHẤT một chuỗi JSON hợp lệ không có giải thích thêm với cấu trúc sau:\n"
+        "{\n"
+        '  "exam_title": "ĐỀ THI ' + f'{grade.upper()} - {term.upper()}' + '",\n'
+        '  "part1": [\n'
+        '    {"id": "P1_1", "question": "Nội dung câu 1", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}\n'
+        '  ],\n'
+        '  "part2": [\n'
+        '    {"id": "P2_1", "question": "Nội dung câu...", "sub_items": [{"label": "a", "text": "Khẳng định a", "correct": true}, {"label": "b", "text": "Khẳng định b", "correct": false}, {"label": "c", "text": "Khẳng định c", "correct": true}, {"label": "d", "text": "Khẳng định d", "correct": false}]}\n'
+        '  ],\n'
+        '  "part3": [\n'
+        '    {"id": "P3_1", "question": "Nội dung câu bài toán...", "correct_num": "4.5", "is_modeled": true}\n'
+        '  ]\n'
+        "}"
+    )
+    raw = call_gemini_safe([prompt])
+    t = raw.strip()
+    if t.startswith("```json"):
+        t = t[7:]
+    if t.endswith("```"):
+        t = t[:-3]
+    return json.loads(t.strip())
+
+def export_exam_to_docx(exam_data):
+    """Xuất đề thi ra file Word (.docx) chuẩn format có thể in trực tiếp."""
+    doc = Document()
+    
+    # Tiêu đề
+    title_p = doc.add_paragraph()
+    title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run_t = title_p.add_run(exam_data.get("exam_title", "ĐỀ THI MÔN TOÁN THPT").upper() + "\n")
+    run_t.bold = True
+    run_t.font.size = Pt(14)
+    run_sub = title_p.add_run("Thời gian làm bài: 90 phút (Không kể thời gian phát đề)\n-----------------------")
+    run_sub.font.italic = True
+    
+    # Phần 1
+    doc.add_heading("PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn (Thí sinh chọn 1 đáp án)", level=2)
+    for idx, q in enumerate(exam_data.get("part1", [])):
+        p = doc.add_paragraph()
+        p.add_run(f"Câu {idx + 1}: ").bold = True
+        p.add_run(q.get("question", ""))
+        for opt in q.get("options", []):
+            doc.add_paragraph(f"    {opt}")
+
+    # Phần 2
+    doc.add_heading("PHẦN II. Câu trắc nghiệm Đúng/Sai (Mỗi câu thí sinh trả lời đúng/sai cho các ý a, b, c, d)", level=2)
+    for idx, q in enumerate(exam_data.get("part2", [])):
+        p = doc.add_paragraph()
+        p.add_run(f"Câu {idx + 1}: ").bold = True
+        p.add_run(q.get("question", ""))
+        for sub in q.get("sub_items", []):
+            doc.add_paragraph(f"    {sub.get('label')}) {sub.get('text')}")
+
+    # Phần 3
+    doc.add_heading("PHẦN III. Câu trắc nghiệm trả lời ngắn (Thí sinh điền kết quả vào ô trả lời)", level=2)
+    for idx, q in enumerate(exam_data.get("part3", [])):
+        p = doc.add_paragraph()
+        p.add_run(f"Câu {idx + 1}: ").bold = True
+        p.add_run(q.get("question", ""))
+        doc.add_paragraph("    Đáp số: .....................................................")
+
+    doc_io = io.BytesIO()
+    doc.save(doc_io)
+    doc_io.seek(0)
+    return doc_io
 
 # ==============================================================================
 # 6. MÀN HÌNH ĐĂNG NHẬP
@@ -451,7 +540,7 @@ with tab1:
             st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
 # ------------------------------------------------------------------------------
-# TAB 2: VÍ DỤ MINH HỌA (LOAD TOÀN BỘ CỦA TẤT CẢ CHỦ ĐIỂM)
+# TAB 2: VÍ DỤ MINH HỌA
 # ------------------------------------------------------------------------------
 with tab_ex:
     st.subheader(f"💡 Toàn Bộ Ví Dụ Minh Họa Chuẩn Mực — {sel_lesson}")
@@ -474,7 +563,7 @@ with tab_ex:
                         st.markdown(ex_item["solution"])
 
 # ------------------------------------------------------------------------------
-# TAB 3: HỌC SINH TỰ GIẢI (PHÁT SINH ĐỀ TƯƠNG TỰ & ĐỀ NÂNG CAO MÔ HÌNH HÓA)
+# TAB 3: HỌC SINH TỰ GIẢI
 # ------------------------------------------------------------------------------
 with tab2:
     st.subheader(f"📝 Không Gian Tự Luyện Toán Học — {sel_lesson}")
@@ -483,56 +572,50 @@ with tab2:
     col_adv_btn, col_adv_space = st.columns([1.5, 2.5])
     with col_adv_btn:
         if st.button("🚀 Thử Sức: Tạo Đề Nâng Cao (Vận Dụng / Mô Hình Hóa)", use_container_width=True):
-            if client:
-                with st.spinner("AI đang sáng tạo bài toán mô hình hóa thực tế cho bài học này..."):
-                    adv_res = generate_advanced_exercise_ai(sel_lesson)
-                    if adv_res:
-                        st.session_state["advanced_exercise_data"][sel_lesson] = adv_res
-                        st.rerun()
-                    else:
-                        st.error("Không thể tạo đề nâng cao lúc này. Vui lòng thử lại sau.")
-            else:
-                st.warning("Cần cấu hình Gemini API Key để phát sinh bài toán nâng cao.")
+            with st.spinner("AI đang sáng tạo bài toán mô hình hóa thực tế cho bài học này..."):
+                adv_res = generate_advanced_exercise_ai(sel_lesson)
+                if adv_res:
+                    st.session_state["advanced_exercise_data"][sel_lesson] = adv_res
+                    st.rerun()
+                else:
+                    st.error("Không thể tạo đề nâng cao lúc này. Vui lòng thử lại sau.")
 
     if sel_lesson in st.session_state["advanced_exercise_data"]:
         adv_obj = st.session_state["advanced_exercise_data"][sel_lesson]
-        st.markdown("""
-        <div class="adv-box">
-            <h4 style="margin-top:0; color:#4338CA;">🔥 Bài Toán Thực Tế / Vận Dụng Cao (Mô Hình Hóa)</h4>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown(f"**Đề bài:**\n\n{adv_obj.get('problem')}")
-        
-        c_adv_in, c_adv_sub = st.columns([2, 1])
-        with c_adv_in:
-            user_adv_ans = st.text_input("Nhập đáp số bài nâng cao của em:", key=f"ans_adv_{sel_lesson}")
-        with c_adv_sub:
-            st.write("")
-            st.write("")
-            btn_chk_adv = st.button("Nộp Bài Nâng Cao", key=f"btn_adv_{sel_lesson}", use_container_width=True)
+        with st.container(border=True):
+            st.markdown("#### 🔥 Bài Toán Thực Tế / Vận Dụng Cao (Mô Hình Hóa)")
+            st.markdown(f"**Đề bài:**\n\n{adv_obj.get('problem')}")
             
-        if btn_chk_adv:
-            target_adv = str(adv_obj.get("answer", "")).strip().lower()
-            u_ans = user_adv_ans.strip().lower()
-            is_adv_correct = False
-            if u_ans == target_adv:
-                is_adv_correct = True
-            else:
-                try:
-                    if abs(float(u_ans) - float(target_adv)) < 0.1:
-                        is_adv_correct = True
-                except Exception:
-                    pass
+            c_adv_in, c_adv_sub = st.columns([2, 1])
+            with c_adv_in:
+                user_adv_ans = st.text_input("Nhập đáp số bài nâng cao của em:", key=f"ans_adv_{sel_lesson}")
+            with c_adv_sub:
+                st.write("")
+                st.write("")
+                btn_chk_adv = st.button("Nộp Bài Nâng Cao", key=f"btn_adv_{sel_lesson}", use_container_width=True)
+                
+            if btn_chk_adv:
+                target_adv = str(adv_obj.get("answer", "")).strip().lower()
+                u_ans = user_adv_ans.strip().lower()
+                is_adv_correct = False
+                if u_ans == target_adv:
+                    is_adv_correct = True
+                else:
+                    try:
+                        if abs(float(u_ans) - float(target_adv)) < 0.1:
+                            is_adv_correct = True
+                    except Exception:
+                        pass
 
-            if is_adv_correct:
-                st.balloons()
-                st.success("🎉 XUẤT SẮC! Em đã giải chính xác bài toán vận dụng cao và nhận được +3 Bông hoa Tri thức!")
-                reward_student_flower(student_info["student_id"], 3, "xuất sắc giải đúng bài toán nâng cao mô hình hóa")
-            else:
-                st.error("❌ Kết quả chưa chính xác! Em hãy xem hướng dẫn chi tiết bên dưới.")
-            
-            with st.expander("📖 Xem Hướng Dẫn Chi Tiết Bài Nâng Cao"):
-                st.markdown(adv_obj.get("guide", "Đang cập nhật hướng dẫn."))
+                if is_adv_correct:
+                    st.balloons()
+                    st.success("🎉 XUẤT SẮC! Em đã giải chính xác bài toán vận dụng cao và nhận được +3 Bông hoa Tri thức!")
+                    reward_student_flower(student_info["student_id"], 3, "xuất sắc giải đúng bài toán nâng cao mô hình hóa")
+                else:
+                    st.error("❌ Kết quả chưa chính xác! Em hãy xem hướng dẫn chi tiết bên dưới.")
+                
+                with st.expander("📖 Xem Hướng Dẫn Chi Tiết Bài Nâng Cao"):
+                    st.markdown(adv_obj.get("guide", "Đang cập nhật hướng dẫn."))
 
         st.markdown("---")
 
@@ -569,14 +652,11 @@ with tab2:
                         st.markdown(f"#### 📝 Bài tập tự luyện {exercise_counter} *(Tương tự: {ex_item['title']})*")
                     with col_ex_btn_regen:
                         if st.button("🔄 Tạo đề mới", key=f"regen_{ex_key_id}", help="Bấm để AI sinh một đề bài mới cùng dạng bài này"):
-                            if client:
-                                with st.spinner("Đang tạo đề tương tự mới..."):
-                                    new_sim = generate_similar_exercise_ai(ex_item["problem"])
-                                    if new_sim:
-                                        st.session_state["dynamic_similar_exercises"][ex_key_id] = new_sim
-                                        st.rerun()
-                            else:
-                                st.warning("Cần API Key để tạo đề tương tự.")
+                            with st.spinner("Đang tạo đề tương tự mới..."):
+                                new_sim = generate_similar_exercise_ai(ex_item["problem"])
+                                if new_sim:
+                                    st.session_state["dynamic_similar_exercises"][ex_key_id] = new_sim
+                                    st.rerun()
 
                     if active_exercise:
                         st.info("✨ *Đề bài tương tự do AI phát sinh:*")
@@ -629,7 +709,7 @@ with tab2:
                 exercise_counter += 1
 
 # ------------------------------------------------------------------------------
-# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (MODEL: gemini-3.8-flash)
+# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Sư Phạm")
@@ -700,15 +780,9 @@ with tab3:
                     elif not image_to_process:
                         contents.append("Học sinh chưa cung cấp ảnh bài làm hoặc câu hỏi, hãy nhắc nhở em gửi ảnh hoặc nội dung cần giải đáp.")
 
-                    # Gọi model chính thức gemini-3.8-flash theo yêu cầu mới nhất
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=contents
-                    )
-                    
+                    ai_reply = call_gemini_safe(contents)
                     st.success("### ✍️ Lời Khuyên & Nhận Xét Từ Thầy/Cô AI:")
-                    st.markdown(response.text)
-                    
+                    st.markdown(ai_reply)
                     reward_student_flower(student_info["student_id"], 1, "tích cực chụp bài hỏi Thầy/Cô AI")
             except Exception as e:
                 st.error(f"Chi tiết lỗi kết nối AI: {e}")
@@ -716,17 +790,237 @@ with tab3:
             st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ trong mục Secrets).")
 
 # ------------------------------------------------------------------------------
-# TAB 5: PHÒNG KHẢO THÍ CHUẨN MA TRẬN
+# TAB 5: PHÒNG KHẢO THÍ CHUẨN MA TRẬN GDPT 2018 (TƯƠNG TÁC TỪNG CÂU & XUẤT DOCX)
 # ------------------------------------------------------------------------------
 with tab4:
-    st.subheader(f"🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa ({sel_grade})")
-    st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo.")
-    with st.container(border=True):
-        st.markdown(f"### 📋 Đề Khảo Thí Định Kỳ — {sel_lesson}")
-        st.markdown("#### PHẦN I: Câu trắc nghiệm nhiều phương án lựa chọn")
-        st.markdown(f"**Câu 1:** Vận dụng kiến thức trọng tâm của bài {sel_lesson}, khẳng định nào sau đây là đúng?")
-        st.radio("Chọn phương án đúng:", ["A. Đáp án đúng theo định nghĩa SGK", "B. Khẳng định sai điều kiện", "C. Nhầm lẫn dấu toán học", "D. Thiếu trường hợp ngoại lai"], key="ex_p1")
-        if st.button("📤 Nộp Bài Khảo Thí & Chấm Điểm", use_container_width=True):
-            st.balloons()
-            st.success("🎉 **KẾT QUẢ BÀI THI CỦA EM:** **10.0 / 10.0 Điểm**")
-            reward_student_flower(student_info["student_id"], 3, "đạt điểm xuất sắc bài khảo thí định kỳ")
+    st.subheader("🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa GDPT 2018")
+    st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo. Tùy chọn ma trận, tương tác làm từng câu và lưu đề file Word.")
+
+    with st.expander("⚙️ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI", expanded=(st.session_state["generated_exam"] is None)):
+        c1, c2 = st.columns(2)
+        with c1:
+            exam_grade = st.selectbox("1. Khối lớp:", ["Khối 10", "Khối 11", "Khối 12"], index=(2 if sel_grade=="Khối 12" else (0 if sel_grade=="Khối 10" else 1)))
+        with c2:
+            exam_term = st.selectbox("2. Kỳ kiểm tra:", ["Giữa kỳ 1", "Cuối kỳ 1", "Giữa kỳ 2", "Cuối kỳ 2"])
+            
+        st.markdown("---")
+        st.markdown("##### 3. PHẦN I: Trắc nghiệm 1 lựa chọn (A, B, C, D) — Mặc định 3.0 điểm")
+        col_p1_1, col_p1_2 = st.columns([1, 2])
+        with col_p1_1:
+            p1_count = st.number_input("Số câu phần I:", min_value=1, max_value=20, value=12)
+        with col_p1_2:
+            st.caption("Cấu hình mức độ mặc định: **6 Nhận biết (NB), 5 Thông hiểu (TH), 1 Vận dụng (VD)**.")
+
+        st.markdown("##### 4. PHẦN II: Trắc nghiệm Đúng / Sai (Mỗi câu 4 ý a, b, c, d) — Mặc định 4.0 điểm")
+        col_p2_1, col_p2_2 = st.columns([1, 2])
+        with col_p2_1:
+            p2_count = st.number_input("Số câu phần II:", min_value=1, max_value=10, value=4)
+        with col_p2_2:
+            st.caption("Quy chuẩn điểm Bộ GD&ĐT: Đúng 1 ý: 0.1đ | Đúng 2 ý: 0.25đ | Đúng 3 ý: 0.5đ | Đúng 4 ý: 1.0đ. Mức độ: [NB, NB, TH, VD].")
+
+        st.markdown("##### 5. PHẦN III: Trắc nghiệm trả lời ngắn — Mặc định 3.0 điểm (Mỗi câu 0.5đ)")
+        col_p3_1, col_p3_2, col_p3_3 = st.columns([1, 1, 1])
+        with col_p3_1:
+            p3_count = st.number_input("Số câu phần III:", min_value=1, max_value=10, value=6)
+        with col_p3_2:
+            p3_modeled = st.number_input("Số câu mô hình hóa thực tế:", min_value=0, max_value=p3_count, value=3)
+        with col_p3_3:
+            st.caption("Mức độ: 3 TH, 2 VD, 1 VDC. Đáp số là số thực (làm tròn 1 chữ số thập phân).")
+
+        if st.button("🚀 BẮT ĐẦU TẠO ĐỀ THI", use_container_width=True):
+            with st.spinner("AI đang thiết kế và chuẩn hóa đề thi theo đúng ma trận yêu cầu..."):
+                try:
+                    new_exam = generate_custom_full_exam(exam_grade, exam_term, p1_count, p2_count, p3_count, p3_modeled)
+                    if new_exam:
+                        st.session_state["generated_exam"] = new_exam
+                        st.session_state["current_exam_idx"] = 0
+                        st.session_state["user_exam_answers"] = {}
+                        st.session_state["exam_submitted_result"] = None
+                        st.rerun()
+                    else:
+                        st.error("Không thể tạo đề lúc này, vui lòng thử lại.")
+                except Exception as e:
+                    st.error(f"Lỗi tạo đề: {e}")
+
+    # Giao diện làm bài thi khi đã tạo đề
+    exam = st.session_state["generated_exam"]
+    if exam:
+        st.markdown(f"### 📋 {exam.get('exam_title', 'ĐỀ THI KHẢO THÍ')}")
+        
+        # Gom danh sách toàn bộ câu hỏi để điều hướng
+        all_q_flat = []
+        for idx, q in enumerate(exam.get("part1", [])):
+            all_q_flat.append({"part": 1, "idx_part": idx, "label": f"I.{idx+1}", "data": q})
+        for idx, q in enumerate(exam.get("part2", [])):
+            all_q_flat.append({"part": 2, "idx_part": idx, "label": f"II.{idx+1}", "data": q})
+        for idx, q in enumerate(exam.get("part3", [])):
+            all_q_flat.append({"part": 3, "idx_part": idx, "label": f"III.{idx+1}", "data": q})
+
+        total_questions = len(all_q_flat)
+        curr_i = st.session_state["current_exam_idx"]
+        curr_q = all_q_flat[curr_i]
+
+        # Nút Lưu đề Word (.docx)
+        col_down, col_info = st.columns([1.5, 2.5])
+        with col_down:
+            docx_file = export_exam_to_docx(exam)
+            st.download_button(
+                label="📥 LƯU ĐỀ THÀNH FILE WORD (.DOCX)",
+                data=docx_file,
+                file_name=f"De_Thi_{exam_grade}_{exam_term}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True
+            )
+
+        # Bảng câu hỏi tương tác (Navigation Bar)
+        st.markdown("##### 🧭 Bảng câu hỏi (Bấm vào số câu để chuyển nhanh):")
+        cols_nav = st.columns(min(12, total_questions))
+        for i_btn, q_item in enumerate(all_q_flat):
+            col_target = cols_nav[i_btn % len(cols_nav)]
+            is_answered = q_item["label"] in st.session_state["user_exam_answers"]
+            btn_label = f"✓ {q_item['label']}" if is_answered else q_item['label']
+            
+            with col_target:
+                if st.button(btn_label, key=f"nav_{i_btn}", use_container_width=True):
+                    st.session_state["current_exam_idx"] = i_btn
+                    st.rerun()
+
+        # Hiển thị nội dung câu hỏi hiện tại
+        with st.container(border=True):
+            st.markdown(f"#### 📌 Câu hỏi {curr_q['label']} (Câu {curr_i + 1}/{total_questions})")
+            
+            # --- PHẦN I ---
+            if curr_q["part"] == 1:
+                q_data = curr_q["data"]
+                st.markdown(f"**{q_data.get('question')}**")
+                saved_ans = st.session_state["user_exam_answers"].get(curr_q["label"], None)
+                opts = q_data.get("options", ["A", "B", "C", "D"])
+                
+                selected_opt = st.radio(
+                    "Chọn đáp án của em:",
+                    opts,
+                    index=(["A", "B", "C", "D"].index(saved_ans) if saved_ans in ["A", "B", "C", "D"] else None),
+                    key=f"radio_{curr_q['label']}"
+                )
+                if st.button("Lưu đáp án câu này", key=f"save_p1_{curr_q['label']}"):
+                    if selected_opt:
+                        opt_letter = selected_opt[0].upper()
+                        st.session_state["user_exam_answers"][curr_q["label"]] = opt_letter
+                        st.toast(f"Đã lưu đáp án {opt_letter} cho câu {curr_q['label']}!")
+                        st.rerun()
+
+            # --- PHẦN II ---
+            elif curr_q["part"] == 2:
+                q_data = curr_q["data"]
+                st.markdown(f"**{q_data.get('question')}**")
+                saved_sub = st.session_state["user_exam_answers"].get(curr_q["label"], {})
+                cur_answers_p2 = {}
+                
+                for sub in q_data.get("sub_items", []):
+                    lbl = sub.get("label")
+                    st.write(f"**{lbl})** {sub.get('text')}")
+                    prev_val = saved_sub.get(lbl, None)
+                    choice = st.radio(
+                        f"Ý {lbl}:",
+                        ["Đúng", "Sai"],
+                        index=(0 if prev_val is True else (1 if prev_val is False else None)),
+                        horizontal=True,
+                        key=f"sub_p2_{curr_q['label']}_{lbl}"
+                    )
+                    cur_answers_p2[lbl] = (choice == "Đúng") if choice else None
+
+                if st.button("Lưu câu Đúng/Sai này", key=f"save_p2_{curr_q['label']}"):
+                    st.session_state["user_exam_answers"][curr_q["label"]] = cur_answers_p2
+                    st.toast(f"Đã lưu các ý cho câu {curr_q['label']}!")
+                    st.rerun()
+
+            # --- PHẦN III ---
+            elif curr_q["part"] == 3:
+                q_data = curr_q["data"]
+                if q_data.get("is_modeled"):
+                    st.info("💡 *Đây là câu hỏi bài toán thực tế mô hình hóa.*")
+                st.markdown(f"**{q_data.get('question')}**")
+                prev_text = st.session_state["user_exam_answers"].get(curr_q["label"], "")
+                in_val = st.text_input("Nhập kết quả số học (làm tròn 1 chữ số thập phân):", value=prev_text, key=f"txt_p3_{curr_q['label']}")
+                if st.button("Lưu câu trả lời ngắn này", key=f"save_p3_{curr_q['label']}"):
+                    if in_val.strip():
+                        st.session_state["user_exam_answers"][curr_q["label"]] = in_val.strip()
+                        st.toast(f"Đã lưu kết quả câu {curr_q['label']}!")
+                        st.rerun()
+
+        # NÚT NỘP TOÀN BÀI & CƠ CHẾ XÁC NHẬN CHẤM ĐIỂM
+        st.markdown("---")
+        col_sub_all, col_res = st.columns([1.5, 2.5])
+        with col_sub_all:
+            with st.popover("📤 NỘP TOÀN BÀI THI", use_container_width=True):
+                st.markdown("⚠️ **XÁC NHẬN NỘP BÀI?**")
+                answered_count = len(st.session_state["user_exam_answers"])
+                st.write(f"Em đã hoàn thành: **{answered_count}/{total_questions}** câu hỏi.")
+                st.caption("Sau khi xác nhận, bài làm sẽ được gửi đi để chấm điểm ngay lập tức.")
+                
+                if st.button("Xác nhận nộp bài và chấm điểm", key="confirm_submit_exam"):
+                    total_score = 0.0
+                    user_ans = st.session_state["user_exam_answers"]
+                    
+                    # 1. Chấm phần I: 12 câu -> 3 điểm (mỗi câu 0.25đ)
+                    p1_list = exam.get("part1", [])
+                    p1_score_per_q = 3.0 / len(p1_list) if p1_list else 0.25
+                    for idx, q in enumerate(p1_list):
+                        lbl = f"I.{idx+1}"
+                        if user_ans.get(lbl) == q.get("correct"):
+                            total_score += p1_score_per_q
+
+                    # 2. Chấm phần II: Chuẩn Bộ GD&ĐT (đúng 1 ý 0.1đ, đúng 2 ý 0.25đ, đúng 3 ý 0.5đ, đúng 4 ý 1.0đ)
+                    for idx, q in enumerate(exam.get("part2", [])):
+                        lbl = f"II.{idx+1}"
+                        sub_dict = user_ans.get(lbl, {})
+                        correct_count = 0
+                        for sub in q.get("sub_items", []):
+                            if sub_dict.get(sub.get("label")) == sub.get("correct"):
+                                correct_count += 1
+                        if correct_count == 1:
+                            total_score += 0.1
+                        elif correct_count == 2:
+                            total_score += 0.25
+                        elif correct_count == 3:
+                            total_score += 0.5
+                        elif correct_count == 4:
+                            total_score += 1.0
+
+                    # 3. Chấm phần III: 6 câu -> 3 điểm (mỗi câu 0.5đ)
+                    p3_list = exam.get("part3", [])
+                    p3_score_per_q = 3.0 / len(p3_list) if p3_list else 0.5
+                    for idx, q in enumerate(p3_list):
+                        lbl = f"III.{idx+1}"
+                        u_v = str(user_ans.get(lbl, "")).strip().lower()
+                        c_v = str(q.get("correct_num", "")).strip().lower()
+                        if u_v == c_v:
+                            total_score += p3_score_per_q
+                        else:
+                            try:
+                                if abs(float(u_v) - float(c_v)) < 0.15:
+                                    total_score += p3_score_per_q
+                            except Exception:
+                                pass
+
+                    final_score = round(total_score, 2)
+                    st.session_state["exam_submitted_result"] = final_score
+                    reward_student_flower(student_info["student_id"], 3, f"hoàn thành bài khảo thí được {final_score} điểm")
+                    st.rerun()
+
+        # Hiển thị kết quả chấm bài và nhận xét động viên
+        if st.session_state["exam_submitted_result"] is not None:
+            score = st.session_state["exam_submitted_result"]
+            with st.container(border=True):
+                st.balloons()
+                st.markdown(f"## 🎉 KẾT QUẢ BÀI THI CỦA EM: **{score} / 10.0 ĐIỂM**")
+                
+                # Nhận xét ngắn gọn, đáng yêu để khích lệ
+                if score >= 8.5:
+                    comment = "🌟 Em học đỉnh chóp luôn á! Tư duy toán học siêu bén và tự giác vô cùng. Cố gắng giữ vững phong độ này nhé, tự hào về em quá chừng! 💖"
+                elif score >= 6.5:
+                    comment = "🌸 Giỏi lắm nè! Em đã nắm rất chắc các dạng bài cơ bản rồi đó. Chỉ cần chú ý rèn thêm một chút cẩn thận ở phần tính toán là điểm 9, 10 trong tầm tay luôn nha! ✨"
+                else:
+                    comment = "🌱 Đừng buồn nhé, em đã rất kiên trì hoàn thành cả bài thi dài rồi! Mỗi lần sai là một lần mình hiểu sâu hơn. Xem lại gợi ý ở Tab 2 rồi thử sức lại nha, Thầy/Cô luôn đồng hành cùng em! 🥰"
+                    
+                st.success(comment)

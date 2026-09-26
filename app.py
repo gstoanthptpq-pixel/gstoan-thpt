@@ -7,6 +7,7 @@ from PIL import Image
 from gtts import gTTS
 import os
 import hashlib
+import json
 from datetime import datetime
 
 # ==============================================================================
@@ -19,7 +20,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Quản lý trạng thái Theme (Sáng / Tối)
 if "theme_mode" not in st.session_state:
     st.session_state["theme_mode"] = "Sáng"
 
@@ -80,6 +80,13 @@ st.markdown(f"""
         margin-top: 14px;
         margin-bottom: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }}
+    .adv-box {{
+        background: {("#312E81" if is_dark else "linear-gradient(135deg, #EEF2FF, #E0E7FF)")};
+        border: 1px solid #6366F1;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -182,8 +189,15 @@ if "students_db" not in st.session_state:
         {"student_id": "HS10_01", "password": "123", "full_name": "Lê Ngọc", "grade": 10, "flowers": 35}
     ]
 
+# Lưu trữ các bài tập tự luyện tương tự được AI sinh động
+if "dynamic_similar_exercises" not in st.session_state:
+    st.session_state["dynamic_similar_exercises"] = {}
+
+# Lưu trữ bài tập nâng cao do AI sinh động
+if "advanced_exercise_data" not in st.session_state:
+    st.session_state["advanced_exercise_data"] = {}
+
 def sync_flower_to_sheets(student_id, student_name, earned, total_flowers, reason):
-    """Ghi nhận nhật ký tích lũy hoa lên Google Sheets nếu đã cấu hình kết nối."""
     if conn:
         try:
             log_data = pd.DataFrame([{
@@ -209,6 +223,69 @@ def reward_student_flower(student_id, earned, reason):
                 st.session_state["auth_user"]["flowers"] = s["flowers"]
             sync_flower_to_sheets(student_id, s.get("full_name", ""), earned, s["flowers"], reason)
             break
+
+# ==============================================================================
+# HÀM AI SINH ĐỀ TƯƠNG TỰ VÀ ĐỀ NÂNG CAO
+# ==============================================================================
+def generate_similar_exercise_ai(base_problem):
+    """Sử dụng Gemini để sinh một đề bài tương tự dạng với số liệu khác."""
+    if not client:
+        return None
+    try:
+        prompt = (
+            f"Dựa vào bài toán gốc sau: '{base_problem}'.\n"
+            "Hãy phát sinh 1 bài toán TƯƠNG TỰ CÙNG DẠNG, chỉ thay đổi số liệu hoặc ngữ cảnh đơn giản, "
+            "sao cho đáp số cuối cùng là MỘT CON SỐ cụ thể (hoặc số nguyên, hoặc số thập phân đơn giản).\n"
+            "Trả về kết quả duy nhất ở định dạng JSON chuẩn (không dùng markdown khác):\n"
+            "{\n"
+            '  "problem": "Nội dung đề bài mới",\n'
+            '  "answer": "đáp số cuối cùng (chỉ ghi số)",\n'
+            '  "hint": "Gợi ý hoặc tóm tắt cách giải ngắn gọn"\n'
+            "}"
+        )
+        resp = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        text_resp = resp.text.strip()
+        if text_resp.startswith("```json"):
+            text_resp = text_resp[7:]
+        if text_resp.endswith("```"):
+            text_resp = text_resp[:-3]
+        return json.loads(text_resp.strip())
+    except Exception:
+        return None
+
+def generate_advanced_exercise_ai(lesson_title):
+    """Sinh bài toán Vận dụng, Vận dụng cao hoặc Mô hình hóa thực tế."""
+    if not client:
+        return None
+    try:
+        prompt = (
+            f"Bạn là chuyên gia ra đề thi Toán THPT chương trình GDPT 2018 bộ Kết nối tri thức.\n"
+            f"Thuộc bài học: '{lesson_title}'.\n"
+            "Hãy sáng tạo 1 bài toán ở mức độ VẬN DỤNG, VẬN DỤNG CAO hoặc MÔ HÌNH HÓA TOÁN HỌC THỰC TẾ "
+            "(bài toán tối ưu chi phí, lợi nhuận, chuyển động thực tế, hình học thực nghiệm, xác suất thực tế...).\n"
+            "Yêu cầu: Kết quả bài toán có thể làm tròn đến 1 chữ số thập phân hoặc là số nguyên.\n"
+            "Trả về duy nhất định dạng JSON chuẩn:\n"
+            "{\n"
+            '  "problem": "Nội dung đề bài bài toán mô hình hóa/vận dụng cao",\n'
+            '  "answer": "đáp số số học (chỉ ghi số)",\n'
+            '  "guide": "Lời giải chi tiết từng bước chuẩn mực sư phạm"\n'
+            "}"
+        )
+        resp = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        text_resp = resp.text.strip()
+        if text_resp.startswith("```json"):
+            text_resp = text_resp[7:]
+        if text_resp.endswith("```"):
+            text_resp = text_resp[:-3]
+        return json.loads(text_resp.strip())
+    except Exception:
+        return None
 
 # ==============================================================================
 # 6. MÀN HÌNH ĐĂNG NHẬP
@@ -290,7 +367,6 @@ if st.session_state["role"] == "teacher":
 # ==============================================================================
 student_info = st.session_state["auth_user"]
 
-# Thanh tìm kiếm nhanh toàn khóa học
 search_kw = st.text_input("🔍 Tìm kiếm nhanh bài học, chủ điểm (Ví dụ: 'Simpson', 'Đạo hàm', 'Tọa độ'):", "")
 
 c_gr, c_les, c_top = st.columns([1, 1.8, 1.8])
@@ -303,7 +379,6 @@ if not grade_dict:
     st.warning(f"Dữ liệu của {sel_grade} đang được đồng bộ hóa. Vui lòng kiểm tra lại file data tương ứng!")
     st.stop()
 
-# Lọc bài học theo từ khóa tìm kiếm
 all_lessons = list(grade_dict.keys())
 if search_kw.strip():
     filtered_lessons = []
@@ -331,7 +406,7 @@ cur_topic_data = cur_lesson_obj["topics"][sel_topic]
 tab1, tab_ex, tab2, tab3, tab4 = st.tabs([
     "📖 Cốt Lõi Kiến Thức (Hình Ảnh & Audio)",
     "💡 Ví Dụ Minh Họa (Toàn Bộ Chủ Điểm)",
-    "📝 Học Sinh Tự Giải (Kiểm Minh Chứng)",
+    "📝 Học Sinh Tự Giải (Luyện Tập & Đề Tương Tự)",
     "📸 Trợ Lý AI: Soi Vở & Lời Khuyên",
     "🎯 Phòng Khảo Thí Khách Quan"
 ])
@@ -378,7 +453,7 @@ with tab1:
             st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
 # ------------------------------------------------------------------------------
-# TAB 2: VÍ DỤ MINH HỌA (LOAD ĐẦY ĐỦ TẤT CẢ VÍ DỤ CỦA MỌI CHỦ ĐIỂM)
+# TAB 2: VÍ DỤ MINH HỌA (LOAD TOÀN BỘ CỦA TẤT CẢ CHỦ ĐIỂM)
 # ------------------------------------------------------------------------------
 with tab_ex:
     st.subheader(f"💡 Toàn Bộ Ví Dụ Minh Họa Chuẩn Mực — {sel_lesson}")
@@ -401,53 +476,186 @@ with tab_ex:
                         st.markdown(ex_item["solution"])
 
 # ------------------------------------------------------------------------------
-# TAB 3: HỌC SINH TỰ GIẢI - KIỂM MINH CHỨNG
+# TAB 3: HỌC SINH TỰ GIẢI (PHÁT SINH ĐỀ TƯƠNG TỰ & ĐỀ NÂNG CAO MÔ HÌNH HÓA)
 # ------------------------------------------------------------------------------
 with tab2:
-    ex = cur_topic_data.get("exercise", {})
-    if ex:
-        with st.container(border=True):
-            st.subheader(f"📝 {ex.get('title', 'Bài tập kiểm minh chứng')}")
-            st.markdown(f"**Đề bài:** {ex.get('content', '')}")
-            st.markdown("---")
-            st.markdown("#### ✍️ Kiểm Minh Chứng: Em hãy tự làm ra nháp và điền kết quả")
+    st.subheader(f"📝 Không Gian Tự Luyện Toán Học — {sel_lesson}")
+    st.caption("Hệ thống phát sinh bài tập rèn luyện tương tự cho TẤT CẢ ví dụ minh họa. Em hãy tự giải ra nháp, nhập đáp số và nộp bài để nhận phản hồi tức thì.")
 
-            user_submitted_ans = st.text_input("Nhập đáp số của em:", key=f"n_{ex.get('id', 'ex')}")
+    # --------------------------------------------------------------------------
+    # NÚT ĐỀ NÂNG CAO (VẬN DỤNG / MÔ HÌNH HÓA TOÁN HỌC)
+    # --------------------------------------------------------------------------
+    col_adv_btn, col_adv_space = st.columns([1.5, 2.5])
+    with col_adv_btn:
+        if st.button("🚀 Thử Sức: Tạo Đề Nâng Cao (Vận Dụng / Mô Hình Hóa)", use_container_width=True):
+            if client:
+                with st.spinner("AI đang sáng tạo bài toán mô hình hóa thực tế cho bài học này..."):
+                    adv_res = generate_advanced_exercise_ai(sel_lesson)
+                    if adv_res:
+                        st.session_state["advanced_exercise_data"][sel_lesson] = adv_res
+                        st.rerun()
+                    else:
+                        st.error("Không thể tạo đề nâng cao lúc này. Vui lòng thử lại sau.")
+            else:
+                st.warning("Cần cấu hình Gemini API Key để phát sinh bài toán nâng cao.")
 
-            if st.button("🚀 Nộp Bài Giải Để Kiểm Tra Minh Chứng", key=f"chk_{ex.get('id', 'ex')}", use_container_width=True):
-                is_correct = False
-                target_ans = str(ex.get("target", "")).strip().lower()
-                user_ans = user_submitted_ans.strip().lower()
+    # Hiển thị khối đề nâng cao nếu đã được tạo
+    if sel_lesson in st.session_state["advanced_exercise_data"]:
+        adv_obj = st.session_state["advanced_exercise_data"][sel_lesson]
+        st.markdown("""
+        <div class="adv-box">
+            <h4 style="margin-top:0; color:#4338CA;">🔥 Bài Toán Thực Tế / Vận Dụng Cao (Mô Hình Hóa)</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown(f"**Đề bài:**\n\n{adv_obj.get('problem')}")
+        
+        c_adv_in, c_adv_sub = st.columns([2, 1])
+        with c_adv_in:
+            user_adv_ans = st.text_input("Nhập đáp số bài nâng cao của em:", key=f"ans_adv_{sel_lesson}")
+        with c_adv_sub:
+            st.write("")
+            st.write("")
+            btn_chk_adv = st.button("Nộp Bài Nâng Cao", key=f"btn_adv_{sel_lesson}", use_container_width=True)
+            
+        if btn_chk_adv:
+            target_adv = str(adv_obj.get("answer", "")).strip().lower()
+            u_ans = user_adv_ans.strip().lower()
+            is_adv_correct = False
+            if u_ans == target_adv:
+                is_adv_correct = True
+            else:
+                try:
+                    if abs(float(u_ans) - float(target_adv)) < 0.1:
+                        is_adv_correct = True
+                except Exception:
+                    pass
 
-                if user_ans == target_ans:
-                    is_correct = True
-                else:
-                    try:
-                        if abs(float(user_ans) - float(target_ans)) < 0.05:
-                            is_correct = True
-                    except Exception:
-                        pass
+            if is_adv_correct:
+                st.balloons()
+                st.success("🎉 XUẤT SẮC! Em đã giải chính xác bài toán vận dụng cao và nhận được +3 Bông hoa Tri thức!")
+                reward_student_flower(student_info["student_id"], 3, "xuất sắc giải đúng bài toán nâng cao mô hình hóa")
+            else:
+                st.error("❌ Kết quả chưa chính xác! Em hãy xem hướng dẫn chi tiết bên dưới.")
+            
+            with st.expander("📖 Xem Hướng Dẫn Chi Tiết Bài Nâng Cao"):
+                st.markdown(adv_obj.get("guide", "Đang cập nhật hướng dẫn."))
 
-                if is_correct:
-                    st.balloons()
-                    st.success("🎉 CHÍNH XÁC 100%! Em đã tự giải đúng bài tập và xứng đáng nhận thưởng +2 Bông hoa Tri thức!")
-                    reward_student_flower(student_info["student_id"], 2, "tự lực giải đúng bài tập kiểm minh chứng")
-                else:
-                    st.error("❌ Kết quả chưa chính xác! Em hãy xem lại Ví dụ minh họa và thử giải lại ra nháp nhé.")
+        st.markdown("---")
+
+    # --------------------------------------------------------------------------
+    # DUYỆT TẤT CẢ CÁC VÍ DỤ MINH HỌA VÀ TẠO BÀI TẬP TƯƠNG TỰ TƯƠNG ỨNG
+    # --------------------------------------------------------------------------
+    all_topics_in_lesson = cur_lesson_obj.get("topics", {})
+    exercise_counter = 1
+
+    for t_name, t_content in all_topics_in_lesson.items():
+        st.markdown(f"<div class='topic-card'><b>🎯 {t_name} — Bài Tập Tự Luyện Tương Tự</b></div>", unsafe_allow_html=True)
+        topic_examples = t_content.get("examples", [])
+        
+        if not topic_examples:
+            # Nếu chủ điểm có sẵn bài kiểm minh chứng mặc định
+            def_ex = t_content.get("exercise", {})
+            if def_ex:
+                with st.container(border=True):
+                    st.markdown(f"**Bài tập {exercise_counter}:** {def_ex.get('content')}")
+                    ans_in = st.text_input("Nhập đáp số:", key=f"def_ex_{def_ex.get('id')}")
+                    if st.button("Nộp Bài", key=f"btn_def_{def_ex.get('id')}"):
+                        target = str(def_ex.get("target", "")).strip().lower()
+                        if ans_in.strip().lower() == target:
+                            st.balloons()
+                            st.success("🎉 CHÍNH XÁC! +2 Bông hoa Tri thức!")
+                            reward_student_flower(student_info["student_id"], 2, "giải đúng bài tập tự luyện")
+                        else:
+                            st.error("❌ Chưa đúng, em hãy thử lại nhé!")
+                exercise_counter += 1
+        else:
+            for ex_idx, ex_item in enumerate(topic_examples):
+                ex_key_id = f"{sel_lesson}_{t_name}_{ex_idx}"
+                
+                # Kiểm tra xem bài này đã được nhấn nút "Tạo đề tương tự mới" chưa
+                active_exercise = st.session_state["dynamic_similar_exercises"].get(ex_key_id)
+                
+                with st.container(border=True):
+                    col_ex_title, col_ex_btn_regen = st.columns([3, 1])
+                    with col_ex_title:
+                        st.markdown(f"#### 📝 Bài tập tự luyện {exercise_counter} *(Tương tự: {ex_item['title']})*")
+                    with col_ex_btn_regen:
+                        if st.button("🔄 Tạo đề mới", key=f"regen_{ex_key_id}", help="Bấm để AI sinh một đề bài mới cùng dạng bài này"):
+                            if client:
+                                with st.spinner("Đang tạo đề tương tự mới..."):
+                                    new_sim = generate_similar_exercise_ai(ex_item["problem"])
+                                    if new_sim:
+                                        st.session_state["dynamic_similar_exercises"][ex_key_id] = new_sim
+                                        st.rerun()
+                            else:
+                                st.warning("Cần API Key để tạo đề tương tự.")
+
+                    if active_exercise:
+                        # Hiển thị đề bài tương tự do AI sinh ra
+                        st.info("✨ *Đề bài tương tự do AI phát sinh:*")
+                        st.markdown(f"**Đề bài:**\n\n{active_exercise.get('problem')}")
+                        target_ans_val = str(active_exercise.get("answer", "")).strip()
+                        hint_val = active_exercise.get("hint", "")
+                    else:
+                        # Mặc định: Lấy đề bài gốc của ví dụ yêu cầu học sinh tự giải lại để kiểm chứng
+                        st.markdown(f"**Đề bài:**\n\n{ex_item['problem']}")
+                        target_ans_val = ""
+                        hint_val = ex_item["solution"]
+
+                    col_ans_in, col_btn_sub = st.columns([2, 1])
+                    with col_ans_in:
+                        u_ans_input = st.text_input(f"Nhập kết quả Bài tập {exercise_counter}:", key=f"ans_in_{ex_key_id}")
+                    with col_btn_sub:
+                        st.write("")
+                        st.write("")
+                        btn_submit_ex = st.button("🚀 Nộp Bài", key=f"sub_btn_{ex_key_id}", use_container_width=True)
+
+                    if btn_submit_ex:
+                        if not u_ans_input.strip():
+                            st.warning("Vui lòng điền đáp số trước khi nộp bài.")
+                        else:
+                            is_match = False
+                            user_norm = u_ans_input.strip().lower()
+                            
+                            if target_ans_val:
+                                if user_norm == target_ans_val.lower():
+                                    is_match = True
+                                else:
+                                    try:
+                                        if abs(float(user_norm) - float(target_ans_val)) < 0.05:
+                                            is_match = True
+                                    except Exception:
+                                        pass
+                            else:
+                                # Kiểm tra xem đáp số có xuất hiện trong phần kết quả lời giải mẫu không
+                                if len(user_norm) >= 1 and user_norm in hint_val.lower():
+                                    is_match = True
+
+                            if is_match:
+                                st.balloons()
+                                st.success("🎉 HOÀN TOÀN CHÍNH XÁC! Em đã tự lực giải đúng bài tập và nhận +2 Bông hoa Tri thức!")
+                                reward_student_flower(student_info["student_id"], 2, f"tự giải đúng bài tập tự luyện số {exercise_counter}")
+                            else:
+                                st.error("❌ Kết quả chưa chính xác! Em hãy xem lại phương pháp hoặc mở gợi ý giải.")
+
+                    with st.expander("💡 Bấm để xem Gợi ý / Lời giải mẫu"):
+                        st.markdown(hint_val)
+
+                exercise_counter += 1
 
 # ------------------------------------------------------------------------------
-# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (HỖ TRỢ CAMERA, UPLOAD FILE & DÁN CLIPBOARD)
+# TAB 4: TRỢ LÝ AI SOI VỞ VIẾT TAY (GOM GỌN TẢI / DÁN ẢNH LÀM 1 NÚT)
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("💬 Gia Sư AI: Soi Bài Viết Tay & Lời Khuyên Sư Phạm")
     st.caption("Chụp ảnh, tải file hoặc dán ảnh bài giải viết tay để Thầy/Cô AI chỉ rõ từng bước sai sót mà không giải hộ.")
 
+    # Gom nút Tải ảnh và Dán ảnh làm một
     inp_mode = st.radio(
         "Chọn phương thức nạp bài làm:",
         [
-            "📸 Chụp qua Camera", 
-            "📁 Tải ảnh từ thiết bị (Upload)", 
-            "📋 Dán ảnh từ Clipboard (Ctrl + V)", 
+            "📸 Chụp trực tiếp qua Camera", 
+            "📁 Tải hoặc Dán ảnh bài làm (Upload / Paste Clipboard)", 
             "✍️ Chỉ gửi câu hỏi chữ"
         ],
         horizontal=True
@@ -455,39 +663,28 @@ with tab3:
 
     image_to_process = None
 
-    if inp_mode == "📸 Chụp qua Camera":
+    if inp_mode == "📸 Chụp trực tiếp qua Camera":
         cam_image = st.camera_input("Chụp ảnh trang vở nháp của em:")
         if cam_image:
             image_to_process = Image.open(cam_image)
 
-    elif inp_mode == "📁 Tải ảnh từ thiết bị (Upload)":
-        uploaded_file = st.file_uploader(
-            "Chọn file ảnh bài làm (PNG, JPG, JPEG, WEBP):", 
-            type=["png", "jpg", "jpeg", "webp"],
-            help="Hỗ trợ ảnh chụp từ điện thoại hoặc ảnh chụp màn hình máy tính"
-        )
-        if uploaded_file:
-            image_to_process = Image.open(uploaded_file)
-            st.image(image_to_process, caption="Ảnh bài làm đã tải lên", use_container_width=True)
-
-    elif inp_mode == "📋 Dán ảnh từ Clipboard (Ctrl + V)":
+    elif inp_mode == "📁 Tải hoặc Dán ảnh bài làm (Upload / Paste Clipboard)":
         st.markdown("""
-        <div style="background-color: #F1F5F9; border: 2px dashed #94A3B8; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 10px;">
-            <p style="margin: 0; color: #334155; font-weight: 500;">
-                📋 <b>Cách dán ảnh nhanh:</b> Chụp ảnh màn hình (phím <i>Print Screen</i> hoặc <i>Shift + Win + S</i>), sau đó thả/dán trực tiếp vào ô bên dưới.
+        <div style="background-color: #F1F5F9; border: 2px dashed #94A3B8; border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 8px;">
+            <p style="margin: 0; color: #334155; font-size: 14px;">
+                📎 <b>Hỗ trợ đa năng:</b> Em có thể bấm chọn file từ máy, kéo thả ảnh vào, hoặc bấm phím <code>Ctrl + V</code> (ảnh chụp màn hình) vào khung bên dưới.
             </p>
         </div>
         """, unsafe_allow_html=True)
         
-        paste_file = st.file_uploader(
-            "Dán hoặc thả ảnh bài làm vào đây:", 
+        uploaded_or_pasted_file = st.file_uploader(
+            "Tải file hoặc dán ảnh bài làm vào đây (PNG, JPG, JPEG, WEBP):", 
             type=["png", "jpg", "jpeg", "webp"],
-            key="paste_uploader",
-            label_visibility="collapsed"
+            help="Hỗ trợ ảnh chụp điện thoại hoặc dán trực tiếp từ bộ nhớ tạm clipboard"
         )
-        if paste_file:
-            image_to_process = Image.open(paste_file)
-            st.image(image_to_process, caption="Ảnh bài làm từ bộ nhớ tạm", use_container_width=True)
+        if uploaded_or_pasted_file:
+            image_to_process = Image.open(uploaded_or_pasted_file)
+            st.image(image_to_process, caption="Ảnh bài làm đã tiếp nhận", use_container_width=True)
 
     user_q = st.text_area(
         "Ghi chú thêm câu hỏi hoặc thắc mắc của em:", 
@@ -527,10 +724,9 @@ with tab3:
                     st.success("### ✍️ Lời Khuyên & Nhận Xét Từ Thầy/Cô AI:")
                     st.markdown(response.text)
                     
-                    # Tặng hoa khích lệ tinh thần tự học
                     reward_student_flower(student_info["student_id"], 1, "tích cực chụp bài hỏi Thầy/Cô AI")
             except Exception as e:
-                st.error("Không thể kết nối đến Trợ lý AI lúc này. Vui lòng kiểm tra lại cấu hình Gemini API Key.")
+                st.error(f"Chi tiết lỗi kết nối AI: {e}")
         else:
             st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ trong mục Secrets).")
 

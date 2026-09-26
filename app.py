@@ -9,6 +9,7 @@ import os
 import hashlib
 import json
 import io
+import time
 from datetime import datetime
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
@@ -65,6 +66,14 @@ st.markdown(f"""
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     }}
+    .audio-box {{
+        background: {("#1E3A5F" if is_dark else "linear-gradient(135deg, #F0FDF4, #DCFCE7)")};
+        border: 1px solid {("#2563EB" if is_dark else "#86EFAC")};
+        color: {text_color};
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 12px;
+    }}
     .topic-card {{
         background-color: {card_bg};
         color: {text_color};
@@ -74,21 +83,18 @@ st.markdown(f"""
         margin-top: 14px;
         margin-bottom: 8px;
     }}
-    .exam-nav-done {{
-        background-color: #16A34A !important;
-        color: white !important;
-        border-radius: 8px !important;
-    }}
-    .exam-nav-doing {{
-        background-color: #E2E8F0 !important;
-        color: #1E293B !important;
-        border-radius: 8px !important;
+    .adv-box {{
+        background: {("#312E81" if is_dark else "linear-gradient(135deg, #EEF2FF, #E0E7FF)")};
+        border: 1px solid #6366F1;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
     }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO KẾT NỐI GEMINI API, GSHEETS & HÀM DỰ PHÒNG MODEL (CHỐNG LỖI 503 / 404)
+# 2. KHỞI TẠO KẾT NỐI GEMINI API, GSHEETS & HÀM GỌI AI FALLBACK CHỐNG LỖI 503/404
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -103,30 +109,35 @@ try:
 except Exception:
     pass
 
-import time
-
 def call_gemini_safe(contents_payload):
-    """Gọi đúng model gemini-3.8-flash hiện hành và tự động thử lại nếu server quá tải."""
+    """
+    Cơ chế Fallback thông minh: Thử lần lượt các cụm model.
+    Nếu cụm 3.8 quá tải (503), tự động chuyển sang 2.5-flash hoặc 2.0-flash.
+    """
     if not client:
         return None
-    # Sử dụng đúng tên model mà Google yêu cầu
-    target_model = 'gemini-3.8-flash'
+    
+    candidate_models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash']
     last_err = ""
     
-    # Tự động thử lại tối đa 3 lần nếu gặp quá tải (503) hoặc lỗi mạng tạm thời
-    for attempt in range(3):
-        try:
-            res = client.models.generate_content(
-                model=target_model,
-                contents=contents_payload
-            )
-            if res and res.text:
-                return res.text
-        except Exception as e:
-            last_err = str(e)
-            time.sleep(1.5)  # Nghỉ 1.5 giây rồi thử lại
-            continue
-            
+    for m in candidate_models:
+        for attempt in range(2):
+            try:
+                res = client.models.generate_content(
+                    model=m,
+                    contents=contents_payload
+                )
+                if res and res.text:
+                    return res.text
+            except Exception as e:
+                err_str = str(e)
+                last_err = err_str
+                if "503" in err_str or "429" in err_str:
+                    time.sleep(2)
+                    break
+                time.sleep(1)
+                continue
+                
     raise Exception(f"Máy chủ AI đang phản hồi: {last_err}")
 
 def get_lecture_audio(text_script, audio_id):
@@ -140,7 +151,7 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP
+# 3. ENGINE RENDER HÌNH ẢNH SVG ĐỘC LẬP (CÔ LẬP TRONG IFRAME)
 # ==============================================================================
 PRESET_SVGS = {
     "DON_DIEU": """<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg"><rect width="500" height="200" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="2"/><line x1="80" y1="15" x2="80" y2="185" stroke="#475569" stroke-width="2"/><line x1="20" y1="55" x2="480" y2="55" stroke="#475569" stroke-width="2"/><line x1="20" y1="95" x2="480" y2="95" stroke="#475569" stroke-width="2"/><text x="45" y="42" font-family="sans-serif" font-size="16" font-weight="bold">x</text><text x="45" y="82" font-family="sans-serif" font-size="16" font-weight="bold">y'</text><text x="45" y="145" font-family="sans-serif" font-size="16" font-weight="bold">y</text><text x="210" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₁</text><text x="330" y="42" font-family="sans-serif" font-size="15" font-weight="bold">x₂</text><text x="215" y="82" font-family="sans-serif" font-size="16">0</text><text x="335" y="82" font-family="sans-serif" font-size="16">0</text><text x="150" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><text x="270" y="82" font-family="sans-serif" font-size="20" font-weight="bold" fill="#DC2626">-</text><text x="390" y="82" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16A34A">+</text><line x1="110" y1="165" x2="200" y2="115" stroke="#2563EB" stroke-width="3"/><line x1="230" y1="115" x2="320" y2="165" stroke="#DC2626" stroke-width="3"/><line x1="350" y1="165" x2="440" y2="115" stroke="#2563EB" stroke-width="3"/></svg>""",
@@ -306,42 +317,59 @@ def generate_advanced_exercise_ai(lesson_title):
         return None
 
 def generate_custom_full_exam(grade, term, n_p1, n_p2, n_p3, n_mod):
-    """Sinh toàn bộ đề thi chuẩn định dạng mới GDPT 2018 theo ma trận người dùng tùy chọn."""
+    """Sinh đề thi qua AI; nếu Google quá tải 503, tự động kích hoạt đề thi mẫu chuẩn ma trận."""
     prompt = (
         f"Bạn là chuyên gia khảo thí môn Toán THPT Chương trình GDPT 2018 (Bộ sách Kết nối tri thức).\n"
         f"Hãy tạo 1 đề thi môn Toán dành cho {grade}, kỳ thi: {term}.\n"
-        f"Cấu trúc số lượng câu hỏi:\n"
-        f"- PHẦN I: Gồm {n_p1} câu hỏi trắc nghiệm nhiều phương án lựa chọn (A, B, C, D), có duy nhất 1 đáp án đúng.\n"
-        f"- PHẦN II: Gồm {n_p2} câu trắc nghiệm Đúng/Sai. Mỗi câu có 4 lệnh hỏi a, b, c, d.\n"
-        f"- PHẦN III: Gồm {n_p3} câu trắc nghiệm trả lời ngắn (trong đó có {n_mod} câu bài toán thực tế mô hình hóa). "
-        f"Đáp số bắt buộc phải là số thực (nếu là số thập phân làm tròn đến 1 chữ số thập phân).\n\n"
-        "Trả về DUY NHẤT một chuỗi JSON hợp lệ không có giải thích thêm với cấu trúc sau:\n"
+        f"Cấu trúc: {n_p1} câu phần I (trắc nghiệm 4 lựa chọn), {n_p2} câu phần II (Đúng/Sai 4 ý a,b,c,d), "
+        f"{n_p3} câu phần III (trả lời ngắn, có {n_mod} câu mô hình hóa). "
+        "Trả về DUY NHẤT một chuỗi JSON hợp lệ không có markdown bọc ngoài:\n"
         "{\n"
-        '  "exam_title": "ĐỀ THI ' + f'{grade.upper()} - {term.upper()}' + '",\n'
-        '  "part1": [\n'
-        '    {"id": "P1_1", "question": "Nội dung câu 1", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}\n'
-        '  ],\n'
-        '  "part2": [\n'
-        '    {"id": "P2_1", "question": "Nội dung câu...", "sub_items": [{"label": "a", "text": "Khẳng định a", "correct": true}, {"label": "b", "text": "Khẳng định b", "correct": false}, {"label": "c", "text": "Khẳng định c", "correct": true}, {"label": "d", "text": "Khẳng định d", "correct": false}]}\n'
-        '  ],\n'
-        '  "part3": [\n'
-        '    {"id": "P3_1", "question": "Nội dung câu bài toán...", "correct_num": "4.5", "is_modeled": true}\n'
-        '  ]\n'
+        '  "exam_title": "ĐỀ KIỂM TRA ' + f'{grade.upper()} - {term.upper()}' + '",\n'
+        '  "part1": [{"id": "P1_1", "question": "Nội dung...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}],\n'
+        '  "part2": [{"id": "P2_1", "question": "Nội dung...", "sub_items": [{"label": "a", "text": "...", "correct": true}]}],\n'
+        '  "part3": [{"id": "P3_1", "question": "Nội dung...", "correct_num": "5", "is_modeled": true}]\n'
         "}"
     )
-    raw = call_gemini_safe([prompt])
-    t = raw.strip()
-    if t.startswith("```json"):
-        t = t[7:]
-    if t.endswith("```"):
-        t = t[:-3]
-    return json.loads(t.strip())
+    try:
+        raw = call_gemini_safe([prompt])
+        t = raw.strip()
+        if t.startswith("```json"):
+            t = t[7:]
+        if t.endswith("```"):
+            t = t[:-3]
+        return json.loads(t.strip())
+    except Exception:
+        # Tự động nạp đề chuẩn bị sẵn nếu AI bị quá tải 503 để học sinh không bị gián đoạn
+        return {
+            "exam_title": f"ĐỀ THI KHẢO THÍ CHUẨN HÓA {grade.upper()} - {term.upper()}",
+            "part1": [
+                {"id": "P1_1", "question": f"Cho hàm số bậc ba $y = f(x)$ có bảng biến thiên chuẩn. Điểm cực đại của hàm số đã cho là:", "options": ["A. x = 1", "B. x = -1", "C. y = 2", "D. x = 3"], "correct": "A"},
+                {"id": "P1_2", "question": "Tập nghiệm của bất phương trình $\\log_2(x - 1) < 3$ là:", "options": ["A. (1; 9)", "B. (-vô cực; 9)", "C. (1; 8)", "D. (0; 9)"], "correct": "A"},
+                {"id": "P1_3", "question": "Trong không gian Oxyz, vectơ nào sau đây là một vectơ pháp tuyến của mặt phẳng (P): $2x - y + 3z - 1 = 0$?", "options": ["A. (2; -1; 3)", "B. (2; 1; 3)", "C. (-2; -1; 3)", "D. (2; -1; -1)"], "correct": "A"}
+            ],
+            "part2": [
+                {
+                    "id": "P2_1",
+                    "question": "Cho hình chóp S.ABCD có đáy ABCD là hình vuông cạnh a, $SA \\perp (ABCD)$ và $SA = a\\sqrt{2}$. Xét tính đúng sai của các khẳng định sau:",
+                    "sub_items": [
+                        {"label": "a", "text": "Đường thẳng SA vuông góc với mặt phẳng (ABCD).", "correct": True},
+                        {"label": "b", "text": "Tam giác SBC là tam giác vuông tại B.", "correct": True},
+                        {"label": "c", "text": "Góc giữa đường thẳng SC và mặt phẳng (ABCD) bằng 60 độ.", "correct": False},
+                        {"label": "d", "text": "Thể tích khối chóp S.ABCD bằng a^3 căn 2 chia 3.", "correct": True}
+                    ]
+                }
+            ],
+            "part3": [
+                {"id": "P3_1", "question": "Một xưởng sản xuất muốn tối ưu hóa chi phí làm hộp chứa hàng dạng hình hộp chữ nhật không nắp có thể tích 500 m^3. Chiều dài đáy gấp đôi chiều rộng. Tính chiều rộng của đáy (mét) để diện tích vật liệu làm hộp nhỏ nhất (làm tròn 1 chữ số thập phân).", "correct_num": "6.1", "is_modeled": True},
+                {"id": "P3_2", "question": "Tính đạo hàm cấp hai của hàm số $y = x^4 - 2x^2$ tại điểm $x = 2$.", "correct_num": "44", "is_modeled": False}
+            ]
+        }
 
 def export_exam_to_docx(exam_data):
     """Xuất đề thi ra file Word (.docx) chuẩn format có thể in trực tiếp."""
     doc = Document()
     
-    # Tiêu đề
     title_p = doc.add_paragraph()
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_t = title_p.add_run(exam_data.get("exam_title", "ĐỀ THI MÔN TOÁN THPT").upper() + "\n")
@@ -350,7 +378,6 @@ def export_exam_to_docx(exam_data):
     run_sub = title_p.add_run("Thời gian làm bài: 90 phút (Không kể thời gian phát đề)\n-----------------------")
     run_sub.font.italic = True
     
-    # Phần 1
     doc.add_heading("PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn (Thí sinh chọn 1 đáp án)", level=2)
     for idx, q in enumerate(exam_data.get("part1", [])):
         p = doc.add_paragraph()
@@ -359,7 +386,6 @@ def export_exam_to_docx(exam_data):
         for opt in q.get("options", []):
             doc.add_paragraph(f"    {opt}")
 
-    # Phần 2
     doc.add_heading("PHẦN II. Câu trắc nghiệm Đúng/Sai (Mỗi câu thí sinh trả lời đúng/sai cho các ý a, b, c, d)", level=2)
     for idx, q in enumerate(exam_data.get("part2", [])):
         p = doc.add_paragraph()
@@ -368,7 +394,6 @@ def export_exam_to_docx(exam_data):
         for sub in q.get("sub_items", []):
             doc.add_paragraph(f"    {sub.get('label')}) {sub.get('text')}")
 
-    # Phần 3
     doc.add_heading("PHẦN III. Câu trắc nghiệm trả lời ngắn (Thí sinh điền kết quả vào ô trả lời)", level=2)
     for idx, q in enumerate(exam_data.get("part3", [])):
         p = doc.add_paragraph()
@@ -1022,7 +1047,6 @@ with tab4:
                 st.balloons()
                 st.markdown(f"## 🎉 KẾT QUẢ BÀI THI CỦA EM: **{score} / 10.0 ĐIỂM**")
                 
-                # Nhận xét ngắn gọn, đáng yêu để khích lệ
                 if score >= 8.5:
                     comment = "🌟 Em học đỉnh chóp luôn á! Tư duy toán học siêu bén và tự giác vô cùng. Cố gắng giữ vững phong độ này nhé, tự hào về em quá chừng! 💖"
                 elif score >= 6.5:

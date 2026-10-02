@@ -15,8 +15,8 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement, parse_xml
-from docx.oxml.ns import nsdecls, qn
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 # ==============================================================================
 # 1. CẤU HÌNH GIAO DIỆN & TÙY BIẾN GIAO DIỆN SÁNG / TỐI (THEME)
@@ -97,7 +97,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO GEMINI API, CƠ CHẾ DÒ MODEL VÀ MULTI-FALLBACK TRIỆT ĐỂ
+# 2. KHỞI TẠO GEMINI API & CƠ CHẾ GỌI TỐI ƯU TỐC ĐỘ, CHỐNG NGHẼN
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -112,56 +112,16 @@ try:
 except Exception:
     pass
 
-def get_available_models():
-    """Tự động quét danh mục model khả dụng từ Google API trên tài khoản hiện hành."""
-    if not client:
-        return []
-    
-    preferred_order = [
-        'gemini-3.8-flash',
-        'gemini-2.5-flash',
-        'gemini-2.0-flash',
-        'gemini-flash-latest',
-        'gemini-2.5-pro',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
-    ]
-    
-    discovered = []
-    try:
-        for m in client.models.list():
-            name = m.name.replace('models/', '')
-            if hasattr(m, 'supported_generation_methods') and 'generateContent' in m.supported_generation_methods:
-                discovered.append(name)
-            elif not hasattr(m, 'supported_generation_methods'):
-                discovered.append(name)
-    except Exception:
-        pass
-    
-    final_models = []
-    for pref in preferred_order:
-        for d in discovered:
-            if pref in d and d not in final_models:
-                final_models.append(d)
-                
-    for d in discovered:
-        if ('flash' in d or 'pro' in d) and d not in final_models:
-            final_models.append(d)
-            
-    if not final_models:
-        final_models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash']
-        
-    return final_models
-
 def call_gemini_safe(contents_payload):
-    """Cơ chế xoay vòng tự động qua các model để xử lý dứt điểm lỗi 503 và 404."""
+    """Gọi API với thứ tự ưu tiên các model Flash siêu tốc để phản hồi nhanh nhất."""
     if not client:
         raise Exception("Chưa cấu hình GEMINI_API_KEY trong Streamlit Secrets!")
     
-    candidate_models = get_available_models()
+    # Danh sách model tối ưu tốc độ và sẵn sàng phản hồi
+    fast_models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.8-flash']
     last_err = ""
     
-    for m in candidate_models:
+    for m in fast_models:
         try:
             res = client.models.generate_content(
                 model=m,
@@ -172,14 +132,11 @@ def call_gemini_safe(contents_payload):
         except Exception as e:
             err_str = str(e)
             last_err = err_str
-            if any(code in err_str for code in ["503", "404", "429", "NOT_FOUND", "UNAVAILABLE"]):
-                time.sleep(1)
-                continue
-            else:
-                time.sleep(1)
-                continue
-                
-    raise Exception(f"Tất cả các cụm máy chủ AI đang phản hồi: {last_err}")
+            # Tự động chuyển model nếu gặp quá tải (503) hoặc không tồn tại (404)
+            time.sleep(0.5)
+            continue
+            
+    raise Exception(f"Máy chủ AI phản hồi: {last_err}")
 
 def get_lecture_audio(text_script, audio_id):
     filename = f"lecture_{audio_id}.mp3"
@@ -466,14 +423,14 @@ def reward_student_flower(student_id, earned, reason):
 # ==============================================================================
 def generate_similar_exercise_ai(base_problem):
     prompt = (
-        f"Dựa vào bài toán gốc sau: '{base_problem}'.\n"
-        "Hãy phát sinh 1 bài toán TƯƠNG TỰ CÙNG DẠNG, chỉ thay đổi số liệu hoặc ngữ cảnh đơn giản, "
-        "sao cho đáp số cuối cùng là MỘT CON SỐ cụ thể (hoặc số nguyên, hoặc số thập phân đơn giản).\n"
-        "Trả về kết quả duy nhất ở định dạng JSON chuẩn (không dùng markdown):\n"
+        f"Dựa vào bài toán gốc: '{base_problem}'.\n"
+        "Hãy tạo 1 bài toán TƯƠNG TỰ CÙNG DẠNG, chỉ đổi số liệu.\n"
+        "Đáp số là 1 con số thực duy nhất.\n"
+        "Trả về định dạng JSON thuần:\n"
         "{\n"
         '  "problem": "Nội dung đề bài mới",\n'
         '  "answer": "đáp số cuối cùng (chỉ ghi số)",\n'
-        '  "hint": "Gợi ý hoặc tóm tắt cách giải ngắn gọn"\n'
+        '  "hint": "Gợi ý giải ngắn gọn"\n'
         "}"
     )
     try:
@@ -489,16 +446,14 @@ def generate_similar_exercise_ai(base_problem):
 
 def generate_advanced_exercise_ai(lesson_title):
     prompt = (
-        f"Bạn là chuyên gia ra đề thi Toán THPT chương trình GDPT 2018 bộ Kết nối tri thức.\n"
-        f"Thuộc bài học: '{lesson_title}'.\n"
-        "Hãy sáng tạo 1 bài toán ở mức độ VẬN DỤNG, VẬN DỤNG CAO hoặc MÔ HÌNH HÓA TOÁN HỌC THỰC TẾ "
-        "(bài toán tối ưu, lợi nhuận, chuyển động thực tế, xác suất, hình học thực tế...).\n"
-        "Yêu cầu: Kết quả làm tròn đến 1 chữ số thập phân hoặc là số nguyên.\n"
-        "Trả về duy nhất định dạng JSON chuẩn:\n"
+        f"Thuộc bài học: '{lesson_title}' (Toán THPT GDPT 2018).\n"
+        "Hãy sáng tạo 1 bài toán mức độ VẬN DỤNG CAO hoặc MÔ HÌNH HÓA THỰC TẾ.\n"
+        "Đáp số là số thực cụ thể.\n"
+        "Trả về định dạng JSON thuần:\n"
         "{\n"
-        '  "problem": "Nội dung đề bài mô hình hóa/vận dụng cao",\n'
-        '  "answer": "đáp số số học (chỉ ghi số)",\n'
-        '  "guide": "Lời giải chi tiết từng bước chuẩn mực sư phạm"\n'
+        '  "problem": "Nội dung bài toán",\n'
+        '  "answer": "đáp số (chỉ ghi số)",\n'
+        '  "guide": "Lời giải chi tiết từng bước"\n'
         "}"
     )
     try:
@@ -513,42 +468,31 @@ def generate_advanced_exercise_ai(lesson_title):
         return None
 
 def generate_matrix_custom_exam(grade, term, p1_nb, p1_th, p1_vd, p2_nb, p2_th, p2_vd, p3_th, p3_vd, p3_vdc, p3_mod):
-    """Sinh đề thi theo chi tiết số lượng câu của từng mức độ nhận thức bám sát GDPT 2018."""
+    """Sinh đề thi chính xác số lượng câu theo ma trận; tinh giản để AI phản hồi nhanh nhất."""
     total_p1 = p1_nb + p1_th + p1_vd
     total_p2 = p2_nb + p2_th + p2_vd
     total_p3 = p3_th + p3_vd + p3_vdc
     
     prompt = f"""
-Bạn là chuyên gia Khảo thí môn Toán THPT Chương trình GDPT 2018 bộ Kết nối tri thức.
-Hãy tạo 1 đề kiểm tra trắc nghiệm hoàn chỉnh cho: {grade.upper()} - Kỳ thi: {term.upper()}.
+Bạn là chuyên gia Khảo thí môn Toán THPT Chương trình GDPT 2018.
+Tạo 1 đề thi Toán cho: {grade.upper()} - Kỳ thi: {term.upper()}.
 
-YÊU CẦU BẮT BUỘC VỀ SỐ LƯỢNG CÂU HỎI (PHẢI TẠO ĐỦ CHÍNH XÁC):
-1. PHẦN I (Trắc nghiệm 4 lựa chọn A, B, C, D): BẮT BUỘC TẠO ĐỦ {total_p1} CÂU.
-   - Gồm {p1_nb} câu Nhận biết, {p1_th} câu Thông hiểu, {p1_vd} câu Vận dụng.
-   - Mỗi câu có đúng 4 phương án A, B, C, D và chỉ 1 đáp án đúng ("correct": "A" hoặc "B", "C", "D").
+MA TRẬN BẮT BUỘC (PHẢI TẠO ĐỦ SỐ LƯỢNG):
+1. PHẦN I (Trắc nghiệm 4 lựa chọn): Tạo ĐỦ {total_p1} câu. (Mỗi câu có A, B, C, D; correct là 'A','B','C' hoặc 'D').
+2. PHẦN II (Trắc nghiệm Đúng/Sai): Tạo ĐỦ {total_p2} câu. (Mỗi câu 4 ý a, b, c, d; correct là true/false).
+3. PHẦN III (Trả lời ngắn): Tạo ĐỦ {total_p3} câu. Trong đó có {p3_mod} câu mô hình hóa thực tế. Đáp số correct_num là số thực.
 
-2. PHẦN II (Trắc nghiệm Đúng/Sai): BẮT BUỘC TẠO ĐỦ {total_p2} CÂU.
-   - Gồm {p2_nb} câu Nhận biết, {p2_th} câu Thông hiểu, {p2_vd} câu Vận dụng.
-   - Mỗi câu gồm đề bài và đúng 4 ý a, b, c, d với trường "correct" là true hoặc false.
-
-3. PHẦN III (Trả lời ngắn): BẮT BUỘC TẠO ĐỦ {total_p3} CÂU.
-   - Gồm {p3_th} câu Thông hiểu, {p3_vd} câu Vận dụng, {p3_vdc} câu Vận dụng cao.
-   - Có đúng {p3_mod} câu là bài toán mô hình hóa thực tế ("is_modeled": true).
-   - Đáp án ("correct_num") chỉ ghi một con số thực cụ thể (số nguyên hoặc làm tròn 1 chữ số thập phân).
-
-LƯU Ý: Công thức toán viết dạng LaTeX đơn giản trong dấu $. Nếu phần nào có số câu bằng 0 thì để mảng rỗng [].
-
-TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ (không kèm lời giải thích nào khác ngoài chuỗi JSON):
+Công thức toán đặt trong dấu $...$. Trả về DUY NHẤT chuỗi JSON (không kèm chữ nào khác):
 {{
   "exam_title": "ĐỀ THI {grade.upper()} - {term.upper()}",
   "part1": [
-    {{"id": "P1_1", "question": "Nội dung câu hỏi...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}}
+    {{"id": "P1_1", "question": "Nội dung...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}}
   ],
   "part2": [
-    {{"id": "P2_1", "question": "Nội dung câu...", "sub_items": [{{"label": "a", "text": "...", "correct": true}}, {{"label": "b", "text": "...", "correct": false}}, {{"label": "c", "text": "...", "correct": true}}, {{"label": "d", "text": "...", "correct": false}}]}}
+    {{"id": "P2_1", "question": "Nội dung...", "sub_items": [{{"label": "a", "text": "...", "correct": true}}, {{"label": "b", "text": "...", "correct": false}}, {{"label": "c", "text": "...", "correct": true}}, {{"label": "d", "text": "...", "correct": false}}]}}
   ],
   "part3": [
-    {{"id": "P3_1", "question": "Nội dung câu...", "correct_num": "4.5", "is_modeled": true}}
+    {{"id": "P3_1", "question": "Nội dung...", "correct_num": "4.5", "is_modeled": true}}
   ]
 }}
 """
@@ -568,25 +512,20 @@ TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ (không kèm lời giải th
     try:
         exam_json = json.loads(t)
     except Exception as parse_err:
-        raise Exception(f"Lỗi đọc định dạng JSON từ AI: {parse_err}. Nội dung nhận được: {t[:300]}...")
+        raise Exception(f"Lỗi đọc định dạng JSON: {parse_err}. AI trả về không đúng định dạng.")
 
     return exam_json
 
 # ==============================================================================
-# BỘ XUẤT CÔNG THỨC TOÁN DẠNG EQUATION (OMML) VÀ TẠO FILE WORD IN ẤN
+# BỘ XUẤT CÔNG THỨC DẠNG EQUATION AN TOÀN TUYỆT ĐỐI (TRÁNH LỖI XML)
 # ==============================================================================
-def convert_latex_to_omml_math_run(latex_str: str) -> str:
-    """
-    Chuyển đổi cú pháp LaTeX thông dụng sang cấu trúc văn bản toán học 
-    dùng trong thẻ Office Math (m:oMath) của Microsoft Word.
-    """
+def convert_latex_to_clean_math(latex_str: str) -> str:
+    """Chuyển đổi ký hiệu LaTeX sang chuỗi ký tự toán học Unicode."""
     s = latex_str.strip()
-    # Loại bỏ dấu $ bao quanh nếu có
     s = re.sub(r'^\$\$?', '', s)
     s = re.sub(r'\$\$?$', '', s)
     s = s.strip()
 
-    # Ký tự toán học chuẩn
     replacements = [
         (r'\\pm', '±'), (r'\\times', '×'), (r'\\div', '÷'), (r'\\approx', '≈'),
         (r'\\ne', '≠'), (r'\\le', '≤'), (r'\\ge', '≥'), (r'\\in', '∈'),
@@ -600,53 +539,44 @@ def convert_latex_to_omml_math_run(latex_str: str) -> str:
     for pattern, repl in replacements:
         s = re.sub(pattern, repl, s)
 
-    # Chuyển phân số \frac{a}{b} -> (a)/(b)
     s = re.sub(r'\\frac\{([^{}]+)\}\{([^{}]+)\}', r'(\1)/(\2)', s)
-    # Chuyển căn \sqrt{a} -> √(a)
     s = re.sub(r'\\sqrt\{([^{}]+)\}', r'√(\1)', s)
     s = re.sub(r'\\sqrt\s*([a-zA-Z0-9])', r'√\1', s)
-    # Vectơ \vec{u} -> u⃗
     s = re.sub(r'\\vec\{([^{}]+)\}', r'\1⃗', s)
 
-    # Dọn dẹp khoảng trắng và dấu ngoặc nhọn
     s = s.replace('{', '').replace('}', '')
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
 def add_math_equation_element(paragraph, math_text: str):
-    """
-    Thêm một đối tượng Word Equation (m:oMath) trực tiếp vào đoạn văn bản.
-    Khi mở trên Microsoft Word sẽ hiển thị dạng khung Equation chỉnh sửa và in ấn chuẩn xác.
-    """
-    # Khử ký tự đặc biệt XML
-    clean_text = (math_text.replace('&', '&amp;')
-                           .replace('<', '&lt;')
-                           .replace('>', '&gt;')
-                           .replace('"', '&quot;')
-                           .replace("'", '&apos;'))
-
-    omath_xml = (
-        f'<m:oMath xmlns:m="[http://schemas.openxmlformats.org/officeDocument/2006/math](http://schemas.openxmlformats.org/officeDocument/2006/math)" '
-        f'xmlns:w="[http://schemas.openxmlformats.org/wordprocessingml/2006/main](http://schemas.openxmlformats.org/wordprocessingml/2006/main)">'
-        f'<m:r>'
-        f'<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/><w:i/></w:rPr>'
-        f'<m:t>{clean_text}</m:t>'
-        f'</m:r>'
-        f'</m:oMath>'
-    )
-    omath_element = parse_xml(omath_xml)
-    paragraph._p.append(omath_element)
+    """Tạo đối tượng Equation (m:oMath) an toàn bằng API DOM chuẩn, không bị lỗi XMLSyntaxError."""
+    NS_M = "[http://schemas.openxmlformats.org/officeDocument/2006/math](http://schemas.openxmlformats.org/officeDocument/2006/math)"
+    
+    oMath = OxmlElement('m:oMath')
+    r = OxmlElement('m:r')
+    
+    rPr = OxmlElement('w:rPr')
+    rFonts = OxmlElement('w:rFonts')
+    rFonts.set(qn('w:ascii'), 'Cambria Math')
+    rFonts.set(qn('w:hAnsi'), 'Cambria Math')
+    rPr.append(rFonts)
+    
+    i_elem = OxmlElement('w:i')
+    rPr.append(i_elem)
+    r.append(rPr)
+    
+    t = OxmlElement('m:t')
+    t.text = math_text
+    r.append(t)
+    
+    oMath.append(r)
+    paragraph._p.append(oMath)
 
 def add_formatted_text_with_equations(paragraph, text: str):
-    """
-    Tách các đoạn text thông thường và công thức toán học $...$ để chèn đúng định dạng:
-    - Text thường: add_run bình thường.
-    - Công thức toán ($...$): chèn phần tử Equation (m:oMath).
-    """
+    """Phân tách văn bản và công thức toán học $...$ để hiển thị đúng Equation."""
     if not text:
         return
 
-    # Tách chuỗi theo mẫu $...$ hoặc $$...$$
     pattern = r'(\$\$[^\$]+\$\$|\$[^\$]+\$)'
     parts = re.split(pattern, str(text))
 
@@ -654,25 +584,21 @@ def add_formatted_text_with_equations(paragraph, text: str):
         if not part:
             continue
         if part.startswith('$') and part.endswith('$'):
-            # Là công thức toán học -> chuyển đổi sang Equation
-            math_content = convert_latex_to_omml_math_run(part)
+            math_content = convert_latex_to_clean_math(part)
             add_math_equation_element(paragraph, math_content)
         else:
-            # Là văn bản thông thường
             paragraph.add_run(part)
 
 def export_exam_to_docx(exam_data):
-    """Xuất đề thi ra file Word (.docx) chuẩn format in ấn, công thức dạng Equation."""
+    """Xuất đề thi ra file Word (.docx) chuẩn format in ấn, an toàn tuyệt đối."""
     doc = Document()
     
-    # Canh lề chuẩn A4 phục vụ in ấn
     for section in doc.sections:
         section.top_margin = Inches(0.75)
         section.bottom_margin = Inches(0.75)
         section.left_margin = Inches(0.75)
         section.right_margin = Inches(0.75)
 
-    # Bảng tiêu đề đầu trang
     table_header = doc.add_table(rows=1, cols=2)
     table_header.autofit = False
     
@@ -698,14 +624,13 @@ def export_exam_to_docx(exam_data):
     p_info = doc.add_paragraph()
     p_info.add_run("Họ và tên thí sinh: ............................................................................   Số báo danh: .....................\n")
 
-    # --- PHẦN I ---
     p1 = exam_data.get("part1", [])
     if p1:
         h1 = doc.add_paragraph()
         r1 = h1.add_run("PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn.")
         r1.bold = True
         r1.font.size = Pt(11)
-        doc.add_paragraph("Thí sinh trả lời từ câu 1 đến câu " + str(len(p1)) + ". Mỗi câu hỏi thí sinh chỉ chọn một phương án.")
+        doc.add_paragraph(f"Thí sinh trả lời từ câu 1 đến câu {len(p1)}. Mỗi câu hỏi thí sinh chỉ chọn một phương án.")
 
         for idx, q in enumerate(p1):
             p = doc.add_paragraph()
@@ -714,15 +639,13 @@ def export_exam_to_docx(exam_data):
             p.add_run(f"Câu {idx + 1}: ").bold = True
             add_formatted_text_with_equations(p, q.get("question", ""))
             
-            opts = q.get("options", [])
-            for opt in opts:
+            for opt in q.get("options", []):
                 p_opt = doc.add_paragraph()
                 p_opt.paragraph_format.left_indent = Inches(0.25)
                 p_opt.paragraph_format.space_before = Pt(0)
                 p_opt.paragraph_format.space_after = Pt(2)
                 add_formatted_text_with_equations(p_opt, opt)
 
-    # --- PHẦN II ---
     p2 = exam_data.get("part2", [])
     if p2:
         h2 = doc.add_paragraph()
@@ -730,7 +653,7 @@ def export_exam_to_docx(exam_data):
         r2 = h2.add_run("PHẦN II. Câu trắc nghiệm đúng sai.")
         r2.bold = True
         r2.font.size = Pt(11)
-        doc.add_paragraph("Thí sinh trả lời từ câu 1 đến câu " + str(len(p2)) + ". Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai.")
+        doc.add_paragraph(f"Thí sinh trả lời từ câu 1 đến câu {len(p2)}. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai.")
 
         for idx, q in enumerate(p2):
             p = doc.add_paragraph()
@@ -747,7 +670,6 @@ def export_exam_to_docx(exam_data):
                 p_sub.add_run(f"{sub.get('label')}) ").bold = True
                 add_formatted_text_with_equations(p_sub, sub.get("text", ""))
 
-    # --- PHẦN III ---
     p3 = exam_data.get("part3", [])
     if p3:
         h3 = doc.add_paragraph()
@@ -755,7 +677,7 @@ def export_exam_to_docx(exam_data):
         r3 = h3.add_run("PHẦN III. Câu trắc nghiệm trả lời ngắn.")
         r3.bold = True
         r3.font.size = Pt(11)
-        doc.add_paragraph("Thí sinh trả lời từ câu 1 đến câu " + str(len(p3)) + ". Viết kết quả dưới dạng số (làm tròn đến 1 chữ số thập phân nếu cần).")
+        doc.add_paragraph(f"Thí sinh trả lời từ câu 1 đến câu {len(p3)}. Viết kết quả dưới dạng số (làm tròn đến 1 chữ số thập phân nếu cần).")
 
         for idx, q in enumerate(p3):
             p = doc.add_paragraph()
@@ -979,10 +901,10 @@ with tab1:
                 st.markdown(formula_text)
             else:
                 st.markdown(f"$${formula_text}$$")
-            st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
+            st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
 # ------------------------------------------------------------------------------
-# TAB 2: VÍ DỤ MINH HỌA (LOAD TOÀN BỘ CHỦ ĐIỂM CỦA BÀI ĐANG CHỌN)
+# TAB 2: VÍ DỤ MINH HỌA
 # ------------------------------------------------------------------------------
 with tab_ex:
     st.subheader(f"💡 Toàn Bộ Ví Dụ Minh Họa Chuẩn Mực — {sel_lesson}")
@@ -1013,7 +935,7 @@ with tab_ex:
                         st.markdown(ex_item["solution"])
 
 # ------------------------------------------------------------------------------
-# TAB 3: HỌC SINH TỰ GIẢI (TỰ SINH ĐỀ TƯƠNG TỰ & ĐỀ NÂNG CAO MÔ HÌNH HÓA)
+# TAB 3: HỌC SINH TỰ GIẢI
 # ------------------------------------------------------------------------------
 with tab2:
     st.subheader(f"📝 Không Gian Tự Luyện Toán Học — {sel_lesson}")
@@ -1221,13 +1143,11 @@ with tab3:
                         f"Bạn là Thầy/Cô giáo dạy Toán cấp THPT với phương pháp sư phạm mẫu mực. "
                         f"Học sinh đang tự học bài: '{sel_lesson}', chủ điểm: '{sel_topic_display}'.\n\n"
                         "NHIỆM VỤ SƯ PHẠM KHI SOI BÀI VIẾT TAY:\n"
-                        "1. Đọc và phiên dịch cẩn thận các dòng viết tay hoặc phương trình toán học trong ảnh.\n"
-                        "2. Kiểm tra tính đúng đắn theo từng bước logic, biến đổi công thức và tính toán số học.\n"
-                        "3. NẾU CÓ LỖI SAI: Hãy CHỈ RÕ CHÍNH XÁC học sinh bị sai từ dòng thứ mấy, phân tích nguyên nhân sai "
-                        "(sai dấu, áp dụng sai công thức, quên điều kiện xác định hay nhầm lẫn số học).\n"
-                        "4. GỢI Ý HƯỚNG GIẢI TIẾP THEO để học sinh tự làm lại. TUYỆT ĐỐI KHÔNG giải thay toàn bộ bài hay viết sẵn đáp số cuối cùng.\n"
-                        "5. NẾU BÀI LÀM ĐÃ ĐÚNG: Hãy khen ngợi tinh thần tự học của học sinh và khuyến khích em thử sức với các bài tập nâng cao.\n"
-                        "6. Luôn trình bày các biểu thức toán học bằng định dạng LaTeX chuẩn mực ($...$ hoặc $$...$$)."
+                        "1. Đọc và phân tích các dòng viết tay hoặc phương trình trong ảnh.\n"
+                        "2. Kiểm tra tính đúng đắn theo từng bước logic.\n"
+                        "3. NẾU CÓ LỖI SAI: Chỉ rõ dòng sai sót, giải thích nguyên nhân và gợi ý hướng đi tiếp theo. Không giải thay toàn bộ.\n"
+                        "4. NẾU ĐÚNG: Khen ngợi và khích lệ học sinh thử sức bài nâng cao.\n"
+                        "5. Trình bày công thức bằng LaTeX chuẩn mực ($...$)."
                     )
 
                     contents = [system_vision_prompt]
@@ -1248,13 +1168,13 @@ with tab3:
             st.info("Trợ lý AI đang sẵn sàng hỗ trợ nội dung bài học này (yêu cầu cấu hình Gemini API Key hợp lệ trong mục Secrets).")
 
 # ------------------------------------------------------------------------------
-# TAB 5: PHÒNG KHẢO THÍ (TÙY CHỌN CHI TIẾT TỪNG MỨC ĐỘ, CHO PHÉP VỀ 0)
+# TAB 5: PHÒNG KHẢO THÍ (CHÍNH XÁC SỐ CÂU, EQUATION CHỐNG LỖI XML)
 # ------------------------------------------------------------------------------
 with tab4:
     st.subheader("🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa GDPT 2018")
     st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo. Tùy chọn số câu cho từng mức độ nhận thức (cho phép về 0), tương tác làm bài và xuất file Word.")
 
-    with st.expander("⚙ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI CHI TIẾT", expanded=(st.session_state["generated_exam"] is None)):
+    with st.expander("⚙️ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI CHI TIẾT", expanded=(st.session_state["generated_exam"] is None)):
         c1, c2 = st.columns(2)
         with c1:
             exam_grade = st.selectbox("1. Khối lớp:", ["Khối 10", "Khối 11", "Khối 12"], index=(2 if sel_grade=="Khối 12" else (0 if sel_grade=="Khối 10" else 1)))
@@ -1325,7 +1245,7 @@ with tab4:
             if total_exam_questions == 0:
                 st.error("Tổng số câu hỏi của đề thi không được bằng 0! Vui lòng chọn ít nhất 1 câu.")
             else:
-                with st.spinner("AI đang thiết kế toàn bộ câu hỏi theo đúng ma trận yêu cầu (có thể mất 15-30 giây)..."):
+                with st.spinner("AI đang tạo toàn bộ câu hỏi theo đúng ma trận..."):
                     try:
                         new_exam = generate_matrix_custom_exam(
                             exam_grade, exam_term,
@@ -1340,7 +1260,7 @@ with tab4:
                             st.session_state["exam_submitted_result"] = None
                             st.rerun()
                     except Exception as e:
-                        st.error(f"⚠️ Không thể tạo đề từ AI: {e}")
+                        st.error(f"⚠️️ Thông báo kết nối: {e}")
 
     # Giao diện làm bài thi khi đã tạo đề
     exam = st.session_state["generated_exam"]
@@ -1519,10 +1439,10 @@ with tab4:
                     st.markdown(f"## 🎉 KẾT QUẢ BÀI THI CỦA EM: **{score} / {total_exam_score} ĐIỂM**")
                     
                     if total_exam_score > 0 and (score / total_exam_score) >= 0.8:
-                        comment = "🌟 Em học đỉnh chóp luôn á! Tư duy toán học siêu bén và tự giác vô cùng. Cố gắng giữ vững phong độ này nhé, tự hào về em quá chừng! 💖"
+                        comment = "🌟 Em học đỉnh chóp luôn á! Tư duy toán học siêu bén và tự giác vô cùng. Cố gắng giữ vững phong độ này nhé! 💖"
                     elif total_exam_score > 0 and (score / total_exam_score) >= 0.5:
-                        comment = "🌸 Giỏi lắm nè! Em đã nắm rất chắc các dạng bài cơ bản rồi đó. Chỉ cần chú ý rèn thêm một chút cẩn thận ở phần tính toán là điểm cao trong tầm tay luôn nha! ✨"
+                        comment = "🌸 Giỏi lắm nè! Em đã nắm rất chắc các dạng bài cơ bản rồi đó. Chỉ cần rèn thêm tính cẩn thận là điểm cao trong tầm tay! ✨"
                     else:
-                        comment = "🌱 Đừng buồn nhé, em đã rất kiên trì hoàn thành bài thi! Mỗi lần thử là một lần mình hiểu sâu hơn. Xem lại gợi ý ở Tab 2 rồi thử sức lại nha, Thầy/Cô luôn đồng hành cùng em! 🥰"
+                        comment = "🌱 Đừng nản lòng nhé! Xem lại gợi ý và thử sức lại nha, Thầy/Cô luôn đồng hành cùng em! 🥰"
                         
                     st.success(comment)

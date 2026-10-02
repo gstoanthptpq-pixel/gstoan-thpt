@@ -1,5 +1,5 @@
 # data_grade12.py
-# CHUẨN HÓA THEO VỞ TỰ HỌC TOÁN 12 - BỘ KẾT NỐI TRI THỨC VỚI CUỘC SỐNG
+# CHUẨN HÓA THEO VỞ TỰ HỌC TOÁN 12 - BỘ SÁCH KẾT NỐI TRI THỨC VỚI CUỘC SỐNG
 
 GRADE_12_DATA = {
     "Bài 1. Tính đơn điệu và cực trị của hàm số": {

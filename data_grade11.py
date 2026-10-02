@@ -1,138 +1,138 @@
-# data_grade10.py
-# CHUẨN HÓA DỮ LIỆU TỪ VỞ TỰ HỌC TOÁN 10 - BỘ SÁCH KẾT NỐI TRI THỨC VỚI CUỘC SỐNG
+# data_grade11.py
+# CHUẨN HÓA DỮ LIỆU TỪ VỞ TỰ HỌC TOÁN 11 - BỘ SÁCH KẾT NỐI TRI THỨC VỚI CUỘC SỐNG
 
-GRADE_10_DATA = {
-    "Bài 1. Mệnh đề": {
-        "chapter": "CHƯƠNG I. MỆNH ĐỀ VÀ TẬP HỢP",
+GRADE_11_DATA = {
+    "Bài 1. Giá trị lượng giác của góc lượng giác": {
+        "chapter": "CHƯƠNG I. HÀM SỐ LƯỢNG GIÁC VÀ PHƯƠNG TRÌNH LƯỢNG GIÁC",
         "topics": {
-            "Chủ điểm 1: Mệnh đề và mệnh đề chứa biến": {
-                "theory": "- Mệnh đề toán học là một khẳng định đúng hoặc sai. Một khẳng định không thể vừa đúng vừa sai.\n- Mệnh đề chứa biến là câu khẳng định chứa biến số, chưa xác định được tính đúng sai. Khi thay biến bằng giá trị cụ thể trong tập xác định thì câu đó trở thành một mệnh đề.",
-                "formula": "P(x) \\text{ trở thành mệnh đề khi } x = x_0",
-                "trap": "Các câu hỏi, câu cảm thán, câu cầu khiến không phải là mệnh đề toán học.",
-                "audio": "Mệnh đề là một khẳng định có tính đúng sai rõ ràng. Các câu hỏi hoặc câu cảm thán thì không phải là mệnh đề toán học.",
-                "svg": "TAP_HOP",
+            "Chủ điểm 1: Góc lượng giác và đơn vị radian": {
+                "theory": "- Đường tròn bán kính $R$, cung có độ dài $l = R$ có số đo 1 radian (1 rad).\n- Quan hệ giữa độ và radian: $180^\\circ = \\pi \\text{ rad} \\implies 1^\\circ = \\frac{\\pi}{180} \\text{ rad}, \\ 1 \\text{ rad} = \\left(\\frac{180}{\\pi}\\right)^\\circ$.\n- Độ dài cung tròn có số đo $\\alpha$ rad trên đường tròn bán kính $R$ là: $l = R\\alpha$.",
+                "formula": "180^\\circ = \\pi \\text{ rad}; \\quad l = R \\alpha",
+                "trap": "Khi tính độ dài cung tròn bằng công thức $l = R\\alpha$, góc $\\alpha$ bắt buộc phải đổi sang đơn vị radian.",
+                "audio": "Khi tính độ dài cung tròn, góc alpha bắt buộc phải ở đơn vị radian. Một trăm tám mươi độ tương ứng với pi radian.",
+                "svg": "LUONG_GIAC",
                 "examples": [
                     {
-                        "title": "Ví dụ: Nhận biết mệnh đề toán học",
-                        "problem": "Trong các câu sau, câu nào là mệnh đề toán học?\na) Số 15 chia hết cho 3.\nb) Bạn có thích học Toán không?",
-                        "solution": "a) 'Số 15 chia hết cho 3' là một khẳng định đúng nên là một mệnh đề toán học.\nb) 'Bạn có thích học Toán không?' là câu hỏi nên không phải là mệnh đề toán học."
+                        "title": "Ví dụ: Đổi đơn vị đo góc",
+                        "problem": "Đổi góc có số đo $60^\\circ$ sang radian.",
+                        "solution": "$60^\\circ = 60 \\cdot \\frac{\\pi}{180} = \\frac{\\pi}{3} \\text{ rad}$."
                     }
                 ],
                 "exercise": {
-                    "id": "10_b1_c1",
+                    "id": "11_b1_c1",
                     "title": "Bài tập tự giải kiểm minh chứng",
-                    "content": "Xét câu: 'Số 7 là số nguyên tố'. Đây là mệnh đề đúng hay sai? Nhập 1 nếu đúng, 0 nếu sai:",
+                    "content": "Một bánh xe có bán kính 20 cm quay được góc 3 radian. Tính quãng đường đi được của một điểm trên vành bánh xe (cm):",
+                    "target": "60"
+                }
+            },
+            "Chủ điểm 2: Giá trị lượng giác của một góc lượng giác": {
+                "theory": "Trên đường tròn lượng giác, điểm $M(x_0; y_0)$ biểu diễn góc lượng giác $\\alpha$:\n$$\\cos \\alpha = x_0; \\quad \\sin \\alpha = y_0; \\quad \\tan \\alpha = \\frac{y_0}{x_0} \\ (x_0 \\ne 0); \\quad \\cot \\alpha = \\frac{x_0}{y_0} \\ (y_0 \\ne 0)$$\n- Các hằng đẳng thức cốt lõi:\n$$\\sin^2 \\alpha + \\cos^2 \\alpha = 1; \\quad 1 + \\tan^2 \\alpha = \\frac{1}{\\cos^2 \\alpha}; \\quad 1 + \\cot^2 \\alpha = \\frac{1}{\\sin^2 \\alpha}$$",
+                "formula": "\\sin^2\\alpha + \\cos^2\\alpha = 1; \\quad 1 + \\tan^2\\alpha = \\frac{1}{\\cos^2\\alpha}",
+                "trap": "Xác định dấu của các giá trị lượng giác phụ thuộc vào góc phần tư: Phải chú ý góc $\\alpha$ thuộc góc phần tư thứ mấy để lấy dấu âm/dương khi khai căn.",
+                "audio": "Trục hoành là trục cos, trục tung là trục sin. Chú ý góc phần tư để chọn dấu khi tính sin và cos.",
+                "svg": "LUONG_GIAC",
+                "examples": [
+                    {
+                        "title": "Ví dụ: Tính giá trị lượng giác theo góc phần tư",
+                        "problem": "Cho $\\sin \\alpha = \\frac{3}{5}$ với $\\frac{\\pi}{2} < \\alpha < \\pi$. Tính $\\cos \\alpha$.",
+                        "solution": "Ta có $\\cos^2 \\alpha = 1 - \\sin^2 \\alpha = 1 - \\frac{9}{25} = \\frac{16}{25}$.\nVì $\\frac{\\pi}{2} < \\alpha < \\pi$ (góc phần tư thứ II) nên $\\cos \\alpha < 0$. Do đó $\\cos \\alpha = -\\frac{4}{5}$."
+                    }
+                ],
+                "exercise": {
+                    "id": "11_b1_c2",
+                    "title": "Bài tập tự giải kiểm minh chứng",
+                    "content": "Cho $\\cos \\alpha = 0.6$. Tính giá trị của biểu thức $P = \\sin^2 \\alpha$:",
+                    "target": "0.64"
+                }
+            }
+        }
+    },
+    "Bài 5. Dãy số": {
+        "chapter": "CHƯƠNG II. DÃY SỐ. CẤP SỐ CỘNG VÀ CẤP SỐ NHÂN",
+        "topics": {
+            "Chủ điểm 1: Định nghĩa và cách cho một dãy số": {
+                "theory": "- Dãy số vô hạn là hàm số xác định trên tập các số nguyên dương $\\mathbb{N}^*$. Kí hiệu $(u_n)$.\n- Dãy số có thể được cho bằng: Công thức số hạng tổng quát; Phương pháp mô tả; Phương pháp quy hồi.",
+                "formula": "u_n = f(n), \\ n \\in \\mathbb{N}^*",
+                "trap": "Chỉ số $n$ của dãy số luôn bắt đầu từ 1 ($n \\ge 1, n \\in \\mathbb{N}^*$), không bao giờ lấy $n = 0$.",
+                "audio": "Dãy số là một hàm số xác định trên tập số nguyên dương. Chỉ số n luôn bắt đầu từ số 1.",
+                "svg": "DAY_SO",
+                "examples": [
+                    {
+                        "title": "Ví dụ: Tìm số hạng tổng quát",
+                        "problem": "Cho dãy số $(u_n)$ có số hạng tổng quát $u_n = 2n - 1$. Viết 3 số hạng đầu tiên.",
+                        "solution": "$u_1 = 2(1) - 1 = 1$; $u_2 = 2(2) - 1 = 3$; $u_3 = 2(3) - 1 = 5$."
+                    }
+                ],
+                "exercise": {
+                    "id": "11_b5_c1",
+                    "title": "Bài tập tự giải kiểm minh chứng",
+                    "content": "Cho dãy số $(u_n)$ xác định bởi $u_n = n^2 + 1$. Tìm số hạng thứ 4 của dãy số:",
+                    "target": "17"
+                }
+            },
+            "Chủ điểm 2: Dãy số tăng, dãy số giảm và dãy số bị chặn": {
+                "theory": "- Dãy số $(u_n)$ tăng nếu $u_{n+1} > u_n, \\forall n \\in \\mathbb{N}^*$.\n- Dãy số $(u_n)$ giảm nếu $u_{n+1} < u_n, \\forall n \\in \\mathbb{N}^*$.\n- Dãy số $(u_n)$ bị chặn nếu tồn tại hai số $m, M$ sao cho $m \\le u_n \\le M, \\forall n \\in \\mathbb{N}^*$.",
+                "formula": "u_{n+1} - u_n > 0 \\implies (u_n) \\nearrow; \\quad m \\le u_n \\le M \\implies (u_n) \\text{ bị chặn}",
+                "trap": "Để xét tính tăng giảm, phương pháp chuẩn là xét dấu của hiệu số $u_{n+1} - u_n$. Chỉ được so sánh tỉ số $\\frac{u_{n+1}}{u_n}$ với 1 khi mọi số hạng đều dương.",
+                "audio": "Để xét dãy số tăng hay giảm, ta lập hiệu u n cộng một trừ đi u n rồi xét dấu hiệu số đó.",
+                "svg": "DAY_SO",
+                "examples": [
+                    {
+                        "title": "Ví dụ: Xét tính tăng giảm",
+                        "problem": "Xét tính tăng giảm của dãy số $u_n = \\frac{n}{n + 1}$.",
+                        "solution": "Xét hiệu $u_{n+1} - u_n = \\frac{n+1}{n+2} - \\frac{n}{n+1} = \\frac{(n+1)^2 - n(n+2)}{(n+1)(n+2)} = \\frac{1}{(n+1)(n+2)} > 0, \\forall n \\ge 1$.\nVậy dãy số $(u_n)$ là dãy số tăng."
+                    }
+                ],
+                "exercise": {
+                    "id": "11_b5_c2",
+                    "title": "Bài tập tự giải kiểm minh chứng",
+                    "content": "Dãy số $u_n = \\frac{1}{n}$ bị chặn trên bởi số nào? (Nhập 1 nếu là 1, 0 nếu không bị chặn):",
+                    "target": "1"
+                }
+            }
+        }
+    },
+    "Bài 11. Hai đường thẳng song song trong không gian": {
+        "chapter": "CHƯƠNG IV. QUAN HỆ SONG SONG TRONG KHÔNG GIAN",
+        "topics": {
+            "Chủ điểm 1: Vị trí tương đối của hai đường thẳng": {
+                "theory": "Trong không gian, hai đường thẳng $a$ và $b$ có 4 vị trí tương đối:\n1. Cắt nhau: Có duy nhất một điểm chung (đồng phẳng).\n2. Song song: Cùng nằm trong một mặt phẳng và không có điểm chung.\n3. Trùng nhau: Có vô số điểm chung.\n4. Chéo nhau: Không cùng thuộc bất kì mặt phẳng nào.",
+                "formula": "\\text{Chéo nhau } \\iff \\text{không đồng phẳng}",
+                "trap": "Hai đường thẳng không có điểm chung trong không gian có thể song song HOẶC chéo nhau (khác với hình học phẳng).",
+                "audio": "Trong không gian, hai đường thẳng không có điểm chung thì có thể song song hoặc chéo nhau.",
+                "svg": "HINH_KHONG_GIAN",
+                "examples": [
+                    {
+                        "title": "Ví dụ: Xác định hai đường thẳng chéo nhau",
+                        "problem": "Cho tứ diện ABCD. Xét vị trí tương đối của hai đường thẳng AB và CD.",
+                        "solution": "Bốn điểm A, B, C, D không đồng phẳng nên AB và CD không cùng thuộc một mặt phẳng. Do đó AB và CD chéo nhau."
+                    }
+                ],
+                "exercise": {
+                    "id": "11_b11_c1",
+                    "title": "Bài tập tự giải kiểm minh chứng",
+                    "content": "Cho hình chóp S.ABCD đáy hình vuông. Đường thẳng SA và BC có chéo nhau không? (Nhập 1 nếu có, 0 nếu không):",
                     "target": "1"
                 }
             },
-            "Chủ điểm 2: Mệnh đề phủ định, mệnh đề kéo theo và tương đương": {
-                "theory": "- Phủ định của mệnh đề $P$ là $\\overline{P}$. Nếu $P$ đúng thì $\\overline{P}$ sai và ngược lại.\n- Mệnh đề kéo theo $P \\Rightarrow Q$ chỉ sai khi $P$ đúng mà $Q$ sai.\n- Mệnh đề tương đương $P \\Leftrightarrow Q$ đúng khi và chỉ khi cả $P$ và $Q$ cùng đúng hoặc cùng sai.",
-                "formula": "\\overline{P}; \\quad P \\Rightarrow Q; \\quad P \\Leftrightarrow Q",
-                "trap": "Phủ định của mệnh đề chứa 'với mọi' ($\\forall$) là 'tồn tại' ($\\exists$) và ngược lại.",
-                "audio": "Phủ định của với mọi x thỏa mãn P(x) là tồn tại x để không thỏa mãn P(x).",
-                "svg": "TAP_HOP",
+            "Chủ điểm 2: Tính chất hai đường thẳng song song": {
+                "theory": "- Định lí: Trong không gian, qua một điểm nằm ngoài đường thẳng cho trước có một và chỉ một đường thẳng song song với đường thẳng đó.\n- Hai đường thẳng phân biệt cùng song song với đường thẳng thứ ba thì song song với nhau: $a \\parallel c$ và $b \\parallel c \\implies a \\parallel b$.\n- Định lí giao tuyến: Ba mặt phẳng đôi một cắt nhau theo ba giao tuyến phân biệt thì ba giao tuyến đó hoặc đồng quy hoặc đôi một song song.",
+                "formula": "a \\parallel c \\text{ và } b \\parallel c \\implies a \\parallel b",
+                "trap": "Cần kiểm tra kĩ điều kiện các đường thẳng phân biệt trước khi áp dụng tính chất bắc cầu.",
+                "audio": "Hai đường thẳng phân biệt cùng song song với đường thẳng thứ ba thì song song với nhau.",
+                "svg": "HINH_KHONG_GIAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Phủ định của mệnh đề chứa kí hiệu lượng từ",
-                        "problem": "Lập mệnh đề phủ định của mệnh đề: $P: '\\forall x \\in \\mathbb{R}, x^2 + 1 > 0'$.",
-                        "solution": "Mệnh đề phủ định là: $\\overline{P}: '\\exists x \\in \\mathbb{R}, x^2 + 1 \\le 0'$."
+                        "title": "Ví dụ: Tìm giao tuyến bằng tính chất song song",
+                        "problem": "Cho hình chóp S.ABCD có đáy ABCD là hình bình hành. Tìm giao tuyến của $(SAB)$ và $(SCD)$.",
+                        "solution": "Hai mặt phẳng $(SAB)$ và $(SCD)$ có điểm chung $S$ và lần lượt chứa hai đường thẳng song song $AB$ và $CD$. Do đó giao tuyến của chúng là đường thẳng $d$ đi qua $S$ và song song với $AB, CD$."
                     }
                 ],
                 "exercise": {
-                    "id": "10_b1_c2",
+                    "id": "11_b11_c2",
                     "title": "Bài tập tự giải kiểm minh chứng",
-                    "content": "Phủ định của mệnh đề $P: '\\exists x \\in \\mathbb{R}, x^2 = 2'$ là khẳng định đúng hay sai? (Nhập 1 nếu đúng, 0 nếu sai):",
-                    "target": "0"
-                }
-            }
-        }
-    },
-    "Bài 2. Tập hợp và các phép toán trên tập hợp": {
-        "chapter": "CHƯƠNG I. MỆNH ĐỀ VÀ TẬP HỢP",
-        "topics": {
-            "Chủ điểm 1: Khái niệm tập hợp và các tập hợp số": {
-                "theory": "- Tập hợp gồm các phần tử xác định. Kí hiệu $a \\in A$ hoặc $a \\notin A$.\n- Tập rỗng $\\emptyset$ là tập hợp không chứa phần tử nào.\n- Tập con: $A \\subset B \\iff (\\forall x \\in A \\implies x \\in B)$.\n- Các tập số cơ bản: $\\mathbb{N} \\subset \\mathbb{Z} \\subset \\mathbb{Q} \\subset \\mathbb{R}$.",
-                "formula": "A \\subset B \\iff \\forall x, x \\in A \\implies x \\in B",
-                "trap": "Nhầm lẫn giữa kí hiệu phần tử thuộc tập hợp ($\\in$) và tập con ($\\subset$). Ví dụ $\\{a\\} \\subset A$ chứ không viết $\\{a\\} \\in A$.",
-                "audio": "Tập hợp con là mọi phần tử của tập A đều thuộc về tập B. Các em chú ý phân biệt dấu thuộc và dấu tập con.",
-                "svg": "TAP_HOP",
-                "examples": [
-                    {
-                        "title": "Ví dụ: Xác định tập hợp bằng cách liệt kê phần tử",
-                        "problem": "Viết tập hợp $A = \\{x \\in \\mathbb{N} \\mid (2x - 1)(x^2 - 4) = 0\\}$ dưới dạng liệt kê.",
-                        "solution": "Phương trình $(2x - 1)(x^2 - 4) = 0 \\iff x = \\frac{1}{2}$ hoặc $x = 2$ hoặc $x = -2$.\nVì $x \\in \\mathbb{N}$ nên chỉ nhận $x = 2$. Vậy $A = \\{2\\}$."
-                    }
-                ],
-                "exercise": {
-                    "id": "10_b2_c1",
-                    "title": "Bài tập tự giải kiểm minh chứng",
-                    "content": "Số phần tử của tập hợp $A = \\{x \\in \\mathbb{Z} \\mid |x| \\le 2\\}$ là bao nhiêu?",
-                    "target": "5"
-                }
-            },
-            "Chủ điểm 2: Các phép toán giao, hợp, hiệu và các khoảng số thực": {
-                "theory": "- Giao: $A \\cap B = \\{x \\mid x \\in A \\text{ và } x \\in B\\}$.\n- Hợp: $A \\cup B = \\{x \\mid x \\in A \\text{ hoặc } x \\in B\\}$.\n- Hiệu: $A \\setminus B = \\{x \\mid x \\in A \\text{ và } x \\notin B\\}$.\n- Phần bù: $C_E A = E \\setminus A$ (với $A \\subset E$).",
-                "formula": "A \\cap B; \\quad A \\cup B; \\quad A \\setminus B; \\quad C_E A",
-                "trap": "Khi lấy giao và hợp trên trục số thực, chú ý dấu ngoặc vuông $[,]$ (lấy mút) và ngoặc tròn $(,)$ (không lấy mút).",
-                "audio": "Giao là lấy phần chung, hợp là gộp tất cả, hiệu là thuộc A nhưng không thuộc B.",
-                "svg": "TAP_HOP",
-                "examples": [
-                    {
-                        "title": "Ví dụ: Giao và hợp của hai khoảng số",
-                        "problem": "Cho hai tập hợp $A = [-2; 3)$ và $B = (1; 5]$. Xác định tập $A \\cap B$.",
-                        "solution": "Vẽ hai tập hợp trên trục số, phần giao nhau là $A \\cap B = (1; 3)$."
-                    }
-                ],
-                "exercise": {
-                    "id": "10_b2_c2",
-                    "title": "Bài tập tự giải kiểm minh chứng",
-                    "content": "Cho $A = (-3; 2]$ và $B = (0; 4)$. Tập $A \\cap B$ là khoảng $(0; b]$. Nhập giá trị b:",
-                    "target": "2"
-                }
-            }
-        }
-    },
-    "Bài 7. Các khái niệm mở đầu về vectơ": {
-        "chapter": "CHƯƠNG IV. HỆ THỨC LƯỢNG TRONG TAM GIÁC VÀ VECTƠ",
-        "topics": {
-            "Chủ điểm 1: Định nghĩa vectơ, độ dài và vectơ cùng phương, cùng hướng": {
-                "theory": "- Vectơ là một đoạn thẳng có hướng (có điểm đầu và điểm cuối). Kí hiệu $\\vec{a}$ hoặc $\\vec{AB}$.\n- Độ dài vectơ là khoảng cách giữa điểm đầu và điểm cuối: $|\\vec{AB}| = AB$.\n- Giá của vectơ là đường thẳng đi qua điểm đầu và điểm cuối của nó.\n- Hai vectơ cùng phương nếu giá của chúng song song hoặc trùng nhau.",
-                "formula": "|\\vec{AB}| = AB; \\quad \\vec{a} \\parallel \\vec{b} \\iff \\text{giá song song hoặc trùng}",
-                "trap": "Vectơ không ($\\vec{0}$) cùng phương, cùng hướng với mọi vectơ.",
-                "audio": "Vectơ là đoạn thẳng có hướng. Hai vectơ cùng phương nếu giá của chúng song song hoặc trùng nhau.",
-                "svg": "VECTOR",
-                "examples": [
-                    {
-                        "title": "Ví dụ: Nhận biết vectơ cùng hướng trong hình chữ nhật",
-                        "problem": "Cho hình chữ nhật ABCD. So sánh hướng của hai vectơ $\\vec{AB}$ và $\\vec{DC}$.",
-                        "solution": "Vì $AB \\parallel DC$ và chiều từ A sang B trùng với chiều từ D sang C nên $\\vec{AB}$ và $\\vec{DC}$ là hai vectơ cùng hướng."
-                    }
-                ],
-                "exercise": {
-                    "id": "10_b7_c1",
-                    "title": "Bài tập tự giải kiểm minh chứng",
-                    "content": "Cho hình vuông ABCD có cạnh bằng 3. Tính độ dài của vectơ $\\vec{AC}$ (làm tròn đến 1 chữ số thập phân):",
-                    "target": "4.2"
-                }
-            },
-            "Chủ điểm 2: Hai vectơ bằng nhau và vectơ đối": {
-                "theory": "- Hai vectơ bằng nhau nếu chúng cùng hướng và cùng độ dài: $\\vec{a} = \\vec{b} \\iff \\vec{a} \\uparrow\\uparrow \\vec{b} \\text{ và } |\\vec{a}| = |\\vec{b}|$.\n- Vectơ đối của $\\vec{a}$ là vectơ ngược hướng và có cùng độ dài với $\\vec{a}$. Kí hiệu $-\\vec{a}$.",
-                "formula": "\\vec{a} = \\vec{b} \\iff (\\vec{a} \\uparrow\\uparrow \\vec{b} \\text{ và } |\\vec{a}| = |\\vec{b}|); \\quad \\vec{BA} = -\\vec{AB}",
-                "trap": "Chỉ có cùng độ dài thôi thì chưa đủ để kết luận hai vectơ bằng nhau, bắt buộc phải có cùng hướng.",
-                "audio": "Hai vectơ bằng nhau khi và chỉ khi chúng cùng hướng và cùng độ dài.",
-                "svg": "VECTOR",
-                "examples": [
-                    {
-                        "title": "Ví dụ: Vectơ bằng nhau trong hình bình hành",
-                        "problem": "Cho hình bình hành ABCD có tâm O. Chỉ ra các vectơ bằng vectơ $\\vec{AB}$.",
-                        "solution": "Vì AB song song, cùng độ dài và cùng hướng với DC nên $\\vec{AB} = \\vec{DC}$."
-                    }
-                ],
-                "exercise": {
-                    "id": "10_b7_c2",
-                    "title": "Bài tập tự giải kiểm minh chứng",
-                    "content": "Cho tam giác ABC đều. Số lượng vectơ (khác vectơ-không) có điểm đầu và điểm cuối là các đỉnh của tam giác bằng bao nhiêu?",
-                    "target": "6"
+                    "content": "Cho hình chóp S.ABCD đáy là hình bình hành. Giao tuyến của mặt phẳng (SAD) và (SBC) là đường thẳng đi qua S và song song với AD đúng hay sai? (Nhập 1 nếu đúng, 0 nếu sai):",
+                    "target": "1"
                 }
             }
         }

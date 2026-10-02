@@ -15,6 +15,8 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement, parse_xml
+from docx.oxml.ns import nsdecls, qn
 
 # ==============================================================================
 # 1. CẤU HÌNH GIAO DIỆN & TÙY BIẾN GIAO DIỆN SÁNG / TỐI (THEME)
@@ -95,7 +97,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO GEMINI API, CƠ CHẾ TỰ ĐỘNG DÒ MODEL VÀ MULTI-FALLBACK TRIỆT ĐỂ
+# 2. KHỞI TẠO GEMINI API, CƠ CHẾ DÒ MODEL VÀ MULTI-FALLBACK TRIỆT ĐỂ
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -115,7 +117,6 @@ def get_available_models():
     if not client:
         return []
     
-    # Thứ tự các model ưu tiên thử nghiệm
     preferred_order = [
         'gemini-3.8-flash',
         'gemini-2.5-flash',
@@ -138,18 +139,15 @@ def get_available_models():
         pass
     
     final_models = []
-    # 1. Thêm theo độ ưu tiên đã tìm thấy
     for pref in preferred_order:
         for d in discovered:
             if pref in d and d not in final_models:
                 final_models.append(d)
                 
-    # 2. Bổ sung các model khác tìm thấy có flash hoặc pro
     for d in discovered:
         if ('flash' in d or 'pro' in d) and d not in final_models:
             final_models.append(d)
             
-    # 3. Dự phòng danh sách cứng nếu không truy vấn được list
     if not final_models:
         final_models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash']
         
@@ -174,7 +172,6 @@ def call_gemini_safe(contents_payload):
         except Exception as e:
             err_str = str(e)
             last_err = err_str
-            # Nếu gặp 503 (quá tải), 404 (model cũ đổi tên), 429, tự động bỏ qua sang model tiếp theo
             if any(code in err_str for code in ["503", "404", "429", "NOT_FOUND", "UNAVAILABLE"]):
                 time.sleep(1)
                 continue
@@ -195,7 +192,7 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. HÌNH ẢNH VECTOR SVG CHUẨN XÁC (KHÔNG ĐÈ CHỮ)
+# 3. HÌNH ẢNH VECTOR SVG CHUẨN XÁC
 # ==============================================================================
 PRESET_SVGS = {
     "DON_DIEU": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
@@ -576,90 +573,106 @@ TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ (không kèm lời giải th
     return exam_json
 
 # ==============================================================================
-# BỘ CHUYỂN ĐỔI LATEX SANG UNICODE TOÁN HỌC & XUẤT FILE WORD IN ĐƯỢC
+# BỘ XUẤT CÔNG THỨC TOÁN DẠNG EQUATION (OMML) VÀ TẠO FILE WORD IN ẤN
 # ==============================================================================
-def clean_latex_to_text(text: str) -> str:
-    """Chuyển đổi các cú pháp LaTeX thông dụng sang ký tự Unicode toán học để in ngay trên Word."""
-    if not text:
-        return ""
-    s = str(text)
+def convert_latex_to_omml_math_run(latex_str: str) -> str:
+    """
+    Chuyển đổi cú pháp LaTeX thông dụng sang cấu trúc văn bản toán học 
+    dùng trong thẻ Office Math (m:oMath) của Microsoft Word.
+    """
+    s = latex_str.strip()
+    # Loại bỏ dấu $ bao quanh nếu có
+    s = re.sub(r'^\$\$?', '', s)
+    s = re.sub(r'\$\$?$', '', s)
+    s = s.strip()
 
-    # 1. Bỏ dấu đóng/mở khối công thức $ hoặc $$
-    s = re.sub(r'\$\$?', '', s)
-
-    # 2. Chuyển đổi các ký hiệu đặc biệt
+    # Ký tự toán học chuẩn
     replacements = [
-        (r'\\pm', '±'),
-        (r'\\times', '×'),
-        (r'\\div', '÷'),
-        (r'\\approx', '≈'),
-        (r'\\ne', '≠'),
-        (r'\\le', '≤'),
-        (r'\\ge', '≥'),
-        (r'\\in', '∈'),
-        (r'\\notin', '∉'),
-        (r'\\subset', '⊂'),
-        (r'\\cap', '∩'),
-        (r'\\cup', '∪'),
-        (r'\\emptyset', '∅'),
-        (r'\\infty', '∞'),
-        (r'\\forall', '∀'),
-        (r'\\exists', '∃'),
-        (r'\\implies', '⇒'),
-        (r'\\iff', '⇔'),
-        (r'\\perp', '⊥'),
-        (r'\\parallel', '∥'),
-        (r'\\alpha', 'α'),
-        (r'\\beta', 'β'),
-        (r'\\pi', 'π'),
-        (r'\\Delta', 'Δ'),
-        (r'\\int', '∫'),
-        (r'\\mathbb\{R\}', 'ℝ'),
-        (r'\\mathbb\{N\}', 'ℕ'),
-        (r'\\mathbb\{Z\}', 'ℤ'),
-        (r'\\mathbb\{Q\}', 'ℚ'),
+        (r'\\pm', '±'), (r'\\times', '×'), (r'\\div', '÷'), (r'\\approx', '≈'),
+        (r'\\ne', '≠'), (r'\\le', '≤'), (r'\\ge', '≥'), (r'\\in', '∈'),
+        (r'\\notin', '∉'), (r'\\subset', '⊂'), (r'\\cap', '∩'), (r'\\cup', '∪'),
+        (r'\\emptyset', '∅'), (r'\\infty', '∞'), (r'\\forall', '∀'), (r'\\exists', '∃'),
+        (r'\\implies', '⇒'), (r'\\iff', '⇔'), (r'\\perp', '⊥'), (r'\\parallel', '∥'),
+        (r'\\alpha', 'α'), (r'\\beta', 'β'), (r'\\pi', 'π'), (r'\\Delta', 'Δ'),
+        (r'\\int', '∫'), (r'\\mathbb\{R\}', 'ℝ'), (r'\\mathbb\{N\}', 'ℕ'),
+        (r'\\mathbb\{Z\}', 'ℤ'), (r'\\mathbb\{Q\}', 'ℚ'),
     ]
     for pattern, repl in replacements:
         s = re.sub(pattern, repl, s)
 
-    # 3. Chuyển đổi phân số: \frac{a}{b} -> (a)/(b)
+    # Chuyển phân số \frac{a}{b} -> (a)/(b)
     s = re.sub(r'\\frac\{([^{}]+)\}\{([^{}]+)\}', r'(\1)/(\2)', s)
-
-    # 4. Chuyển đổi căn thức: \sqrt{a} -> √(a)
+    # Chuyển căn \sqrt{a} -> √(a)
     s = re.sub(r'\\sqrt\{([^{}]+)\}', r'√(\1)', s)
     s = re.sub(r'\\sqrt\s*([a-zA-Z0-9])', r'√\1', s)
+    # Vectơ \vec{u} -> u⃗
+    s = re.sub(r'\\vec\{([^{}]+)\}', r'\1⃗', s)
 
-    # 5. Chuyển đổi vectơ: \vec{AB} -> vectơ AB
-    s = re.sub(r'\\vec\{([^{}]+)\}', r'vectơ \1', s)
-
-    # 6. Chuyển đổi số mũ cơ bản sang Unicode superscript
-    superscript_map = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻'}
-    def replace_pow(match):
-        p = match.group(1)
-        return ''.join(superscript_map.get(c, c) for c in p)
-    s = re.sub(r'\^\{([0-9+-]+)\}', replace_pow, s)
-    s = re.sub(r'\^([0-9])', lambda m: superscript_map.get(m.group(1), m.group(1)), s)
-
-    # 7. Chuyển đổi chỉ số dưới: x_1 -> x₁, x_0 -> x₀
-    subscript_map = {'0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'}
-    s = re.sub(r'\_\{([0-9]+)\}', lambda m: ''.join(subscript_map.get(c, c) for c in m.group(1)), s)
-    s = re.sub(r'\_([0-9])', lambda m: subscript_map.get(m.group(1), m.group(1)), s)
-
-    # 8. Dọn dẹp khoảng trắng thừa và dấu ngoặc nhọn
+    # Dọn dẹp khoảng trắng và dấu ngoặc nhọn
     s = s.replace('{', '').replace('}', '')
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
+def add_math_equation_element(paragraph, math_text: str):
+    """
+    Thêm một đối tượng Word Equation (m:oMath) trực tiếp vào đoạn văn bản.
+    Khi mở trên Microsoft Word sẽ hiển thị dạng khung Equation chỉnh sửa và in ấn chuẩn xác.
+    """
+    # Khử ký tự đặc biệt XML
+    clean_text = (math_text.replace('&', '&amp;')
+                           .replace('<', '&lt;')
+                           .replace('>', '&gt;')
+                           .replace('"', '&quot;')
+                           .replace("'", '&apos;'))
+
+    omath_xml = (
+        f'<m:oMath xmlns:m="[http://schemas.openxmlformats.org/officeDocument/2006/math](http://schemas.openxmlformats.org/officeDocument/2006/math)" '
+        f'xmlns:w="[http://schemas.openxmlformats.org/wordprocessingml/2006/main](http://schemas.openxmlformats.org/wordprocessingml/2006/main)">'
+        f'<m:r>'
+        f'<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/><w:i/></w:rPr>'
+        f'<m:t>{clean_text}</m:t>'
+        f'</m:r>'
+        f'</m:oMath>'
+    )
+    omath_element = parse_xml(omath_xml)
+    paragraph._p.append(omath_element)
+
+def add_formatted_text_with_equations(paragraph, text: str):
+    """
+    Tách các đoạn text thông thường và công thức toán học $...$ để chèn đúng định dạng:
+    - Text thường: add_run bình thường.
+    - Công thức toán ($...$): chèn phần tử Equation (m:oMath).
+    """
+    if not text:
+        return
+
+    # Tách chuỗi theo mẫu $...$ hoặc $$...$$
+    pattern = r'(\$\$[^\$]+\$\$|\$[^\$]+\$)'
+    parts = re.split(pattern, str(text))
+
+    for part in parts:
+        if not part:
+            continue
+        if part.startswith('$') and part.endswith('$'):
+            # Là công thức toán học -> chuyển đổi sang Equation
+            math_content = convert_latex_to_omml_math_run(part)
+            add_math_equation_element(paragraph, math_content)
+        else:
+            # Là văn bản thông thường
+            paragraph.add_run(part)
+
 def export_exam_to_docx(exam_data):
-    """Xuất đề thi ra file Word (.docx) chuẩn format in ấn, sạch mã LaTeX."""
+    """Xuất đề thi ra file Word (.docx) chuẩn format in ấn, công thức dạng Equation."""
     doc = Document()
     
+    # Canh lề chuẩn A4 phục vụ in ấn
     for section in doc.sections:
         section.top_margin = Inches(0.75)
         section.bottom_margin = Inches(0.75)
         section.left_margin = Inches(0.75)
         section.right_margin = Inches(0.75)
 
+    # Bảng tiêu đề đầu trang
     table_header = doc.add_table(rows=1, cols=2)
     table_header.autofit = False
     
@@ -673,7 +686,7 @@ def export_exam_to_docx(exam_data):
     cell_right = table_header.cell(0, 1)
     p_right = cell_right.paragraphs[0]
     p_right.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title_text = clean_latex_to_text(exam_data.get("exam_title", "ĐỀ KIỂM TRA MÔN TOÁN")).upper()
+    title_text = exam_data.get("exam_title", "ĐỀ KIỂM TRA MÔN TOÁN").upper()
     run_t = p_right.add_run(f"{title_text}\n")
     run_t.bold = True
     run_t.font.size = Pt(12)
@@ -685,6 +698,7 @@ def export_exam_to_docx(exam_data):
     p_info = doc.add_paragraph()
     p_info.add_run("Họ và tên thí sinh: ............................................................................   Số báo danh: .....................\n")
 
+    # --- PHẦN I ---
     p1 = exam_data.get("part1", [])
     if p1:
         h1 = doc.add_paragraph()
@@ -698,7 +712,7 @@ def export_exam_to_docx(exam_data):
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(2)
             p.add_run(f"Câu {idx + 1}: ").bold = True
-            p.add_run(clean_latex_to_text(q.get("question", "")))
+            add_formatted_text_with_equations(p, q.get("question", ""))
             
             opts = q.get("options", [])
             for opt in opts:
@@ -706,8 +720,9 @@ def export_exam_to_docx(exam_data):
                 p_opt.paragraph_format.left_indent = Inches(0.25)
                 p_opt.paragraph_format.space_before = Pt(0)
                 p_opt.paragraph_format.space_after = Pt(2)
-                p_opt.add_run(clean_latex_to_text(opt))
+                add_formatted_text_with_equations(p_opt, opt)
 
+    # --- PHẦN II ---
     p2 = exam_data.get("part2", [])
     if p2:
         h2 = doc.add_paragraph()
@@ -722,7 +737,7 @@ def export_exam_to_docx(exam_data):
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(2)
             p.add_run(f"Câu {idx + 1}: ").bold = True
-            p.add_run(clean_latex_to_text(q.get("question", "")))
+            add_formatted_text_with_equations(p, q.get("question", ""))
 
             for sub in q.get("sub_items", []):
                 p_sub = doc.add_paragraph()
@@ -730,8 +745,9 @@ def export_exam_to_docx(exam_data):
                 p_sub.paragraph_format.space_before = Pt(0)
                 p_sub.paragraph_format.space_after = Pt(2)
                 p_sub.add_run(f"{sub.get('label')}) ").bold = True
-                p_sub.add_run(clean_latex_to_text(sub.get("text", "")))
+                add_formatted_text_with_equations(p_sub, sub.get("text", ""))
 
+    # --- PHẦN III ---
     p3 = exam_data.get("part3", [])
     if p3:
         h3 = doc.add_paragraph()
@@ -746,7 +762,7 @@ def export_exam_to_docx(exam_data):
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(2)
             p.add_run(f"Câu {idx + 1}: ").bold = True
-            p.add_run(clean_latex_to_text(q.get("question", "")))
+            add_formatted_text_with_equations(p, q.get("question", ""))
             
             p_ans = doc.add_paragraph()
             p_ans.paragraph_format.left_indent = Inches(0.25)
@@ -774,7 +790,7 @@ if st.session_state["auth_user"] is None:
     with col_box:
         with st.container(border=True):
             st.markdown("### 🔐 Cổng Đăng Nhập")
-            login_role = st.radio("Vai trò:", ["👨‍🎓 Học sinh", "👩‍‍🏫 Giáo viên (Admin)"], horizontal=True)
+            login_role = st.radio("Vai trò:", ["👨‍🎓 Học sinh", "👩‍🏫 Giáo viên (Admin)"], horizontal=True)
             user_input = st.text_input("Tài khoản / Mã học sinh:", value="HS11_01")
             pass_input = st.text_input("Mật khẩu:", type="password", value="123")
 
@@ -890,7 +906,6 @@ if not raw_topic_list:
     st.warning("Bài học này đang được chuẩn hóa chủ điểm.")
     st.stop()
 
-# ĐỒNG BỘ 100% CÙNG MỘT FORM "Chủ điểm 1: ...", "Chủ điểm 2: ..." CHO CẢ 3 KHỐI
 formatted_topic_map = {}
 for idx, t_raw in enumerate(raw_topic_list):
     clean_t = t_raw.strip()
@@ -964,7 +979,7 @@ with tab1:
                 st.markdown(formula_text)
             else:
                 st.markdown(f"$${formula_text}$$")
-            st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
+            st.markdown(f"#### 3. Cảnh báo bẫy đề thi\n- ⚠️️ **Lưu ý:** {cur_topic_data.get('trap', '')}")
 
 # ------------------------------------------------------------------------------
 # TAB 2: VÍ DỤ MINH HỌA (LOAD TOÀN BỘ CHỦ ĐIỂM CỦA BÀI ĐANG CHỌN)

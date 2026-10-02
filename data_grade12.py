@@ -1,50 +1,55 @@
 # data_grade12.py
-# CHUẨN HÓA 100% THEO VỞ TỰ HỌC TOÁN 12 (KẾT NỐI TRI THỨC VỚI CUỘC SỐNG)
+# CHUẨN HÓA 100% CẤU TRÚC 19 BÀI VÀ CÁC CHỦ ĐIỂM THEO VỞ TỰ HỌC TOÁN 12
 
 GRADE_12_DATA = {
     # =========================================================================
     # CHƯƠNG I. ỨNG DỤNG ĐẠO HÀM ĐỂ KHẢO SÁT VÀ VẼ ĐỒ THỊ HÀM SỐ
     # =========================================================================
     "Bài 1. Tính đơn điệu và cực trị của hàm số": {
-        "chapter": "CHƯƠNG I. ỨNG DỤNG ĐẠO HÀM ĐỂ KHẢO SÁT VÀ VẼ ĐỒ THỊ HÀM SỐ",
+        "chapter": "Chương I. Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số",
         "topics": {
             "Chủ điểm 1: Tính đơn điệu của hàm số": {
-                "theory": "Cho hàm số $y = f(x)$ xác định trên $K$.\n- Đồng biến trên $K$: $\\forall x_1 < x_2 \\implies f(x_1) < f(x_2)$ (đồ thị đi lên từ trái sang phải).\n- Nghịch biến trên $K$: $\\forall x_1 < x_2 \\implies f(x_1) > f(x_2)$ (đồ thị đi xuống từ trái sang phải).\n- Định lí đạo hàm: $f'(x) > 0, \\forall x \\in K \\implies$ đồng biến; $f'(x) < 0, \\forall x \\in K \\implies$ nghịch biến.\n- Mở rộng: $f'(x) \\ge 0$ (hoặc $\\le 0$) và bằng 0 tại hữu hạn điểm thì hàm số đồng biến (nghịch biến).",
+                "theory": "Cho hàm số $y = f(x)$ xác định trên $K$.\n- Đồng biến trên $K$: $\\forall x_1 < x_2 \\implies f(x_1) < f(x_2)$ (đồ thị đi lên từ trái sang phải).\n- Nghịch biến trên $K$: $\\forall x_1 < x_2 \\implies f(x_1) > f(x_2)$ (đồ thị đi xuống từ trái sang phải).\n- Liên hệ đạo hàm: $f'(x) > 0, \\forall x \\in K \\implies$ hàm số đồng biến; $f'(x) < 0, \\forall x \\in K \\implies$ hàm số nghịch biến.\n- Mở rộng: Nếu $f'(x) \\ge 0$ (hoặc $\\le 0$), $\\forall x \\in K$ và dấu bằng chỉ xảy ra tại hữu hạn điểm thì hàm số vẫn đồng biến (nghịch biến).",
                 "formula": "f'(x) > 0 \\implies f(x) \\nearrow; \\quad f'(x) < 0 \\implies f(x) \\searrow",
-                "trap": "Không được viết 'đồng biến trên R \\ {x_0}' hoặc dùng dấu hợp (∪). Phải kết luận trên từng khoảng xác định rời nhau.",
-                "audio": "Khi xét tính đơn điệu, các em tính đạo hàm, tìm nghiệm, lập bảng xét dấu và kết luận trên từng khoảng riêng biệt.",
+                "trap": "Tuyệt đối không kết luận đồng biến trên $R \\setminus {x_0}$ hoặc dùng ký hiệu hợp (∪). Phải kết luận trên từng khoảng xác định rời nhau.",
+                "audio": "Khi xét tính đơn điệu, các em tính đạo hàm, tìm nghiệm và lập bảng xét dấu. Luôn nhớ kết luận trên từng khoảng xác định rời nhau.",
                 "svg": "DON_DIEU",
                 "examples": [
                     {
-                        "title": "Ví dụ: Xét tính đơn điệu của hàm số bậc ba",
-                        "problem": "Tìm các khoảng đơn điệu của hàm số $y = x^3 - 3x^2 + 1$.",
-                        "solution": "TXĐ: $\\mathbb{R}$. $y' = 3x^2 - 6x = 3x(x - 2) = 0 \\iff x = 0$ hoặc $x = 2$.\nBảng xét dấu: $y' > 0$ trên $(-\\infty; 0)$ và $(2; +\\infty)$; $y' < 0$ trên $(0; 2)$.\nVậy hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên $(0; 2)$."
+                        "title": "Ví dụ 1: Xét tính đơn điệu của hàm số đa thức bậc ba",
+                        "problem": "Xét tính đơn điệu của hàm số $y = x^3 - 3x^2 + 1$.",
+                        "solution": "1. TXĐ: $\\mathbb{R}$.\n2. Đạo hàm: $y' = 3x^2 - 6x = 3x(x - 2) = 0 \\iff x = 0$ hoặc $x = 2$.\n3. Bảng xét dấu: $y' > 0$ trên $(-\\infty; 0)$ và $(2; +\\infty)$; $y' < 0$ trên $(0; 2)$.\n4. Kết luận: Hàm số đồng biến trên các khoảng $(-\\infty; 0)$ và $(2; +\\infty)$; nghịch biến trên khoảng $(0; 2)$."
+                    },
+                    {
+                        "title": "Ví dụ 2: Tính đơn điệu của hàm phân thức bậc nhất trên bậc nhất",
+                        "problem": "Xét tính đơn điệu của hàm số $y = \\frac{2x - 1}{x + 1}$.",
+                        "solution": "1. TXĐ: $\\mathbb{R} \\setminus \\{-1\\}$.\n2. Đạo hàm: $y' = \\frac{2(1) - (-1)(1)}{(x + 1)^2} = \\frac{3}{(x + 1)^2} > 0, \\forall x \\ne -1$.\n3. Kết luận: Hàm số đồng biến trên từng khoảng $(-\\infty; -1)$ và $(-1; +\\infty)$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b1_c1",
                     "title": "Bài tập tự giải",
-                    "content": "Tìm số khoảng đồng biến của hàm số $y = -x^3 + 3x$:",
+                    "content": "Hàm số $y = -x^3 + 3x$ nghịch biến trên khoảng nào? (Nhập 1 nếu là (1; +vô cực), 0 nếu sai):",
                     "target": "1"
                 }
             },
             "Chủ điểm 2: Cực trị của hàm số": {
-                "theory": "Giả sử $y = f(x)$ liên tục trên khoảng chứa $x_0$ và có đạo hàm lân cận $x_0$.\n- Nếu $f'(x)$ đổi dấu từ $(+)$ sang $(-)$ khi qua $x_0$ thì $x_0$ là điểm cực đại.\n- Nếu $f'(x)$ đổi dấu từ $(-)$ sang $(+)$ khi qua $x_0$ thì $x_0$ là điểm cực tiểu.",
+                "theory": "Giả sử hàm số $y = f(x)$ liên tục trên $(a; b)$ chứa $x_0$ và có đạo hàm trên $(a; b) \\setminus \\{x_0\\}$.\n- Nếu $f'(x)$ đổi dấu từ dương sang âm khi $x$ qua $x_0$ thì $x_0$ là điểm cực đại.\n- Nếu $f'(x)$ đổi dấu từ âm sang dương khi $x$ qua $x_0$ thì $x_0$ là điểm cực tiểu.",
                 "formula": "f'(x_0) = 0 \\text{ và } f'(x) \\text{ đổi dấu qua } x_0 \\implies x_0 \\text{ là điểm cực trị}",
-                "trap": "Phân biệt rõ: Điểm cực trị của hàm số là $x_0$; Giá trị cực trị là $y_0 = f(x_0)$; Điểm cực trị của đồ thị là $M(x_0; y_0)$.",
-                "audio": "Điểm cực trị là điểm làm cho đạo hàm đổi dấu. Đổi từ dương sang âm là cực đại, từ âm sang dương là cực tiểu.",
+                "trap": "Phân biệt rõ: Điểm cực trị của hàm số là $x_0$; Giá trị cực trị là $y_0 = f(x_0)$; Điểm cực trị của đồ thị hàm số là $M(x_0; y_0)$.",
+                "audio": "Điểm cực trị là điểm làm cho đạo hàm đổi dấu. Đổi dấu từ dương sang âm là cực đại, từ âm sang dương là cực tiểu.",
                 "svg": "CUC_TRI",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tìm cực trị hàm số",
-                        "problem": "Tìm điểm cực đại và điểm cực tiểu của hàm số $y = x^3 - 3x^2 + 1$.",
-                        "solution": "$y' = 3x(x - 2)$. $y'$ đổi dấu từ $(+)$ sang $(-)$ tại $x = 0$ nên $x = 0$ là điểm cực đại, $y_{CĐ} = 1$.\n$y'$ đổi dấu từ $(-)$ sang $(+)$ tại $x = 2$ nên $x = 2$ là điểm cực tiểu, $y_{CT} = -3$."
+                        "title": "Ví dụ: Tìm điểm cực trị của hàm số bậc ba",
+                        "problem": "Tìm điểm cực trị của hàm số $y = x^3 - 3x^2 + 1$.",
+                        "solution": "$y' = 3x^2 - 6x = 3x(x - 2)$. $y'$ đổi dấu từ (+) sang (-) tại $x = 0$ và từ (-) sang (+) tại $x = 2$.\nHàm số đạt cực đại tại $x = 0$ với $y_{CĐ} = 1$; đạt cực tiểu tại $x = 2$ với $y_{CT} = -3$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b1_c2",
                     "title": "Bài tập tự giải",
-                    "content": "Giá trị cực tiểu của hàm số $y = x^3 - 3x^2 + 1$ bằng bao nhiêu?",
+                    "content": "Giá trị cực tiểu của hàm số $y = x^3 - 3x^2 + 1$ bằng:",
                     "target": "-3"
                 }
             }
@@ -52,19 +57,19 @@ GRADE_12_DATA = {
     },
 
     "Bài 2. Giá trị lớn nhất và giá trị nhỏ nhất của hàm số": {
-        "chapter": "CHƯƠNG I. ỨNG DỤNG ĐẠO HÀM ĐỂ KHẢO SÁT VÀ VẼ ĐỒ THỊ HÀM SỐ",
+        "chapter": "Chương I. Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số",
         "topics": {
             "Chủ điểm 1: Khái niệm giá trị lớn nhất, giá trị nhỏ nhất": {
-                "theory": "Cho hàm số $y = f(x)$ xác định trên tập $D$.\n- $M = \\max_D f(x) \\iff f(x) \\le M, \\forall x \\in D$ và $\\exists x_0 \\in D: f(x_0) = M$.\n- $m = \\min_D f(x) \\iff f(x) \\ge m, \\forall x \\in D$ và $\\exists x_0 \\in D: f(x_0) = m$.",
+                "theory": "Cho hàm số $y = f(x)$ xác định trên tập $D$.\n- $M = \\max_D f(x) \\iff f(x) \\le M, \\forall x \\in D$ và tồn tại $x_0 \\in D$ sao cho $f(x_0) = M$.\n- $m = \\min_D f(x) \\iff f(x) \\ge m, \\forall x \\in D$ và tồn tại $x_0 \\in D$ sao cho $f(x_0) = m$.",
                 "formula": "\\max_D f(x) = M; \\quad \\min_D f(x) = m",
-                "trap": "Hàm số liên tục trên khoảng mở $(a; b)$ có thể không có GTLN hoặc GTNN.",
-                "audio": "GTLN và GTNN nếu có là duy nhất, nhưng có thể đạt được tại nhiều điểm x khác nhau.",
+                "trap": "Hàm số trên khoảng mở $(a; b)$ có thể không có GTLN hoặc GTNN nếu giá trị biên tiến ra vô cực hoặc không có dấu bằng.",
+                "audio": "GTLN và GTNN nếu có là duy nhất, tuy nhiên có thể đạt được tại nhiều vị trí x khác nhau.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tìm GTNN qua BBT",
-                        "problem": "Cho hàm số có BBT với nhánh giảm từ $+\\infty$ về 2 rồi tăng lên $+\\infty$. Tìm GTNN.",
-                        "solution": "Từ bảng biến thiên, $f(x) \\ge 2, \\forall x > 0$ và đạt tại $x = 1$. Vậy $\\min f(x) = 2$."
+                        "title": "Ví dụ: Đọc GTLN, GTNN từ bảng biến thiên",
+                        "problem": "Cho hàm số xác định trên $(0; +\\infty)$ có BBT giảm từ $+\\infty$ về 2 rồi tăng lên $+\\infty$. Tìm GTLN, GTNN.",
+                        "solution": "Từ bảng biến thiên, $f(x) \\ge 2, \\forall x > 0$ và đạt tại $x = 1$ nên $\\min f(x) = 2$. Hàm số tiến ra $+\\infty$ nên không có GTLN."
                     }
                 ],
                 "exercise": {
@@ -75,82 +80,82 @@ GRADE_12_DATA = {
                 }
             },
             "Chủ điểm 2: Tìm GTLN, GTNN của hàm số liên tục trên một đoạn": {
-                "theory": "Quy tắc tìm GTLN, GTNN của $y = f(x)$ liên tục trên đoạn $[a; b]$:\n1. Tìm các nghiệm $x_1, x_2, \\dots, x_n \\in (a; b)$ của $f'(x) = 0$.\n2. Tính $f(a), f(b), f(x_1), \\dots, f(x_n)$.\n3. Số lớn nhất trong các giá trị đó là $\\max$, nhỏ nhất là $\\min$.",
+                "theory": "Quy tắc tìm GTLN, GTNN của $y = f(x)$ liên tục trên đoạn $[a; b]$:\n1. Tìm các nghiệm $x_1, x_2, \\dots, x_n \\in (a; b)$ của $f'(x) = 0$.\n2. Tính các giá trị $f(a), f(b), f(x_1), \\dots, f(x_n)$.\n3. Số lớn nhất trong các giá trị đó là $\\max$, số nhỏ nhất là $\\min$.",
                 "formula": "\\max_{[a;b]} f(x) = \\max\\{f(a), f(b), f(x_i)\\}; \\quad \\min_{[a;b]} f(x) = \\min\\{f(a), f(b), f(x_i)\\}",
-                "trap": "Quên loại nghiệm $x_i$ nằm ngoài đoạn $[a; b]$.",
-                "audio": "Trên đoạn đóng, các em chỉ cần tính giá trị tại 2 đầu mút và các nghiệm nằm trong khoảng, không cần lập bảng biến thiên.",
+                "trap": "Quên loại các nghiệm của đạo hàm nằm ngoài đoạn $[a; b]$.",
+                "audio": "Khi tìm max min trên một đoạn đóng, các em chỉ cần tính giá trị tại hai đầu mút và các nghiệm nằm trong khoảng, không cần lập bảng biến thiên.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
                         "title": "Ví dụ: Tìm max, min trên đoạn",
-                        "problem": "Tìm GTLN của $y = x^3 - 3x^2 - 9x + 35$ trên $[-4; 4]$.",
-                        "solution": "$y' = 3x^2 - 6x - 9 = 0 \\iff x = -1 \\in [-4; 4]$ hoặc $x = 3 \\in [-4; 4]$.\n$y(-4) = -41; y(-1) = 40; y(3) = 8; y(4) = 15$. Vậy $\\max_{[-4; 4]} y = 40$."
+                        "problem": "Tìm GTLN và GTNN của hàm số $y = x^3 - 3x^2 - 9x + 35$ trên $[-4; 4]$.",
+                        "solution": "$y' = 3x^2 - 6x - 9 = 0 \\iff x = -1 \\in [-4; 4]$ hoặc $x = 3 \\in [-4; 4]$.\nTính các giá trị: $y(-4) = -41; y(-1) = 40; y(3) = 8; y(4) = 15$.\nVậy $\\max_{[-4; 4]} y = 40$ (tại $x = -1$) và $\\min_{[-4; 4]} y = -41$ (tại $x = -4$)."
                     }
                 ],
                 "exercise": {
                     "id": "12_b2_c2",
                     "title": "Bài tập tự giải",
-                    "content": "Giá trị lớn nhất của $y = -x^2 + 4$ trên đoạn [-1; 2] là:",
+                    "content": "Giá trị lớn nhất của hàm số $y = -x^2 + 4$ trên đoạn [-1; 2] là:",
                     "target": "4"
                 }
             },
             "Chủ điểm 3: Tìm GTLN, GTNN trên khoảng, nửa khoảng (dùng bảng biến thiên)": {
-                "theory": "Khi tập xác định là khoảng $(a; b)$ hoặc nửa khoảng: lập bảng biến thiên trên tập đó, chú ý giới hạn ở các đầu mút. Từ bảng biến thiên kết luận GTLN, GTNN.",
+                "theory": "Khi xét trên khoảng $(a; b)$ hoặc nửa khoảng: lập bảng biến thiên trên tập đó, chú ý giới hạn tại các đầu mút. Từ bảng biến thiên kết luận GTLN, GTNN (nếu có).",
                 "formula": "x + \\frac{k}{x} \\ge 2\\sqrt{k} \\quad (x > 0, k > 0)",
-                "trap": "Không kiểm tra giới hạn tại đầu mút có thể kết luận sai GTLN.",
-                "audio": "Trên khoảng mở, luôn phải lập bảng biến thiên và tính các giới hạn tại đầu mút.",
+                "trap": "Không tính các giới hạn tại đầu mút dẫn đến kết luận nhầm lẫn cực trị địa phương là GTLN.",
+                "audio": "Trên khoảng mở, luôn phải tính giới hạn tại các đầu mút và quan sát bảng biến thiên để xác định đúng giá trị lớn nhất hoặc nhỏ nhất.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
                         "title": "Ví dụ: Tìm GTNN trên khoảng dương",
-                        "problem": "Tìm GTNN của $y = x + \\frac{4}{x}$ trên $(0; +\\infty)$.",
-                        "solution": "$y' = 1 - \\frac{4}{x^2} = 0 \\iff x = 2$. BBT cho thấy $y$ giảm về 4 tại $x = 2$ rồi tăng lên $+\\infty$. Vậy $\\min_{(0; +\\infty)} y = 4$."
+                        "problem": "Tìm GTNN của hàm số $y = x + \\frac{4}{x}$ trên khoảng $(0; +\\infty)$.",
+                        "solution": "$y' = 1 - \\frac{4}{x^2} = \\frac{x^2 - 4}{x^2} = 0 \\iff x = 2$ (do $x > 0$).\nBBT cho thấy hàm số nghịch biến trên $(0; 2)$ và đồng biến trên $(2; +\\infty)$. Do đó $\\min_{(0; +\\infty)} y = y(2) = 4$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b2_c3",
                     "title": "Bài tập tự giải",
-                    "content": "Giá trị nhỏ nhất của hàm số y = x + 9/x trên khoảng (0; +vô cực) là:",
+                    "content": "Giá trị nhỏ nhất của $y = x + \\frac{9}{x}$ trên $(0; +\\infty)$ bằng:",
                     "target": "6"
                 }
             },
             "Chủ điểm 4: Bài toán chứa tham số": {
-                "theory": "Xét tính đơn điệu hoặc lập bảng biến thiên phụ thuộc vào tham số $m$ để biện luận vị trí đạt GTLN, GTNN.",
+                "theory": "Khảo sát tính đơn điệu của hàm số theo tham số $m$ để biện luận vị trí đạt GTLN hoặc GTNN trên đoạn.",
                 "formula": "y = \\frac{ax+b}{cx+d} \\implies y' = \\frac{ad-bc}{(cx+d)^2}",
-                "trap": "Hàm phân thức đơn điệu trên từng khoảng, GTLN/GTNN trên đoạn luôn đạt tại một trong hai đầu mút.",
-                "audio": "Với hàm phân thức bậc nhất trên bậc nhất, đạo hàm luôn mang một dấu nên giá trị lớn nhất nhỏ nhất luôn nằm ở hai đầu mút.",
+                "trap": "Hàm phân thức bậc nhất trên bậc nhất luôn đơn điệu trên từng khoảng xác định nên max min trên đoạn luôn đạt tại một trong hai đầu mút.",
+                "audio": "Với hàm phân thức bậc nhất trên bậc nhất, đạo hàm luôn mang một dấu nên giá trị lớn nhất nhỏ nhất luôn nằm ở hai đầu mút của đoạn.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tham số m trong bài toán min",
-                        "problem": "Tìm $m$ để GTNN của $y = \\frac{x+m}{x-1}$ trên $[2; 4]$ bằng 3.",
-                        "solution": "$y' = \\frac{-1-m}{(x-1)^2}$. Xét $m > -1$ thì hàm nghịch biến $\\implies \\min = y(4) = \\frac{4+m}{3} = 3 \\iff m = 5$."
+                        "title": "Ví dụ: Tìm tham số để GTNN bằng giá trị cho trước",
+                        "problem": "Tìm $m$ để GTNN của hàm số $y = \\frac{x + m}{x - 1}$ trên đoạn $[2; 4]$ bằng 3.",
+                        "solution": "$y' = \\frac{-1 - m}{(x - 1)^2}$.\nNếu $m > -1 \\implies y' < 0$, hàm số nghịch biến nên $\\min_{[2; 4]} y = y(4) = \\frac{4 + m}{3} = 3 \\iff m = 5$ (thỏa mãn).\nNếu $m < -1 \\implies y' > 0$, hàm đồng biến nên $\\min = y(2) = 2 + m = 3 \\iff m = 1$ (loại). Vậy $m = 5$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b2_c4",
                     "title": "Bài tập tự giải",
-                    "content": "Giá trị của m tìm được trong ví dụ trên là:",
+                    "content": "Giá trị của m tìm được trong ví dụ trên bằng:",
                     "target": "5"
                 }
             },
             "Chủ điểm 5: Ứng dụng: bài toán thực tế": {
-                "theory": "Chọn ẩn biến thích hợp $x$, thiết lập hàm mục tiêu và tìm cực trị trên miền điều kiện thực tế.",
-                "formula": "S(x) \\text{ hoặc } V(x) \\implies S'(x) = 0",
-                "trap": "Quên kiểm tra điều kiện thực tế của biến số (ví dụ kích thước phải dương).",
-                "audio": "Quy trình giải toán thực tế: đặt ẩn, tìm điều kiện, lập hàm số mục tiêu và dùng đạo hàm tìm cực trị.",
+                "theory": "Phương pháp: Đặt ẩn $x$, xác định điều kiện thực tế của biến số, lập hàm mục tiêu và dùng đạo hàm tìm GTLN hoặc GTNN.",
+                "formula": "L(x) = 2x + \\frac{S}{x} \\implies L'(x) = 0",
+                "trap": "Quên kiểm tra điều kiện thực tế của biến số (độ dài, số sản phẩm phải dương).",
+                "audio": "Giải toán thực tế tối ưu: chọn ẩn thích hợp, đặt điều kiện, thiết lập hàm số mục tiêu và dùng đạo hàm để tìm điểm tối ưu.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Rào đất sát bờ sông",
-                        "problem": "Rào mảnh đất chữ nhật diện tích 800 m2 sát bờ sông (không cần rào bờ sông). Tìm chiều dài hàng rào ngắn nhất.",
-                        "solution": "Gọi cạnh vuông góc bờ sông là $x > 0$. Chiều dài hàng rào $L(x) = 2x + \\frac{800}{x}$. $L'(x) = 2 - \\frac{800}{x^2} = 0 \\iff x = 20$. Hàng rào ngắn nhất là $L(20) = 80$ m."
+                        "title": "Ví dụ: Rào đất sát bờ sông tiết kiệm hàng rào",
+                        "problem": "Rào mảnh đất hình chữ nhật diện tích 800 m2 sát bờ sông thẳng (không rào phía bờ sông). Tìm chiều dài hàng rào ngắn nhất.",
+                        "solution": "Gọi $x$ (m) là độ dài cạnh vuông góc bờ sông ($x > 0$), cạnh kia dài $\\frac{800}{x}$.\nChiều dài hàng rào $L(x) = 2x + \\frac{800}{x}$. $L'(x) = 2 - \\frac{800}{x^2} = 0 \\iff x = 20$.\nVậy hàng rào ngắn nhất là $L(20) = 40 + 40 = 80$ m."
                     }
                 ],
                 "exercise": {
                     "id": "12_b2_c5",
                     "title": "Bài tập tự giải",
-                    "content": "Chiều dài hàng rào ngắn nhất trong bài toán rào bờ sông là bao nhiêu mét?",
+                    "content": "Chiều dài hàng rào ngắn nhất (m) là:",
                     "target": "80"
                 }
             }
@@ -158,245 +163,245 @@ GRADE_12_DATA = {
     },
 
     "Bài 3. Đường tiệm cận của đồ thị hàm số": {
-        "chapter": "CHƯƠNG I. ỨNG DỤNG ĐẠO HÀM ĐỂ KHẢO SÁT VÀ VẼ ĐỒ THỊ HÀM SỐ",
+        "chapter": "Chương I. Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số",
         "topics": {
             "Chủ điểm 1: Đường tiệm cận ngang": {
-                "theory": "Đường thẳng $y = y_0$ là tiệm cận ngang nếu:\n$$\\lim_{x \\to +\\infty} f(x) = y_0 \\quad \\text{hoặc} \\quad \\lim_{x \\to -\\infty} f(x) = y_0$$",
+                "theory": "Đường thẳng $y = y_0$ là tiệm cận ngang của đồ thị hàm số $y = f(x)$ nếu:\n$$\\lim_{x \\to +\\infty} f(x) = y_0 \\quad \\text{hoặc} \\quad \\lim_{x \\to -\\infty} f(x) = y_0$$\nĐồ thị có tối đa hai tiệm cận ngang.",
                 "formula": "\\lim_{x \\to \\pm \\infty} f(x) = y_0 \\implies y = y_0 \\text{ là TCN}",
-                "trap": "Hàm chứa căn thức có thể có 2 tiệm cận ngang khác nhau khi $x \\to +\\infty$ và $x \\to -\\infty$.",
-                "audio": "Tiệm cận ngang là đường thẳng nằm ngang y bằng y không khi x tiến ra vô cực.",
+                "trap": "Hàm chứa căn thức có thể có hai tiệm cận ngang khác nhau khi $x \\to +\\infty$ và $x \\to -\\infty$.",
+                "audio": "Tiệm cận ngang là đường thẳng nằm ngang y bằng y không khi x tiến ra dương vô cùng hoặc âm vô cùng.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tìm tiệm cận ngang",
-                        "problem": "Tìm tiệm cận ngang của $y = \\frac{2x-1}{x+1}$.",
-                        "solution": "$\\lim_{x \\to \\pm\\infty} \\frac{2x-1}{x+1} = 2$. Tiệm cận ngang là $y = 2$."
+                        "title": "Ví dụ: Tìm tiệm cận ngang của hàm phân thức",
+                        "problem": "Tìm tiệm cận ngang của đồ thị hàm số $y = \\frac{2x - 1}{x + 1}$.",
+                        "solution": "Ta có $\\lim_{x \\to \\pm\\infty} \\frac{2x - 1}{x + 1} = 2$. Do đó đường thẳng $y = 2$ là tiệm cận ngang."
                     }
                 ],
                 "exercise": {
                     "id": "12_b3_c1",
                     "title": "Bài tập tự giải",
-                    "content": "Tung độ tiệm cận ngang của đồ thị y = (4x + 1)/(2x - 3) bằng:",
+                    "content": "Tung độ tiệm cận ngang của đồ thị $y = \\frac{4x + 1}{2x - 3}$ bằng:",
                     "target": "2"
                 }
             },
             "Chủ điểm 2: Đường tiệm cận đứng": {
-                "theory": "Đường thẳng $x = x_0$ là tiệm cận đứng nếu ít nhất một trong các giới hạn một bên khi $x \\to x_0^+$ hoặc $x \\to x_0^-$ bằng $+\\infty$ hoặc $-\\infty$.",
-                "formula": "\\lim_{x \\to x_0^\\pm} f(x) = \\pm\\infty \\implies x = x_0 \\text{ là TCĐ}",
-                "trap": "Nghiệm của mẫu triệt tiêu với nghiệm của tử thì không phải là tiệm cận đứng.",
-                "audio": "Tiệm cận đứng là đường thẳng đứng x bằng x không, làm mẫu bằng không mà không triệt tiêu tử số.",
+                "theory": "Đường thẳng $x = x_0$ là tiệm cận đứng nếu ít nhất một trong các giới hạn một bên khi $x \\to x_0^+$ hoặc $x \\to x_0^-$ bằng $+\\infty$ hoặc $-\\infty$.\nVới hàm phân thức tối giản $y = \\frac{P(x)}{Q(x)}$, tiệm cận đứng là các nghiệm của $Q(x) = 0$ mà $P(x) \\ne 0$.",
+                "formula": "\\lim_{x \\to x_0^\\pm} f(x) = \\pm \\infty \\implies x = x_0 \\text{ là TCĐ}",
+                "trap": "Nghiệm của mẫu số triệt tiêu hoàn toàn với nghiệm của tử số thì không phải là tiệm cận đứng.",
+                "audio": "Tiệm cận đứng là đường thẳng đứng x bằng x không, thường là nghiệm của mẫu số không làm triệt tiêu tử số.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Phân biệt nghiệm triệt tiêu",
-                        "problem": "Tìm tiệm cận đứng của $y = \\frac{x^2-3x+2}{x^2-1}$.",
-                        "solution": "$y = \\frac{(x-1)(x-2)}{(x-1)(x+1)} = \\frac{x-2}{x+1}$ ($x \\ne 1$).\nTại $x = 1$: giới hạn hữu hạn (không là TCĐ). Tại $x = -1$: mẫu bằng 0, tử bằng -3 khác 0 nên $x = -1$ là TCĐ duy nhất."
+                        "title": "Ví dụ: Rút gọn trước khi tìm tiệm cận đứng",
+                        "problem": "Tìm số tiệm cận đứng của đồ thị $y = \\frac{x^2 - 3x + 2}{x^2 - 1}$.",
+                        "solution": "Ta có $y = \\frac{(x - 1)(x - 2)}{(x - 1)(x + 1)} = \\frac{x - 2}{x + 1}$ ($x \\ne 1$).\nTại $x = 1$, giới hạn hữu hạn (bằng $-1/2$). Tại $x = -1$, giới hạn tiến ra vô cực nên $x = -1$ là tiệm cận đứng duy nhất."
                     }
                 ],
                 "exercise": {
                     "id": "12_b3_c2",
                     "title": "Bài tập tự giải",
-                    "content": "Số tiệm cận đứng của đồ thị hàm số y = (x - 1)/(x^2 - 1) là:",
+                    "content": "Số tiệm cận đứng của đồ thị $y = \\frac{x - 1}{x^2 - 1}$ là:",
                     "target": "1"
                 }
             },
             "Chủ điểm 3: Đường tiệm cận xiên": {
-                "theory": "Đường thẳng $y = ax + b$ ($a \\ne 0$) là tiệm cận xiên nếu $\\lim_{x \\to \\pm \\infty} [f(x) - (ax + b)] = 0$.\nVới hàm phân thức bậc hai trên bậc nhất: chia tử cho mẫu $f(x) = ax + b + \\frac{r}{dx+e}$.",
+                "theory": "Đường thẳng $y = ax + b$ ($a \\ne 0$) là tiệm cận xiên nếu $\\lim_{x \\to \\pm \\infty} [f(x) - (ax + b)] = 0$.\nVới hàm phân thức bậc hai trên bậc nhất: thực hiện phép chia đa thức tử cho mẫu $f(x) = ax + b + \\frac{r}{dx + e}$.",
                 "formula": "y = ax + b \\quad (a = \\lim \\frac{f(x)}{x}; \\ b = \\lim [f(x) - ax])",
-                "trap": "Chỉ có tiệm cận xiên khi bậc của tử lớn hơn bậc của mẫu đúng 1 bậc.",
-                "audio": "Tiệm cận xiên xuất hiện khi bậc tử hơn bậc mẫu một bậc. Chia đa thức thì phần thương chính là tiệm cận xiên.",
+                "trap": "Đồ thị chỉ có tiệm cận xiên khi bậc của tử lớn hơn bậc của mẫu đúng 1 bậc.",
+                "audio": "Tiệm cận xiên xuất hiện khi bậc tử hơn bậc mẫu một bậc. Thực hiện phép chia đa thức thì phần thương chính là phương trình tiệm cận xiên.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
                         "title": "Ví dụ: Tìm tiệm cận xiên",
-                        "problem": "Tìm tiệm cận xiên của $y = \\frac{x^2 - 2x + 2}{x - 1}$.",
-                        "solution": "$y = x - 1 + \\frac{1}{x - 1}$. Vì $\\lim_{x \\to \\pm\\infty} \\frac{1}{x-1} = 0$ nên $y = x - 1$ là tiệm cận xiên."
+                        "problem": "Tìm tiệm cận xiên của đồ thị $y = \\frac{x^2 - 2x + 2}{x - 1}$.",
+                        "solution": "Chia tử cho mẫu: $y = x - 1 + \\frac{1}{x - 1}$. Vì $\\lim_{x \\to \\pm\\infty} \\frac{1}{x - 1} = 0$ nên đường thẳng $y = x - 1$ là tiệm cận xiên."
                     }
                 ],
                 "exercise": {
                     "id": "12_b3_c3",
                     "title": "Bài tập tự giải",
-                    "content": "Hệ số góc của tiệm cận xiên của đồ thị y = (2x^2 + 1)/x bằng:",
-                    "target": "2"
+                    "content": "Hệ số góc a của tiệm cận xiên của $y = \\frac{3x^2 + 1}{x - 1}$ bằng:",
+                    "target": "3"
                 }
             },
             "Chủ điểm 4: Tiệm cận qua bảng biến thiên": {
-                "theory": "Đọc giới hạn ở các đầu mút $\\pm\\infty$ và các điểm không xác định có giới hạn vô cực từ bảng biến thiên.",
-                "formula": "\\text{Nhìn dòng } x \\to \\pm\\infty \\implies y_0; \\quad \\text{Nhìn hai vạch } || \\implies \\pm\\infty",
-                "trap": "Nhầm số trên dòng y' thay vì đọc giá trị trên dòng y.",
-                "audio": "Nhìn các đầu mút vô cực trên bảng biến thiên để tìm tiệm cận ngang, nhìn dấu hai vạch tiến ra vô cực để tìm tiệm cận đứng.",
+                "theory": "Đọc giới hạn ở các đầu mút $\\pm\\infty$ trên dòng $x$ và giá trị tương ứng ở dòng $y$ để tìm TCN. Nhìn điểm không xác định có giới hạn tiến ra $\\pm\\infty$ để tìm TCĐ.",
+                "formula": "\\text{Đọc } x \\to \\pm\\infty \\implies y_0 \\text{ (TCN)}; \\quad x \\to x_0 \\implies \\pm\\infty \\text{ (TCĐ)}",
+                "trap": "Nhầm lẫn giữa giá trị cực trị và đường tiệm cận ngang trên bảng biến thiên.",
+                "audio": "Nhìn các đầu mút vô cực trên dòng x của bảng biến thiên để tìm tiệm cận ngang, nhìn dấu hai vạch tiến ra vô cực để tìm tiệm cận đứng.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Đọc số tiệm cận từ BBT",
-                        "problem": "BBT có $\\lim_{x \\to \\pm\\infty} y = 2$ và tại $x = 1$, một bên tiến ra $+\\infty$. Có bao nhiêu tiệm cận?",
-                        "solution": "Có 1 tiệm cận ngang $y = 2$ và 1 tiệm cận đứng $x = 1$. Tổng cộng 2 tiệm cận."
+                        "title": "Ví dụ: Xác định tiệm cận từ bảng biến thiên",
+                        "problem": "Bảng biến thiên có $\\lim_{x \\to \\pm\\infty} y = 2$; $\\lim_{x \\to -1^-} y = +\\infty$ và $\\lim_{x \\to 1^+} y = +\\infty$. Đồ thị có bao nhiêu tiệm cận?",
+                        "solution": "Đồ thị có 1 tiệm cận ngang $y = 2$ và 2 tiệm cận đứng $x = -1, x = 1$. Tổng cộng có 3 đường tiệm cận."
                     }
                 ],
                 "exercise": {
                     "id": "12_b3_c4",
                     "title": "Bài tập tự giải",
-                    "content": "Tổng số tiệm cận đứng và tiệm cận ngang trong ví dụ trên là:",
-                    "target": "2"
+                    "content": "Tổng số đường tiệm cận trong ví dụ trên bằng:",
+                    "target": "3"
                 }
             },
             "Chủ điểm 5: Bài toán chứa tham số": {
-                "theory": "Biện luận số nghiệm của mẫu số không trùng với nghiệm của tử để xác định số đường tiệm cận đứng.",
-                "formula": "Q(x) = 0 \\text{ có nghiệm khác nghiệm của } P(x)",
-                "trap": "Quên điều kiện nghiệm của mẫu làm tử số bằng không triệt tiêu.",
-                "audio": "Khi chứa tham số, cần tìm điều kiện để mẫu có nghiệm và nghiệm đó không làm tử bằng không.",
+                "theory": "Biện luận số nghiệm của mẫu số không trùng với nghiệm của tử để xác định số lượng đường tiệm cận đứng theo tham số $m$.",
+                "formula": "\\Delta_{mẫu} > 0 \\text{ và } \\text{nghiệm mẫu khác nghiệm tử}",
+                "trap": "Quên điều kiện loại trừ nghiệm của mẫu làm tử số bằng 0.",
+                "audio": "Khi chứa tham số, cần tìm điều kiện để mẫu có nghiệm phân biệt và các nghiệm đó không làm triệt tiêu tử số.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tìm m để có tiệm cận đứng",
-                        "problem": "Tìm $m$ để đồ thị $y = \\frac{2x+1}{x^2-2x+m}$ có tiệm cận ngang $y=0$ và đúng một tiệm cận đứng.",
-                        "solution": "Mẫu có nghiệm kép $m = 1$ hoặc mẫu có 2 nghiệm phân biệt trong đó 1 nghiệm là $x = -1/2 \\implies m = -5/4$."
+                        "title": "Ví dụ: Tìm m để có số tiệm cận cho trước",
+                        "problem": "Tìm $m$ để đồ thị $y = \\frac{2x + 1}{x^2 - 2x + m}$ có đúng 2 đường tiệm cận.",
+                        "solution": "Đồ thị luôn có TCN $y = 0$. Cần có đúng 1 TCĐ $\\iff$ mẫu có nghiệm kép ($m = 1$) hoặc mẫu có 2 nghiệm trong đó 1 nghiệm là $x = -1/2$ ($m = -5/4$)."
                     }
                 ],
                 "exercise": {
                     "id": "12_b3_c5",
                     "title": "Bài tập tự giải",
-                    "content": "Giá trị m dương để mẫu có nghiệm kép là:",
+                    "content": "Giá trị m nguyên dương để đồ thị có đúng 2 tiệm cận là:",
                     "target": "1"
                 }
             },
             "Chủ điểm 6: Ứng dụng thực tế": {
-                "theory": "Hiện tượng bão hòa hoặc giới hạn chi phí tăng vọt vô hạn khi đạt tiệm cận đứng.",
+                "theory": "Hiện tượng giới hạn bão hòa nồng độ thuốc hoặc chi phí làm sạch môi trường tăng vọt vô hạn được mô tả bởi các đường tiệm cận.",
                 "formula": "\\lim_{p \\to 100^-} C(p) = +\\infty",
-                "trap": "Nhầm đơn vị nghìn đồng và triệu đồng trong các bài toán thực tế.",
-                "audio": "Tiệm cận đứng trong thực tế biểu thị một giới hạn không thể vượt qua, ví dụ chi phí làm sạch môi trường tiến đến vô cực khi độ sạch đạt 100%.",
+                "trap": "Nhầm đơn vị thời gian hoặc đơn vị tiền tệ trong các bài toán thực tế.",
+                "audio": "Tiệm cận đứng trong thực tế biểu thị một giới hạn không thể vượt qua, ví dụ chi phí làm sạch ô nhiễm tiến ra vô cực khi độ sạch đạt 100%.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Chi phí làm sạch ô nhiễm",
-                        "problem": "Chi phí $C(p) = \\frac{1500p}{100-p}$. Vì sao không thể làm sạch 100% ô nhiễm?",
-                        "solution": "Vì $\\lim_{p \\to 100^-} C(p) = +\\infty$, chi phí tăng vô hạn nên không thể loại bỏ 100% về mặt kinh tế."
+                        "title": "Ví dụ: Giới hạn nồng độ thuốc trong máu",
+                        "problem": "Nồng độ thuốc sau $t$ giờ là $C(t) = \\frac{20t}{t + 4}$ (mg/lít). Khi $t$ tăng vô hạn, nồng độ tiến gần tới bao nhiêu?",
+                        "solution": "Ta có $\\lim_{t \\to +\\infty} \\frac{20t}{t + 4} = 20$. Nồng độ thuốc tiến gần tới 20 mg/lít."
                     }
                 ],
                 "exercise": {
                     "id": "12_b3_c6",
                     "title": "Bài tập tự giải",
-                    "content": "Hoành độ tiệm cận đứng của hàm chi phí C(p) là:",
-                    "target": "100"
+                    "content": "Nồng độ thuốc tối đa (mg/lít) tiến đến là:",
+                    "target": "20"
                 }
             }
         }
     },
 
     "Bài 4. Khảo sát sự biến thiên và vẽ đồ thị của hàm số": {
-        "chapter": "CHƯƠNG I. ỨNG DỤNG ĐẠO HÀM ĐỂ KHẢO SÁT VÀ VẼ ĐỒ THỊ HÀM SỐ",
+        "chapter": "Chương I. Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số",
         "topics": {
             "Chủ điểm 1: Sơ đồ khảo sát và vẽ đồ thị hàm số": {
-                "theory": "Sơ đồ 3 bước chuẩn:\n1. Tập xác định.\n2. Sự biến thiên (đạo hàm, đơn điệu, cực trị, giới hạn, tiệm cận, bảng biến thiên).\n3. Đồ thị (giao với Ox, Oy, tâm đối xứng, trục đối xứng).",
+                "theory": "Sơ đồ chuẩn 3 bước:\n1. Tìm tập xác định.\n2. Khảo sát sự biến thiên (tính $y'$, tìm cực trị, tìm tiệm cận nếu có, lập BBT).\n3. Vẽ đồ thị (xác định giao điểm với $Ox, Oy$, tâm đối xứng).",
                 "formula": "\\text{TXĐ} \\to y' \\to \\text{Cực trị/Tiệm cận} \\to \\text{BBT} \\to \\text{Đồ thị}",
-                "trap": "Quên tìm tọa độ giao điểm với các trục tọa độ.",
-                "audio": "Sơ đồ khảo sát gồm tìm tập xác định, xét sự biến thiên rồi xác định các điểm đặc biệt để vẽ đồ thị.",
+                "trap": "Quên tìm tọa độ giao điểm với các trục tọa độ trước khi vẽ đồ thị.",
+                "audio": "Khảo sát hàm số gồm 3 bước: tập xác định, sự biến thiên và vẽ đồ thị đi qua các điểm đặc biệt.",
                 "svg": "DON_DIEU",
                 "examples": [
                     {
-                        "title": "Ví dụ: Khảo sát hàm bậc ba",
-                        "problem": "Khảo sát hàm số $y = x^3 - 3x^2 + 4$.",
-                        "solution": "TXĐ: $\\mathbb{R}$. $y' = 3x(x - 2) = 0 \\iff x = 0, x = 2$. Cực đại $(0; 4)$, cực tiểu $(2; 0)$. Điểm uốn $I(1; 2)$ là tâm đối xứng."
+                        "title": "Ví dụ: Khảo sát hàm số bậc ba",
+                        "problem": "Khảo sát sự biến thiên và vẽ đồ thị hàm số $y = x^3 - 3x^2 + 4$.",
+                        "solution": "TXĐ: $\\mathbb{R}$. $y' = 3x(x - 2) = 0 \\iff x = 0$ hoặc $x = 2$.\nHàm đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$, nghịch biến trên $(0; 2)$. Cực đại $(0; 4)$, cực tiểu $(2; 0)$. Tâm đối xứng là điểm uốn $I(1; 2)$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b4_c1",
                     "title": "Bài tập tự giải",
-                    "content": "Tung độ tâm đối xứng của hàm số y = x^3 - 3x^2 + 4 là:",
+                    "content": "Tung độ tâm đối xứng của đồ thị hàm số $y = x^3 - 3x^2 + 4$ là:",
                     "target": "2"
                 }
             },
             "Chủ điểm 2: Khảo sát hàm số bậc ba y = ax^3 + bx^2 + cx + d (a ≠ 0)": {
                 "theory": "- Đồ thị có 2 cực trị khi $y'=0$ có 2 nghiệm phân biệt, không có cực trị khi $\\Delta'_{y'} \\le 0$.\n- Luôn nhận điểm uốn $I(x_0; y_0)$ với $y''(x_0) = 0$ làm tâm đối xứng.",
                 "formula": "y'' = 6ax + 2b = 0 \\implies x_0 = -\\frac{b}{3a}",
-                "trap": "Hàm bậc ba chỉ có 2 cực trị hoặc không có cực trị, không bao giờ có 1 cực trị.",
+                "trap": "Hàm bậc ba chỉ có 2 cực trị hoặc không có cực trị nào, không bao giờ có đúng 1 cực trị.",
                 "audio": "Đồ thị hàm bậc ba luôn nhận điểm uốn có đạo hàm cấp hai bằng không làm tâm đối xứng.",
                 "svg": "CUC_TRI",
                 "examples": [
                     {
-                        "title": "Ví dụ: Điểm uốn hàm bậc ba",
+                        "title": "Ví dụ: Tâm đối xứng hàm bậc ba",
                         "problem": "Tìm tâm đối xứng của đồ thị $y = -x^3 + 3x^2 - 3x + 2$.",
-                        "solution": "$y' = -3(x-1)^2 \\le 0$. $y'' = -6x + 6 = 0 \\iff x = 1 \\implies y(1) = 1$. Tâm đối xứng là $I(1; 1)$."
+                        "solution": "$y' = -3(x - 1)^2 \\le 0$. $y'' = -6x + 6 = 0 \\iff x = 1 \\implies y(1) = 1$. Tâm đối xứng là $I(1; 1)$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b4_c2",
                     "title": "Bài tập tự giải",
-                    "content": "Hoành độ tâm đối xứng của đồ thị y = x^3 - 6x^2 + 1 là:",
+                    "content": "Hoành độ tâm đối xứng của hàm số $y = x^3 - 6x^2 + 1$ là:",
                     "target": "2"
                 }
             },
             "Chủ điểm 3: Khảo sát hàm phân thức bậc nhất/bậc nhất y = (ax+b)/(cx+d)": {
-                "theory": "- $y' = \\frac{ad-bc}{(cx+d)^2}$: luôn đồng biến hoặc luôn nghịch biến trên từng khoảng xác định. Không có cực trị.\n- Tiệm cận đứng $x = -d/c$, tiệm cận ngang $y = a/c$. Giao điểm 2 tiệm cận là tâm đối xứng.",
+                "theory": "- Đạo hàm $y' = \\frac{ad - bc}{(cx + d)^2}$: luôn đồng biến hoặc luôn nghịch biến trên từng khoảng xác định. Không có cực trị.\n- Tiệm cận đứng $x = -d/c$, tiệm cận ngang $y = a/c$. Giao điểm 2 tiệm cận là tâm đối xứng.",
                 "formula": "I\\left(-\\frac{d}{c}; \\frac{a}{c}\\right) \\text{ là tâm đối xứng}",
-                "trap": "Hàm số này không bao giờ có cực trị.",
-                "audio": "Hàm phân thức bậc nhất trên bậc nhất có đồ thị là hypebol, nhận giao điểm hai đường tiệm cận làm tâm đối xứng.",
+                "trap": "Hàm phân thức bậc nhất trên bậc nhất không bao giờ có cực trị.",
+                "audio": "Hàm phân thức bậc nhất trên bậc nhất có đồ thị hypebol, nhận giao điểm hai đường tiệm cận làm tâm đối xứng.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tâm đối xứng hypebol",
-                        "problem": "Tìm tâm đối xứng của $y = \\frac{x+2}{x-1}$.",
-                        "solution": "TCĐ: $x = 1$; TCN: $y = 1$. Tâm đối xứng là $I(1; 1)$."
+                        "title": "Ví dụ: Tâm đối xứng đồ thị hypebol",
+                        "problem": "Tìm tâm đối xứng của đồ thị $y = \\frac{x + 2}{x - 1}$.",
+                        "solution": "TCĐ là $x = 1$, TCN là $y = 1$. Do đó giao điểm $I(1; 1)$ là tâm đối xứng."
                     }
                 ],
                 "exercise": {
                     "id": "12_b4_c3",
                     "title": "Bài tập tự giải",
-                    "content": "Hoành độ tâm đối xứng của đồ thị y = (3x + 1)/(x - 2) bằng:",
+                    "content": "Hoành độ tâm đối xứng của đồ thị $y = \\frac{3x + 1}{x - 2}$ bằng:",
                     "target": "2"
                 }
             },
             "Chủ điểm 4: Khảo sát hàm phân thức bậc hai/bậc nhất": {
-                "theory": "Chia đa thức $y = mx + n + \\frac{r}{dx+e}$. Tiệm cận đứng $x = -e/d$, tiệm cận xiên $y = mx + n$. Tâm đối xứng là giao điểm của hai tiệm cận.",
+                "theory": "Chia đa thức $y = mx + n + \\frac{r}{dx + e}$. Tiệm cận đứng $x = -e/d$, tiệm cận xiên $y = mx + n$. Tâm đối xứng là giao điểm hai tiệm cận.",
                 "formula": "y = mx + n \\text{ (TCX)}; \\quad x = -\\frac{e}{d} \\text{ (TCĐ)}",
-                "trap": "Cực đại có thể có giá trị nhỏ hơn cực tiểu.",
-                "audio": "Với hàm phân thức bậc hai trên bậc nhất, đồ thị có một tiệm cận đứng và một tiệm cận xiên cắt nhau tại tâm đối xứng.",
+                "trap": "Cực đại của hàm phân thức bậc hai trên bậc nhất có thể có giá trị nhỏ hơn cực tiểu.",
+                "audio": "Đồ thị hàm phân thức bậc hai trên bậc nhất có một tiệm cận đứng và một tiệm cận xiên cắt nhau tại tâm đối xứng.",
                 "svg": "TIEM_CAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tâm đối xứng tiệm cận xiên",
-                        "problem": "Tìm tâm đối xứng của $y = \\frac{x^2+x-1}{x+2}$.",
-                        "solution": "$y = x - 1 + \\frac{1}{x+2}$. TCĐ: $x = -2$, TCX: $y = x - 1$. Thay $x = -2$ vào TCX được $y = -3$. Tâm đối xứng là $I(-2; -3)$."
+                        "title": "Ví dụ: Khảo sát hàm phân thức bậc hai trên bậc nhất",
+                        "problem": "Tìm tâm đối xứng của đồ thị $y = \\frac{x^2 + x - 1}{x + 2}$.",
+                        "solution": "Chia tử cho mẫu: $y = x - 1 + \\frac{1}{x + 2}$. TCĐ là $x = -2$, TCX là $y = x - 1$. Thay $x = -2$ vào TCX được $y = -3$. Tâm đối xứng là $I(-2; -3)$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b4_c4",
                     "title": "Bài tập tự giải",
-                    "content": "Tung độ tâm đối xứng của đồ thị trong ví dụ trên bằng:",
+                    "content": "Tung độ tâm đối xứng trong ví dụ trên bằng:",
                     "target": "-3"
                 }
             },
             "Chủ điểm 5: Ứng dụng đồ thị: nhận dạng, tương giao, biện luận nghiệm": {
-                "theory": "- Số nghiệm của $f(x) = m$ bằng số giao điểm của đồ thị $y = f(x)$ với đường thẳng $y = m$.\n- Nhận dạng hệ số: nhánh phải xác định dấu $a$, giao với $Oy$ xác định hệ số tự do.",
+                "theory": "- Số nghiệm của phương trình $f(x) = m$ bằng số giao điểm của đồ thị $y = f(x)$ với đường thẳng $y = m$.\n- Nhận dạng hệ số: nhánh phải cùng xác định dấu $a$, giao với $Oy$ xác định hệ số tự do.",
                 "formula": "f(x) = m \\iff \\text{số giao điểm với } y = m",
-                "trap": "Nhầm dấu các hệ số khi đọc đồ thị hàm phân thức.",
+                "trap": "Nhầm dấu các hệ số khi đọc đồ thị do nhầm chiều các trục tọa độ.",
                 "audio": "Biện luận số nghiệm phương trình bằng cách cho đường thẳng nằm ngang y = m tịnh tiến cắt đồ thị.",
                 "svg": "DON_DIEU",
                 "examples": [
                     {
-                        "title": "Ví dụ: Biện luận nghiệm",
+                        "title": "Ví dụ: Biện luận số nghiệm",
                         "problem": "Phương trình $x^3 - 3x^2 + 4 = m$ có 3 nghiệm phân biệt khi nào?",
-                        "solution": "Đồ thị có cực tiểu tại 0 và cực đại tại 4. Phương trình có 3 nghiệm khi $0 < m < 4$."
+                        "solution": "Đồ thị có cực tiểu tại 0 và cực đại tại 4. Đường thẳng $y = m$ cắt đồ thị tại 3 điểm khi $0 < m < 4$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b4_c5",
                     "title": "Bài tập tự giải",
-                    "content": "Số nghiệm của phương trình x^3 - 3x^2 + 4 = 2 là:",
+                    "content": "Số nghiệm của phương trình $x^3 - 3x^2 + 4 = 2$ là:",
                     "target": "3"
                 }
             },
             "Chủ điểm 6: Ứng dụng thực tế": {
                 "theory": "Sử dụng đạo hàm tìm thời điểm chất điểm đổi chiều chuyển động hoặc đạt vận tốc triệt tiêu.",
                 "formula": "v(t) = s'(t) = 0 \\implies \\text{thời điểm đổi chiều}",
-                "trap": "Nhầm vận tốc bằng 0 với quãng đường bằng 0.",
+                "trap": "Nhầm lẫn giữa vận tốc bằng 0 với quãng đường bằng 0.",
                 "audio": "Khi vận tốc đổi dấu thì chất điểm đổi chiều chuyển động.",
                 "svg": "DON_DIEU",
                 "examples": [
                     {
-                        "title": "Ví dụ: Đổi chiều chuyển động",
-                        "problem": "Chất điểm có $s(t) = t^3 - 6t^2 + 9t$. Tìm thời điểm vật đổi chiều.",
-                        "solution": "$v(t) = 3(t-1)(t-3) = 0 \\iff t = 1$ hoặc $t = 3$. Đổi chiều tại $t = 1$ và $t = 3$."
+                        "title": "Ví dụ: Thời điểm đổi chiều chuyển động",
+                        "problem": "Chất điểm có $s(t) = t^3 - 6t^2 + 9t$ ($t \\ge 0$). Tìm thời điểm vật đổi chiều.",
+                        "solution": "$v(t) = s'(t) = 3t^2 - 12t + 9 = 3(t - 1)(t - 3) = 0 \\iff t = 1$ hoặc $t = 3$. Tại hai thời điểm này vận tốc đổi dấu nên chất điểm đổi chiều."
                     }
                 ],
                 "exercise": {
@@ -410,25 +415,25 @@ GRADE_12_DATA = {
     },
 
     "Bài 5. Ứng dụng đạo hàm để giải quyết một số vấn đề liên quan đến thực tiễn": {
-        "chapter": "CHƯƠNG I. ỨNG DỤNG ĐẠO HÀM ĐỂ KHẢO SÁT VÀ VẼ ĐỒ THỊ HÀM SỐ",
+        "chapter": "Chương I. Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số",
         "topics": {
             "Chủ điểm 1: Quy trình giải bài toán tối ưu trong thực tiễn": {
-                "theory": "4 bước: (1) Chọn biến $x$ và tìm điều kiện; (2) Lập hàm số mục tiêu $y = f(x)$; (3) Khảo sát tìm $\\max/\\min$; (4) Kết luận kèm đơn vị.",
+                "theory": "Quy trình 4 bước:\n1. Chọn ẩn $x$ và tìm điều kiện thực tế.\n2. Thiết lập hàm mục tiêu $y = f(x)$.\n3. Khảo sát hàm số tìm $\\max/\\min$.\n4. Kết luận kèm đơn vị đo.",
                 "formula": "v(t) = s'(t); \\quad a(t) = v'(t) = s''(t)",
-                "trap": "Không đặt đúng điều kiện cho biến theo ý nghĩa thực tế.",
-                "audio": "Đạo hàm là tốc độ thay đổi tức thời của một đại lượng.",
+                "trap": "Không đặt đúng điều kiện cho ẩn số theo ý nghĩa hình học hoặc thực tế.",
+                "audio": "Đạo hàm biểu thị tốc độ thay đổi tức thời của một đại lượng thực tiễn.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
                         "title": "Ví dụ: Gấp hộp từ tấm tôn vuông",
                         "problem": "Từ tấm tôn vuông cạnh 30 cm, cắt 4 góc vuông cạnh $x$ rồi gập thành hộp không nắp. Tìm $x$ để thể tích lớn nhất.",
-                        "solution": "$V(x) = x(30-2x)^2$ với $0 < x < 15$. $V'(x) = 0 \\iff x = 5$. Thể tích lớn nhất bằng 2000 cm3."
+                        "solution": "$V(x) = x(30 - 2x)^2$ với $0 < x < 15$. $V'(x) = 0 \\iff x = 5$. Thể tích lớn nhất bằng 2000 cm3."
                     }
                 ],
                 "exercise": {
                     "id": "12_b5_c1",
                     "title": "Bài tập tự giải",
-                    "content": "Độ dài cạnh cắt x trong bài toán trên bằng bao nhiêu cm?",
+                    "content": "Độ dài cạnh cắt x (cm) trong bài toán trên bằng:",
                     "target": "5"
                 }
             },
@@ -440,8 +445,8 @@ GRADE_12_DATA = {
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Lon nước ngọt tiết kiệm",
-                        "problem": "Lon hình trụ có thể tích $16\\pi$ cm3. Tìm $r$ để diện tích toàn phần nhỏ nhất.",
+                        "title": "Ví dụ: Thiết kế lon nước ngọt tiết kiệm",
+                        "problem": "Lon hình trụ có thể tích $16\\pi$ cm3. Tìm bán kính đáy $r$ để diện tích toàn phần nhỏ nhất.",
                         "solution": "$h = 16/r^2$. $S(r) = 2\\pi r^2 + \\frac{32\\pi}{r}$. $S'(r) = 0 \\iff r = 2$ cm."
                     }
                 ],
@@ -453,14 +458,14 @@ GRADE_12_DATA = {
                 }
             },
             "Chủ điểm 3: Bài toán tối ưu kinh tế: doanh thu, chi phí, lợi nhuận": {
-                "theory": "- Doanh thu: $R(x) = p \\cdot x$.\n- Lợi nhuận: $P(x) = R(x) - C(x)$.\n- Cực đại lợi nhuận khi đạo hàm $P'(x) = 0$.",
+                "theory": "- Doanh thu: $R(x) = p \\cdot x$.\n- Lợi nhuận: $P(x) = R(x) - C(x)$.\n- Lợi nhuận cực đại khi đạo hàm $P'(x) = 0$.",
                 "formula": "P(x) = R(x) - C(x) \\implies P'(x) = 0",
                 "trap": "Nhầm lẫn giữa doanh thu cực đại và lợi nhuận cực đại.",
                 "audio": "Lợi nhuận bằng doanh thu trừ chi phí. Đạo hàm bằng không sẽ cho lượng sản phẩm tối ưu.",
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Giá thuê phòng tối ưu",
+                        "title": "Ví dụ: Tối ưu doanh thu cho thuê phòng",
                         "problem": "Có 50 căn hộ cho thuê giá 2 triệu. Mỗi lần tăng 100 nghìn thì trống 1 căn. Tìm số lần tăng giá để doanh thu lớn nhất.",
                         "solution": "$R(x) = (2 + 0.1x)(50 - x) = 100 + 3x - 0.1x^2$. $R'(x) = 3 - 0.2x = 0 \\iff x = 15$."
                     }
@@ -480,15 +485,15 @@ GRADE_12_DATA = {
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Độ cao cực đại",
-                        "problem": "Độ cao vật ném lên là $h(t) = 20t - 5t^2$. Tìm độ cao lớn nhất.",
-                        "solution": "$v(t) = 20 - 10t = 0 \\iff t = 2$ s. Độ cao lớn nhất là $h(2) = 20$ m."
+                        "title": "Ví dụ: Độ cao lớn nhất của vật",
+                        "problem": "Độ cao vật ném lên là $h(t) = 20t - 5t^2$ (m). Tìm độ cao lớn nhất.",
+                        "solution": "$v(t) = h'(t) = 20 - 10t = 0 \\iff t = 2$ s. Độ cao lớn nhất là $h(2) = 20$ m."
                     }
                 ],
                 "exercise": {
                     "id": "12_b5_c4",
                     "title": "Bài tập tự giải",
-                    "content": "Độ cao lớn nhất (m) của vật đạt được bằng:",
+                    "content": "Độ cao lớn nhất (m) của vật là:",
                     "target": "20"
                 }
             },
@@ -500,15 +505,15 @@ GRADE_12_DATA = {
                 "svg": "GTLN_GTNN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Chèo thuyền và đi bộ",
+                        "title": "Ví dụ: Đi đường ngắn nhất kết hợp chèo thuyền và đi bộ",
                         "problem": "Cách bờ 3 km, chèo thuyền vận tốc 4 km/h đến điểm M trên bờ rồi đi bộ 5 km/h. Tìm $x = CM$ để thời gian ngắn nhất.",
-                        "solution": "$T(x) = \\frac{\\sqrt{9+x^2}}{4} + \\frac{8-x}{5}$. $T'(x) = 0 \\iff 5x = 4\\sqrt{9+x^2} \\iff x = 4$ km."
+                        "solution": "$T(x) = \\frac{\\sqrt{9 + x^2}}{4} + \\frac{8 - x}{5}$. $T'(x) = 0 \\iff 5x = 4\\sqrt{9 + x^2} \\iff x = 4$ km."
                     }
                 ],
                 "exercise": {
                     "id": "12_b5_c5",
                     "title": "Bài tập tự giải",
-                    "content": "Đoạn đường chèo thuyền cập bờ x bằng bao nhiêu km?",
+                    "content": "Khoảng cách x (km) tối ưu bằng:",
                     "target": "4"
                 }
             }
@@ -519,7 +524,7 @@ GRADE_12_DATA = {
     # CHƯƠNG II. VECTƠ VÀ HỆ TRỤC TOẠ ĐỘ TRONG KHÔNG GIAN
     # =========================================================================
     "Bài 6. Vectơ trong không gian": {
-        "chapter": "CHƯƠNG II. VECTƠ VÀ HỆ TRỤC TOẠ ĐỘ TRONG KHÔNG GIAN",
+        "chapter": "Chương II. Vectơ và hệ trục toạ độ trong không gian",
         "topics": {
             "Chủ điểm 1: Khái niệm vectơ trong không gian": {
                 "theory": "Đoạn thẳng có hướng. Hai vectơ cùng phương nếu giá song song hoặc trùng nhau. Bằng nhau nếu cùng hướng và cùng độ dài.",
@@ -529,15 +534,15 @@ GRADE_12_DATA = {
                 "svg": "VECTOR",
                 "examples": [
                     {
-                        "title": "Ví dụ: Vectơ trong lập phương",
-                        "problem": "Trong hình lập phương $ABCD.A'B'C'$, vectơ nào bằng $\\vec{AB}$?",
-                        "solution": "$\\vec{AB} = \\vec{DC} = \\vec{A'B'} = \\vec{D'C'}$."
+                        "title": "Ví dụ: Vectơ trong hình lập phương",
+                        "problem": "Trong hình lập phương $ABCD.A'B'C'D'$, tìm các vectơ bằng $\\vec{AB}$.",
+                        "solution": "Ta có $\\vec{AB} = \\vec{DC} = \\vec{A'B'} = \\vec{D'C'}$."
                     }
                 ],
                 "exercise": {
                     "id": "12_b6_c1",
                     "title": "Bài tập tự giải",
-                    "content": "Hình lập phương cạnh 2 có độ dài vectơ đường chéo mặt đáy AC bằng 2 căn mấy?",
+                    "content": "Hình lập phương cạnh 2 có độ dài đường chéo mặt đáy AC bằng 2 căn mấy?",
                     "target": "2"
                 }
             },
@@ -549,7 +554,7 @@ GRADE_12_DATA = {
                 "svg": "VECTOR",
                 "examples": [
                     {
-                        "title": "Ví dụ: Trọng tâm tam giác",
+                        "title": "Ví dụ: Biểu diễn vectơ qua trọng tâm",
                         "problem": "Cho tứ diện $ABCD$, $G$ là trọng tâm $\\triangle BCD$. Rút gọn $\\vec{AB} + \\vec{AC} + \\vec{AD}$.",
                         "solution": "Vì $\\vec{GB} + \\vec{GC} + \\vec{GD} = \\vec{0}$ nên $\\vec{AB} + \\vec{AC} + \\vec{AD} = 3\\vec{AG}$."
                     }
@@ -562,16 +567,16 @@ GRADE_12_DATA = {
                 }
             },
             "Chủ điểm 3: Tích của một số với một vectơ": {
-                "theory": "$k\\vec{a}$ cùng hướng $\\vec{a}$ nếu $k > 0$, ngược hướng nếu $k < 0$. $|k\\vec{a}| = |k||\\vec{a}|$. Trung điểm: $\\vec{MN} = \\frac{1}{2}(\\vec{AC} + \\vec{BD})$.",
+                "theory": "$k\\vec{a}$ cùng hướng $\\vec{a}$ nếu $k > 0$, ngược hướng nếu $k < 0$. $|k\\vec{a}| = |k||\\vec{a}|$.\nTính chất trung điểm: $\\vec{MN} = \\frac{1}{2}(\\vec{AC} + \\vec{BD})$.",
                 "formula": "\\vec{a} \\parallel \\vec{b} \\iff \\vec{a} = k\\vec{b}",
-                "trap": "Quên dấu trừ khi nhân với số âm.",
+                "trap": "Quên đổi chiều vectơ khi nhân với số âm.",
                 "audio": "Phép nhân vectơ với một số cho ra vectơ cùng phương.",
                 "svg": "VECTOR",
                 "examples": [
                     {
                         "title": "Ví dụ: Vectơ đoạn nối trung điểm",
                         "problem": "Cho $M, N$ là trung điểm $AB$ và $CD$. Chứng minh $\\vec{MN} = \\frac{1}{2}(\\vec{AC} + \\vec{BD})$.",
-                        "solution": "Cộng hai vế $\\vec{MN} = \\vec{MA} + \\vec{AC} + \\vec{CN}$ và $\\vec{MN} = \\vec{MB} + \\vec{BD} + \\vec{DN}$, triệt tiêu trung điểm được đpcm."
+                        "solution": "Cộng hai vế $\\vec{MN} = \\vec{MA} + \\vec{AC} + \\vec{CN}$ và $\\vec{MN} = \\vec{MB} + \\vec{BD} + \\vec{DN}$, do $M, N$ là trung điểm nên được điều phải chứng minh."
                     }
                 ],
                 "exercise": {
@@ -582,14 +587,14 @@ GRADE_12_DATA = {
                 }
             },
             "Chủ điểm 4: Góc giữa hai vectơ và tích vô hướng": {
-                "theory": "$\\vec{a} \\cdot \\vec{b} = |\\vec{a}||\\vec{b}|\\cos(\\vec{a}, \\vec{b})$. Vuông góc khi tích vô hướng bằng 0.",
+                "theory": "$\\vec{a} \\cdot \\vec{b} = |\\vec{a}||\\vec{b}|\\cos(\\vec{a}, \\vec{b})$.\nHai vectơ vuông góc khi và chỉ khi tích vô hướng bằng 0.",
                 "formula": "\\vec{a} \\cdot \\vec{b} = |\\vec{a}||\\vec{b}|\\cos(\\vec{a}, \\vec{b}); \\quad \\vec{a} \\perp \\vec{b} \\iff \\vec{a} \\cdot \\vec{b} = 0",
                 "trap": "Phải đưa về chung gốc mới xác định đúng góc xen giữa.",
                 "audio": "Tích vô hướng bằng tích độ dài nhân cos góc xen giữa. Vuông góc thì tích vô hướng bằng không.",
                 "svg": "VECTOR",
                 "examples": [
                     {
-                        "title": "Ví dụ: Tứ diện đều vuông góc",
+                        "title": "Ví dụ: Cạnh đối diện vuông góc trong tứ diện đều",
                         "problem": "Cho tứ diện đều $ABCD$ cạnh $a$. Tính $\\vec{AB} \\cdot \\vec{CD}$.",
                         "solution": "$\\vec{AB} \\cdot (\\vec{AD} - \\vec{AC}) = \\vec{AB} \\cdot \\vec{AD} - \\vec{AB} \\cdot \\vec{AC} = \\frac{a^2}{2} - \\frac{a^2}{2} = 0 \\implies AB \\perp CD$."
                     }
@@ -604,7 +609,7 @@ GRADE_12_DATA = {
             "Chủ điểm 5: Ứng dụng vectơ trong vật lí": {
                 "theory": "- Hợp lực: $\\vec{F} = \\vec{F}_1 + \\vec{F}_2$.\n- Công cơ học: $A = \\vec{F} \\cdot \\vec{s} = |\\vec{F}||\\vec{s}|\\cos\\varphi$.",
                 "formula": "A = |\\vec{F}||\\vec{s}|\\cos\\varphi",
-                "trap": "Góc phi là góc giữa lực tác dụng và hướng chuyển động.",
+                "trap": "Góc phi là góc giữa lực tác dụng và hướng chuyển động của vật.",
                 "audio": "Công của lực bằng tích vô hướng giữa vectơ lực và vectơ độ dịch chuyển.",
                 "svg": "VECTOR",
                 "examples": [
@@ -617,7 +622,7 @@ GRADE_12_DATA = {
                 "exercise": {
                     "id": "12_b6_c5",
                     "title": "Bài tập tự giải",
-                    "content": "Công của lực kéo trong bài toán trên bằng bao nhiêu Jun?",
+                    "content": "Công của lực kéo trong ví dụ trên bằng bao nhiêu Jun?",
                     "target": "100"
                 }
             }
@@ -625,7 +630,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 7. Hệ trục toạ độ trong không gian": {
-        "chapter": "CHƯƠNG II. VECTƠ VÀ HỆ TRỤC TOẠ ĐỘ TRONG KHÔNG GIAN",
+        "chapter": "Chương II. Vectơ và hệ trục toạ độ trong không gian",
         "topics": {
             "Chủ điểm 1: Hệ trục toạ độ Oxyz": {
                 "theory": "Ba trục $Ox, Oy, Oz$ đôi một vuông góc. Các vectơ đơn vị $\\vec{i}, \\vec{j}, \\vec{k}$ có độ dài bằng 1 và tích vô hướng từng đôi bằng 0.",
@@ -648,7 +653,7 @@ GRADE_12_DATA = {
                 }
             },
             "Chủ điểm 2: Toạ độ của một điểm": {
-                "theory": "$M(x; y; z) \\iff \\vec{OM} = x\\vec{i} + y\\vec{j} + z\\vec{k}$.\n- Hình chiếu lên $Oxy$: $(x; y; 0)$, lên $Ox$: $(x; 0; 0)$.\n- Đối xứng qua $Oxy$: $(x; y; -z)$, qua gốc $O$: $(-x; -y; -z)$.",
+                "theory": "$M(x; y; z) \\iff \\vec{OM} = x\\vec{i} + y\\vec{j} + z\\vec{k}$.\n- Chiếu lên $Oxy$: $(x; y; 0)$, chiếu lên $Ox$: $(x; 0; 0)$.\n- Đối xứng qua $Oxy$: $(x; y; -z)$, qua gốc $O$: $(-x; -y; -z)$.",
                 "formula": "M(x; y; z) \\implies \\text{Chiếu lên } Oxy: (x; y; 0)",
                 "trap": "Chiếu lên mặt phẳng hoặc trục nào thì giữ nguyên tọa độ đó, các tọa độ còn lại bằng 0.",
                 "audio": "Hình chiếu lên trục hay mặt phẳng nào thì chỉ giữ lại chữ cái của trục hoặc mặt phẳng đó.",
@@ -711,7 +716,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 8. Biểu thức toạ độ của các phép toán vectơ": {
-        "chapter": "CHƯƠNG II. VECTƠ VÀ HỆ TRỤC TOẠ ĐỘ TRONG KHÔNG GIAN",
+        "chapter": "Chương II. Vectơ và hệ trục toạ độ trong không gian",
         "topics": {
             "Chủ điểm 1: Toạ độ của tổng, hiệu và tích của một số với một vectơ": {
                 "theory": "Cho $\\vec{a} = (a_1; a_2; a_3), \\vec{b} = (b_1; b_2; b_3)$:\n- $\\vec{a} \\pm \\vec{b} = (a_1 \\pm b_1; a_2 \\pm b_2; a_3 \\pm b_3)$.\n- $k\\vec{a} = (ka_1; ka_2; ka_3)$.\n- Cùng phương khi các tọa độ tỉ lệ.",
@@ -734,9 +739,9 @@ GRADE_12_DATA = {
                 }
             },
             "Chủ điểm 2: Biểu thức toạ độ của tích vô hướng, độ dài, khoảng cách, góc": {
-                "theory": "- Tích vô hướng: $\\vec{a} \\cdot \\vec{b} = a_1b_1 + a_2b_2 + a_3b_3$.\n- Độ dài: $|\\vec{a}| = \\sqrt{a_1^2 + a_2^2 + a_3^2}$.\n- Khoảng cách: $AB = \\sqrt{(x_B-x_A)^2 + (y_B-y_A)^2 + (z_B-z_A)^2}$.\n- Vuông góc khi $\\vec{a} \\cdot \\vec{b} = 0$.",
-                "formula": "\\vec{a} \\cdot \\vec{b} = a_1b_1 + a_2b_2 + a_3b_3; \\quad |\\vec{a}| = \\sqrt{a_1^2+a_2^2+a_3^2}",
-                "trap": "Bình phương số âm quên dấu ngoặc dẫn đến tính sai khoảng cách.",
+                "theory": "- Tích vô hướng: $\\vec{a} \\cdot \\vec{b} = a_1b_1 + a_2b_2 + a_3b_3$.\n- Độ dài: $|\\vec{a}| = \\sqrt{a_1^2 + a_2^2 + a_3^2}$.\n- Khoảng cách: $AB = \\sqrt{(x_B - x_A)^2 + (y_B - y_A)^2 + (z_B - z_A)^2}$.\n- Vuông góc khi $\\vec{a} \\cdot \\vec{b} = 0$.",
+                "formula": "\\vec{a} \\cdot \\vec{b} = a_1b_1 + a_2b_2 + a_3b_3; \\quad |\\vec{a}| = \\sqrt{a_1^2 + a_2^2 + a_3^2}",
+                "trap": "Bình phương số âm quên đóng ngoặc dẫn đến tính sai khoảng cách.",
                 "audio": "Tích vô hướng bằng hoành nhân hoành cộng tung nhân tung cộng cao nhân cao.",
                 "svg": "OXYZ",
                 "examples": [
@@ -777,7 +782,7 @@ GRADE_12_DATA = {
                 "theory": "- Công của lực không đổi $\\vec{F}$ dịch chuyển vật dọc theo $\\vec{AB}$: $A = \\vec{F} \\cdot \\vec{AB}$.\n- Vị trí sau $t$ giây với vận tốc $\\vec{v}$: $\\vec{OM}(t) = \\vec{OM}_0 + t\\vec{v}$.",
                 "formula": "A = \\vec{F} \\cdot \\vec{AB} = F_x \\Delta x + F_y \\Delta y + F_z \\Delta z",
                 "trap": "Quên kiểm tra tính đồng bộ của đơn vị đo (mét, Newton, Jun).",
-                "audio": "Công của lực trong không gian bằng tích vô hướng giữa vectơ lực và vectơ độ dời.",
+                "audio": "Công của lực trong không gian bằng tích vô hướng giữa vectơ lực và vectơ độ dịch chuyển.",
                 "svg": "OXYZ",
                 "examples": [
                     {
@@ -800,7 +805,7 @@ GRADE_12_DATA = {
     # CHƯƠNG III. CÁC SỐ ĐẶC TRƯNG ĐO MỨC ĐỘ PHÂN TÁN CHO MẪU GHÉP NHÓM
     # =========================================================================
     "Bài 9. Khoảng biến thiên, khoảng tứ phân vị": {
-        "chapter": "CHƯƠNG III. CÁC SỐ ĐẶC TRƯNG ĐO MỨC ĐỘ PHÂN TÁN CHO MẪU GHÉP NHÓM",
+        "chapter": "Chương III. Các số đặc trưng đo mức độ phân tán của mẫu số liệu ghép nhóm",
         "topics": {
             "Chủ điểm 1: Mẫu số liệu ghép nhóm và khoảng biến thiên": {
                 "theory": "Khoảng biến thiên $R$ là hiệu giữa đầu mút phải của nhóm cuối cùng và đầu mút trái của nhóm đầu tiên:\n$$R = a_{m+1} - a_1$$",
@@ -866,7 +871,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 10. Phương sai, độ lệch chuẩn": {
-        "chapter": "CHƯƠNG III. CÁC SỐ ĐẶC TRƯNG ĐO MỨC ĐỘ PHÂN TÁN CHO MẪU GHÉP NHÓM",
+        "chapter": "Chương III. Các số đặc trưng đo mức độ phân tán của mẫu số liệu ghép nhóm",
         "topics": {
             "Chủ điểm 1: Giá trị đại diện và số trung bình của mẫu số liệu ghép nhóm": {
                 "theory": "Giá trị đại diện $c_i = \\frac{a_i + a_{i+1}}{2}$.\nSố trung bình: $\\overline{x} = \\frac{1}{n} \\sum m_i c_i$.",
@@ -955,7 +960,7 @@ GRADE_12_DATA = {
     # CHƯƠNG IV. NGUYÊN HÀM VÀ TÍCH PHÂN
     # =========================================================================
     "Bài 11. Nguyên hàm": {
-        "chapter": "CHƯƠNG IV. NGUYÊN HÀM VÀ TÍCH PHÂN",
+        "chapter": "Chương IV. Nguyên hàm và tích phân",
         "topics": {
             "Chủ điểm 1: Khái niệm nguyên hàm": {
                 "theory": "$F(x)$ là nguyên hàm của $f(x)$ nếu $F'(x) = f(x)$. Họ nguyên hàm: $\\int f(x)dx = F(x) + C$.",
@@ -1041,7 +1046,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 12. Tích phân": {
-        "chapter": "CHƯƠNG IV. NGUYÊN HÀM VÀ TÍCH PHÂN",
+        "chapter": "Chương IV. Nguyên hàm và tích phân",
         "topics": {
             "Chủ điểm 1: Khái niệm tích phân và công thức Newton – Leibniz": {
                 "theory": "Cho $f(x)$ liên tục trên $[a; b]$. Công thức Newton – Leibniz:\n$$\\int_a^b f(x)dx = F(b) - F(a) = F(x)\\Big|_a^b$$",
@@ -1127,7 +1132,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 13. Ứng dụng hình học của tích phân": {
-        "chapter": "CHƯƠNG IV. NGUYÊN HÀM VÀ TÍCH PHÂN",
+        "chapter": "Chương IV. Nguyên hàm và tích phân",
         "topics": {
             "Chủ điểm 1: Diện tích hình phẳng": {
                 "theory": "- Giới hạn bởi $y = f(x)$, $Ox$, $x = a, x = b$: $S = \\int_a^b |f(x)|dx$.\n- Giới hạn bởi 2 đồ thị: $S = \\int_a^b |f(x) - g(x)|dx$.",
@@ -1137,7 +1142,7 @@ GRADE_12_DATA = {
                 "svg": "TICH_PHAN",
                 "examples": [
                     {
-                        "title": "Ví dụ: Diện tích giữa 2 parabol và đường thẳng",
+                        "title": "Ví dụ: Diện tích giữa parabol và đường thẳng",
                         "problem": "Tính diện tích hình phẳng giới hạn bởi $y = x^2$ và $y = 2x$.",
                         "solution": "Hoành độ giao điểm: $x^2 = 2x \\iff x = 0, x = 2$. $S = \\int_0^2 (2x - x^2)dx = \\frac{4}{3}$."
                     }
@@ -1216,7 +1221,7 @@ GRADE_12_DATA = {
     # CHƯƠNG V. PHƯƠNG TRÌNH MẶT PHẲNG, ĐƯỜNG THẲNG, MẶT CẦU
     # =========================================================================
     "Bài 14. Phương trình mặt phẳng": {
-        "chapter": "CHƯƠNG V. PHƯƠNG TRÌNH MẶT PHẲNG, ĐƯỜNG THẲNG, MẶT CẦU",
+        "chapter": "Chương V. Phương trình mặt phẳng, đường thẳng, mặt cầu trong không gian",
         "topics": {
             "Chủ điểm 1: Vectơ pháp tuyến của mặt phẳng": {
                 "theory": "VTPT $\\vec{n} \\ne \\vec{0}$ vuông góc với mặt phẳng. Nếu biết 2 vectơ không cùng phương $\\vec{a}, \\vec{b}$ có giá song song hoặc nằm trên $(P)$ thì $\\vec{n} = [\\vec{a}, \\vec{b}]$.",
@@ -1302,7 +1307,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 15. Phương trình đường thẳng trong không gian": {
-        "chapter": "CHƯƠNG V. PHƯƠNG TRÌNH MẶT PHẲNG, ĐƯỜNG THẲNG, MẶT CẦU",
+        "chapter": "Chương V. Phương trình mặt phẳng, đường thẳng, mặt cầu trong không gian",
         "topics": {
             "Chủ điểm 1: Vectơ chỉ phương và phương trình của đường thẳng": {
                 "theory": "Đường thẳng qua $M_0(x_0; y_0; z_0)$ có VTCP $\\vec{u} = (a; b; c)$:\n- Tham số: $x = x_0 + at, y = y_0 + bt, z = z_0 + ct$.\n- Chính tắc: $\\frac{x - x_0}{a} = \\frac{y - y_0}{b} = \\frac{z - z_0}{c}$ ($abc \\ne 0$).",
@@ -1388,7 +1393,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 16. Công thức tính góc trong không gian": {
-        "chapter": "CHƯƠNG V. PHƯƠNG TRÌNH MẶT PHẲNG, ĐƯỜNG THẲNG, MẶT CẦU",
+        "chapter": "Chương V. Phương trình mặt phẳng, đường thẳng, mặt cầu trong không gian",
         "topics": {
             "Chủ điểm 1: Góc giữa hai đường thẳng": {
                 "theory": "Góc $\\varphi$ giữa 2 đường thẳng có VTCP $\\vec{u}_1, \\vec{u}_2$ ($0^\\circ \\le \\varphi \\le 90^\\circ$):\n$$\\cos \\varphi = \\frac{|\\vec{u}_1 \\cdot \\vec{u}_2|}{|\\vec{u}_1||\\vec{u}_2|}$$",
@@ -1474,7 +1479,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 17. Phương trình mặt cầu": {
-        "chapter": "CHƯƠNG V. PHƯƠNG TRÌNH MẶT PHẲNG, ĐƯỜNG THẲNG, MẶT CẦU",
+        "chapter": "Chương V. Phương trình mặt phẳng, đường thẳng, mặt cầu trong không gian",
         "topics": {
             "Chủ điểm 1: Phương trình mặt cầu": {
                 "theory": "Mặt cầu tâm $I(a; b; c)$, bán kính $R > 0$:\n$$(x - a)^2 + (y - b)^2 + (z - c)^2 = R^2$$",
@@ -1563,7 +1568,7 @@ GRADE_12_DATA = {
     # CHƯƠNG VI. XÁC SUẤT CÓ ĐIỀU KIỆN
     # =========================================================================
     "Bài 18. Xác suất có điều kiện": {
-        "chapter": "CHƯƠNG VI. XÁC SUẤT CÓ ĐIỀU KIỆN",
+        "chapter": "Chương VI. Xác suất có điều kiện",
         "topics": {
             "Chủ điểm 1: Định nghĩa xác suất có điều kiện": {
                 "theory": "Xác suất của biến cố $A$ khi biết biến cố $B$ đã xảy ra ($P(B) > 0$):\n$$P(A|B) = \\frac{P(AB)}{P(B)}$$",
@@ -1649,7 +1654,7 @@ GRADE_12_DATA = {
     },
 
     "Bài 19. Xác suất toàn phần và công thức Bayes": {
-        "chapter": "CHƯƠNG VI. XÁC SUẤT CÓ ĐIỀU KIỆN",
+        "chapter": "Chương VI. Xác suất có điều kiện",
         "topics": {
             "Chủ điểm 1: Công thức xác suất toàn phần": {
                 "theory": "Với $0 < P(B) < 1$:\n$$P(A) = P(B) \\cdot P(A|B) + P(\\overline{B}) \\cdot P(A|\\overline{B})$$",

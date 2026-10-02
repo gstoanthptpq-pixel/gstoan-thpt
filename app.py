@@ -111,11 +111,12 @@ except Exception:
     pass
 
 def call_gemini_safe(contents_payload):
-    """Fallback tự động qua các cụm model để triệt tiêu lỗi 503 và 404."""
+    """Fallback tự động qua các cụm model tương thích để triệt tiêu lỗi 503 và 404."""
     if not client:
         return None
     
-    candidate_models = ['gemini-2.5-flash', 'gemini-2.0-flash']
+    # Cập nhật danh sách model chính xác nhất theo thông báo từ Google API
+    candidate_models = ['gemini-3.8-flash', 'gemini-flash-latest']
     last_err = ""
     
     for m in candidate_models:
@@ -948,7 +949,7 @@ with tab_ex:
                     with st.expander(f"📌 {ex_item['title']}", expanded=is_default_open):
                         st.markdown(f"**Đề bài yêu cầu:**\n\n{ex_item['problem']}")
                         st.markdown("---")
-                        st.markdown("**✍️ Lời giải chi tiết chuẩn mực sư phạm:**")
+                        st.markdown("**✍️️ Lời giải chi tiết chuẩn mực sư phạm:**")
                         st.markdown(ex_item["solution"])
 
 # ------------------------------------------------------------------------------
@@ -1193,7 +1194,7 @@ with tab4:
     st.subheader("🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa GDPT 2018")
     st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo. Tùy chọn số câu cho từng mức độ nhận thức (cho phép về 0), tương tác làm bài và xuất file Word.")
 
-    with st.expander("⚙️️ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI CHI TIẾT", expanded=(st.session_state["generated_exam"] is None)):
+    with st.expander("⚙ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI CHI TIẾT", expanded=(st.session_state["generated_exam"] is None)):
         c1, c2 = st.columns(2)
         with c1:
             exam_grade = st.selectbox("1. Khối lớp:", ["Khối 10", "Khối 11", "Khối 12"], index=(2 if sel_grade=="Khối 12" else (0 if sel_grade=="Khối 10" else 1)))
@@ -1279,7 +1280,7 @@ with tab4:
                             st.session_state["exam_submitted_result"] = None
                             st.rerun()
                     except Exception as e:
-                        st.error(f"⚠️️ Không thể tạo đề từ AI: {e}")
+                        st.error(f"⚠ Không thể tạo đề từ AI: {e}")
 
     # Giao diện làm bài thi khi đã tạo đề
     exam = st.session_state["generated_exam"]

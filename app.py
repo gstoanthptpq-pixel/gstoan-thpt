@@ -476,35 +476,30 @@ def generate_matrix_custom_exam(grade, term, p1_nb, p1_th, p1_vd, p2_nb, p2_th, 
     total_p3 = p3_th + p3_vd + p3_vdc
     
     prompt = f"""
-Bạn là chuyên gia Khảo thí và Đánh giá môn Toán THPT Chương trình GDPT 2018 (Bộ sách Kết nối tri thức với cuộc sống).
-Hãy thiết kế một đề kiểm tra chính thức môn Toán dành cho: {grade.upper()} - Kỳ thi: {term.upper()}.
+Bạn là chuyên gia Khảo thí môn Toán THPT Chương trình GDPT 2018 bộ Kết nối tri thức.
+Hãy tạo 1 đề kiểm tra trắc nghiệm hoàn chỉnh cho: {grade.upper()} - Kỳ thi: {term.upper()}.
 
-MA TRẬN ĐỀ THI YÊU CẦU BẮT BUỘC:
-1. PHẦN I (Trắc nghiệm nhiều lựa chọn 4 phương án A, B, C, D):
-   - Tổng số câu: {total_p1} câu.
-   - Cơ cấu mức độ: {p1_nb} câu Nhận biết (NB), {p1_th} câu Thông hiểu (TH), {p1_vd} câu Vận dụng (VD).
-   - Nội dung: Mỗi câu có 4 đáp án A, B, C, D, chỉ duy nhất 1 đáp án đúng.
+YÊU CẦU BẮT BUỘC VỀ SỐ LƯỢNG CÂU HỎI (PHẢI TẠO ĐỦ CHÍNH XÁC):
+1. PHẦN I (Trắc nghiệm 4 lựa chọn A, B, C, D): BẮT BUỘC TẠO ĐỦ {total_p1} CÂU.
+   - Gồm {p1_nb} câu Nhận biết, {p1_th} câu Thông hiểu, {p1_vd} câu Vận dụng.
+   - Mỗi câu có đúng 4 phương án A, B, C, D và chỉ 1 đáp án đúng ("correct": "A" hoặc "B", "C", "D").
 
-2. PHẦN II (Trắc nghiệm Đúng/Sai):
-   - Tổng số câu: {total_p2} câu.
-   - Cơ cấu mức độ: {p2_nb} câu Nhận biết (NB), {p2_th} câu Thông hiểu (TH), {p2_vd} câu Vận dụng (VD).
-   - Nội dung: Mỗi câu có phần thân đề bài và đúng 4 khẳng định a, b, c, d với giá trị đúng/sai (true/false) rõ ràng.
+2. PHẦN II (Trắc nghiệm Đúng/Sai): BẮT BUỘC TẠO ĐỦ {total_p2} CÂU.
+   - Gồm {p2_nb} câu Nhận biết, {p2_th} câu Thông hiểu, {p2_vd} câu Vận dụng.
+   - Mỗi câu gồm đề bài và đúng 4 ý a, b, c, d với trường "correct" là true hoặc false.
 
-3. PHẦN III (Trắc nghiệm trả lời ngắn):
-   - Tổng số câu: {total_p3} câu.
-   - Cơ cấu mức độ: {p3_th} câu Thông hiểu (TH), {p3_vd} câu Vận dụng (VD), {p3_vdc} câu Vận dụng cao (VDC).
-   - Trong đó BẮT BUỘC có đúng {p3_mod} câu là bài toán thực tế mô hình hóa (tối ưu hóa, kinh tế, vật lý, xác suất, đo đạc hình học).
-   - Đáp án đúng của Phần III bắt buộc phải là một con số cụ thể (nếu là số thập phân, yêu cầu làm tròn đến 1 chữ số thập phân).
+3. PHẦN III (Trả lời ngắn): BẮT BUỘC TẠO ĐỦ {total_p3} CÂU.
+   - Gồm {p3_th} câu Thông hiểu, {p3_vd} câu Vận dụng, {p3_vdc} câu Vận dụng cao.
+   - Có đúng {p3_mod} câu là bài toán mô hình hóa thực tế ("is_modeled": true).
+   - Đáp án ("correct_num") chỉ ghi một con số thực cụ thể (số nguyên hoặc làm tròn 1 chữ số thập phân).
 
-QUY TẮC ĐỊNH DẠNG TOÁN HỌC:
-- Viết công thức toán học bằng định dạng LaTeX chuẩn, đặt trong dấu $...$ (ví dụ: $x^2 - 3x + 2 = 0$, $\\frac{{2x-1}}{{x+1}}$, $\\sqrt{{x+1}}$, $\\int_0^1 f(x)dx$).
-- Nếu phần nào có tổng số câu là 0, trả về mảng rỗng [] cho phần đó.
+LƯU Ý: Công thức toán viết dạng LaTeX đơn giản trong dấu $. Nếu phần nào có số câu bằng 0 thì để mảng rỗng [].
 
-TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không có giải thích thêm với cấu trúc:
+TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ (không kèm lời giải thích nào khác ngoài chuỗi JSON):
 {{
   "exam_title": "ĐỀ THI {grade.upper()} - {term.upper()}",
   "part1": [
-    {{"id": "P1_1", "question": "Nội dung câu...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}}
+    {{"id": "P1_1", "question": "Nội dung câu hỏi...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}}
   ],
   "part2": [
     {{"id": "P2_1", "question": "Nội dung câu...", "sub_items": [{{"label": "a", "text": "...", "correct": true}}, {{"label": "b", "text": "...", "correct": false}}, {{"label": "c", "text": "...", "correct": true}}, {{"label": "d", "text": "...", "correct": false}}]}}
@@ -514,39 +509,25 @@ TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không có giải thích th�
   ]
 }}
 """
+    raw = call_gemini_safe([prompt])
+    if not raw:
+        raise Exception("Không nhận được phản hồi từ AI.")
+        
+    t = raw.strip()
+    if t.startswith("```json"):
+        t = t[7:]
+    elif t.startswith("```"):
+        t = t[3:]
+    if t.endswith("```"):
+        t = t[:-3]
+    t = t.strip()
+    
     try:
-        raw = call_gemini_safe([prompt])
-        t = raw.strip()
-        if t.startswith("```json"):
-            t = t[7:]
-        if t.endswith("```"):
-            t = t[:-3]
-        return json.loads(t.strip())
-    except Exception:
-        part1_fall = []
-        if total_p1 > 0:
-            part1_fall.append({"id": "P1_1", "question": f"Cho hàm số bậc ba $y = f(x)$ có bảng biến thiên chuẩn. Điểm cực đại của hàm số đã cho là:", "options": ["A. $x = 1$", "B. $x = -1$", "C. $y = 2$", "D. $x = 3$"], "correct": "A"})
-        part2_fall = []
-        if total_p2 > 0:
-            part2_fall.append({
-                "id": "P2_1", "question": "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$, $SA \\perp (ABCD)$ và $SA = a\\sqrt{2}$. Xét tính đúng, sai của các khẳng định sau:",
-                "sub_items": [
-                    {"label": "a", "text": "Đường thẳng $SA$ vuông góc với mặt phẳng $(ABCD)$.", "correct": True},
-                    {"label": "b", "text": "Tam giác $SBC$ là tam giác vuông tại $B$.", "correct": True},
-                    {"label": "c", "text": "Góc giữa đường thẳng $SC$ và $(ABCD)$ bằng $60^\\circ$.", "correct": False},
-                    {"label": "d", "text": "Thể tích khối chóp $S.ABCD$ bằng $\\frac{a^3\\sqrt{2}}{3}$.", "correct": True}
-                ]
-            })
-        part3_fall = []
-        if total_p3 > 0:
-            part3_fall.append({"id": "P3_1", "question": "Một xưởng sản xuất cần làm hộp chứa hàng dạng hình hộp chữ nhật không nắp có thể tích 500 m$^3$. Đáy có chiều dài gấp đôi chiều rộng. Tính chiều rộng của đáy (mét) để diện tích vật liệu nhỏ nhất (làm tròn đến 1 chữ số thập phân).", "correct_num": "6.1", "is_modeled": True})
+        exam_json = json.loads(t)
+    except Exception as parse_err:
+        raise Exception(f"Lỗi đọc định dạng JSON từ AI: {parse_err}. Nội dung nhận được: {t[:300]}...")
 
-        return {
-            "exam_title": f"ĐỀ THI KHẢO THÍ CHUẨN HÓA {grade.upper()} - {term.upper()}",
-            "part1": part1_fall,
-            "part2": part2_fall,
-            "part3": part3_fall
-        }
+    return exam_json
 
 # ==============================================================================
 # BỘ CHUYỂN ĐỔI LATEX SANG UNICODE TOÁN HỌC & XUẤT FILE WORD IN ĐƯỢC
@@ -1212,7 +1193,7 @@ with tab4:
     st.subheader("🎯 Phòng Khảo Thí & Luyện Đề Chuẩn Hóa GDPT 2018")
     st.caption("Cấu trúc đề thi mới nhất bám sát khung năng lực của Bộ Giáo dục và Đào tạo. Tùy chọn số câu cho từng mức độ nhận thức (cho phép về 0), tương tác làm bài và xuất file Word.")
 
-    with st.expander("⚙️ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI CHI TIẾT", expanded=(st.session_state["generated_exam"] is None)):
+    with st.expander("⚙️️ BẢNG TÙY CHỌN MA TRẬN ĐỀ THI CHI TIẾT", expanded=(st.session_state["generated_exam"] is None)):
         c1, c2 = st.columns(2)
         with c1:
             exam_grade = st.selectbox("1. Khối lớp:", ["Khối 10", "Khối 11", "Khối 12"], index=(2 if sel_grade=="Khối 12" else (0 if sel_grade=="Khối 10" else 1)))
@@ -1283,7 +1264,7 @@ with tab4:
             if total_exam_questions == 0:
                 st.error("Tổng số câu hỏi của đề thi không được bằng 0! Vui lòng chọn ít nhất 1 câu.")
             else:
-                with st.spinner("AI đang thiết kế và chuẩn hóa đề thi theo đúng ma trận yêu cầu..."):
+                with st.spinner("AI đang thiết kế toàn bộ câu hỏi theo đúng ma trận yêu cầu (có thể mất 15-30 giây)..."):
                     try:
                         new_exam = generate_matrix_custom_exam(
                             exam_grade, exam_term,
@@ -1297,10 +1278,8 @@ with tab4:
                             st.session_state["user_exam_answers"] = {}
                             st.session_state["exam_submitted_result"] = None
                             st.rerun()
-                        else:
-                            st.error("Không thể tạo đề lúc này, vui lòng thử lại.")
                     except Exception as e:
-                        st.error(f"Lỗi tạo đề: {e}")
+                        st.error(f"⚠️️ Không thể tạo đề từ AI: {e}")
 
     # Giao diện làm bài thi khi đã tạo đề
     exam = st.session_state["generated_exam"]

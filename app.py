@@ -95,7 +95,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO KẾT NỐI GEMINI API, GSHEETS & HÀM GỌI FALLBACK AN TOÀN
+# 2. KHỞI TẠO GEMINI API, CƠ CHẾ TỰ ĐỘNG DÒ MODEL VÀ MULTI-FALLBACK TRIỆT ĐỂ
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -110,34 +110,79 @@ try:
 except Exception:
     pass
 
-def call_gemini_safe(contents_payload):
-    """Fallback tự động qua các cụm model tương thích để triệt tiêu lỗi 503 và 404."""
+def get_available_models():
+    """Tự động quét danh mục model khả dụng từ Google API trên tài khoản hiện hành."""
     if not client:
-        return None
+        return []
     
-    # Cập nhật danh sách model chính xác nhất theo thông báo từ Google API
-    candidate_models = ['gemini-3.8-flash', 'gemini-flash-latest']
+    # Thứ tự các model ưu tiên thử nghiệm
+    preferred_order = [
+        'gemini-3.8-flash',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-flash-latest',
+        'gemini-2.5-pro',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
+    ]
+    
+    discovered = []
+    try:
+        for m in client.models.list():
+            name = m.name.replace('models/', '')
+            if hasattr(m, 'supported_generation_methods') and 'generateContent' in m.supported_generation_methods:
+                discovered.append(name)
+            elif not hasattr(m, 'supported_generation_methods'):
+                discovered.append(name)
+    except Exception:
+        pass
+    
+    final_models = []
+    # 1. Thêm theo độ ưu tiên đã tìm thấy
+    for pref in preferred_order:
+        for d in discovered:
+            if pref in d and d not in final_models:
+                final_models.append(d)
+                
+    # 2. Bổ sung các model khác tìm thấy có flash hoặc pro
+    for d in discovered:
+        if ('flash' in d or 'pro' in d) and d not in final_models:
+            final_models.append(d)
+            
+    # 3. Dự phòng danh sách cứng nếu không truy vấn được list
+    if not final_models:
+        final_models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash']
+        
+    return final_models
+
+def call_gemini_safe(contents_payload):
+    """Cơ chế xoay vòng tự động qua các model để xử lý dứt điểm lỗi 503 và 404."""
+    if not client:
+        raise Exception("Chưa cấu hình GEMINI_API_KEY trong Streamlit Secrets!")
+    
+    candidate_models = get_available_models()
     last_err = ""
     
     for m in candidate_models:
-        for attempt in range(2):
-            try:
-                res = client.models.generate_content(
-                    model=m,
-                    contents=contents_payload
-                )
-                if res and res.text:
-                    return res.text
-            except Exception as e:
-                err_str = str(e)
-                last_err = err_str
-                if "503" in err_str or "429" in err_str:
-                    time.sleep(2)
-                    break
+        try:
+            res = client.models.generate_content(
+                model=m,
+                contents=contents_payload
+            )
+            if res and res.text:
+                return res.text
+        except Exception as e:
+            err_str = str(e)
+            last_err = err_str
+            # Nếu gặp 503 (quá tải), 404 (model cũ đổi tên), 429, tự động bỏ qua sang model tiếp theo
+            if any(code in err_str for code in ["503", "404", "429", "NOT_FOUND", "UNAVAILABLE"]):
+                time.sleep(1)
+                continue
+            else:
                 time.sleep(1)
                 continue
                 
-    raise Exception(f"Máy chủ AI đang phản hồi: {last_err}")
+    raise Exception(f"Tất cả các cụm máy chủ AI đang phản hồi: {last_err}")
 
 def get_lecture_audio(text_script, audio_id):
     filename = f"lecture_{audio_id}.mp3"
@@ -150,7 +195,7 @@ def get_lecture_audio(text_script, audio_id):
     return filename
 
 # ==============================================================================
-# 3. RÀ SOÁT & TỐI ƯU HÌNH ẢNH VECTOR SVG (CHỐNG ĐÈ CHỮ, CHUẨN ĐIỂM CỰC TRỊ)
+# 3. HÌNH ẢNH VECTOR SVG CHUẨN XÁC (KHÔNG ĐÈ CHỮ)
 # ==============================================================================
 PRESET_SVGS = {
     "DON_DIEU": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
@@ -729,7 +774,7 @@ if st.session_state["auth_user"] is None:
     with col_box:
         with st.container(border=True):
             st.markdown("### 🔐 Cổng Đăng Nhập")
-            login_role = st.radio("Vai trò:", ["👨‍🎓 Học sinh", "👩‍🏫 Giáo viên (Admin)"], horizontal=True)
+            login_role = st.radio("Vai trò:", ["👨‍🎓 Học sinh", "👩‍‍🏫 Giáo viên (Admin)"], horizontal=True)
             user_input = st.text_input("Tài khoản / Mã học sinh:", value="HS11_01")
             pass_input = st.text_input("Mật khẩu:", type="password", value="123")
 
@@ -949,7 +994,7 @@ with tab_ex:
                     with st.expander(f"📌 {ex_item['title']}", expanded=is_default_open):
                         st.markdown(f"**Đề bài yêu cầu:**\n\n{ex_item['problem']}")
                         st.markdown("---")
-                        st.markdown("**✍️️ Lời giải chi tiết chuẩn mực sư phạm:**")
+                        st.markdown("**✍️ Lời giải chi tiết chuẩn mực sư phạm:**")
                         st.markdown(ex_item["solution"])
 
 # ------------------------------------------------------------------------------
@@ -1280,7 +1325,7 @@ with tab4:
                             st.session_state["exam_submitted_result"] = None
                             st.rerun()
                     except Exception as e:
-                        st.error(f"⚠ Không thể tạo đề từ AI: {e}")
+                        st.error(f"⚠️ Không thể tạo đề từ AI: {e}")
 
     # Giao diện làm bài thi khi đã tạo đề
     exam = st.session_state["generated_exam"]

@@ -10,6 +10,7 @@ import hashlib
 import json
 import io
 import time
+import re
 from datetime import datetime
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
@@ -114,7 +115,7 @@ def call_gemini_safe(contents_payload):
     if not client:
         return None
     
-    candidate_models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash']
+    candidate_models = ['gemini-2.5-flash', 'gemini-2.0-flash']
     last_err = ""
     
     for m in candidate_models:
@@ -270,6 +271,57 @@ PRESET_SVGS = {
         <text x="100" y="205" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">Ox (Hoành độ)</text>
         <circle cx="325" cy="75" r="5" fill="#D97706"/>
         <text x="335" y="75" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309">M(x; y; z)</text>
+    </svg>""",
+
+    "TICH_PHAN": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="2"/>
+        <line x1="40" y1="170" x2="480" y2="170" stroke="#64748B" stroke-width="1.5"/>
+        <line x1="80" y1="195" x2="80" y2="25" stroke="#64748B" stroke-width="1.5"/>
+        <path d="M 120 170 Q 230 40 360 170 Z" fill="#93C5FD" fill-opacity="0.6" stroke="#2563EB" stroke-width="2.5"/>
+        <text x="115" y="190" font-family="sans-serif" font-size="14" font-weight="bold">a</text>
+        <text x="355" y="190" font-family="sans-serif" font-size="14" font-weight="bold">b</text>
+        <text x="220" y="135" font-family="sans-serif" font-size="15" font-weight="bold" fill="#1E40AF">S = ∫ f(x)dx</text>
+    </svg>""",
+
+    "MAT_PHANG": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="2"/>
+        <polygon points="100,170 380,170 440,75 160,75" fill="#E0F2FE" stroke="#0284C7" stroke-width="2.5"/>
+        <circle cx="280" cy="122" r="5" fill="#1E293B"/>
+        <text x="290" y="132" font-family="sans-serif" font-size="14" font-weight="bold">M₀(x₀; y₀; z₀)</text>
+        <line x1="280" y1="122" x2="280" y2="30" stroke="#DC2626" stroke-width="3"/>
+        <polygon points="280,22 274,36 286,36" fill="#DC2626"/>
+        <text x="292" y="42" font-family="sans-serif" font-size="15" font-weight="bold" fill="#DC2626">n⃗ = (A; B; C) ⊥ (P)</text>
+    </svg>""",
+
+    "MAT_CAU": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="2"/>
+        <circle cx="260" cy="110" r="85" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
+        <ellipse cx="260" cy="110" rx="85" ry="25" fill="none" stroke="#0284C7" stroke-width="2" stroke-dasharray="5"/>
+        <circle cx="260" cy="110" r="4.5" fill="#DC2626"/>
+        <text x="245" y="100" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">I(a; b; c)</text>
+        <line x1="260" y1="110" x2="330" y2="60" stroke="#16A34A" stroke-width="3"/>
+        <text x="295" y="80" font-family="sans-serif" font-size="16" font-weight="bold" fill="#15803D">R</text>
+    </svg>""",
+
+    "DUONG_THANG_OXYZ": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="2"/>
+        <line x1="90" y1="170" x2="430" y2="45" stroke="#0284C7" stroke-width="3"/>
+        <text x="100" y="155" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0284C7">d</text>
+        <circle cx="210" cy="126" r="5" fill="#DC2626"/>
+        <text x="220" y="138" font-family="sans-serif" font-size="14" font-weight="bold" fill="#DC2626">M₀(x₀; y₀; z₀)</text>
+        <line x1="290" y1="96" x2="380" y2="63" stroke="#16A34A" stroke-width="3"/>
+        <polygon points="390,60 377,68 381,58" fill="#16A34A"/>
+        <text x="300" y="82" font-family="sans-serif" font-size="15" font-weight="bold" fill="#16A34A">u⃗ = (a; b; c)</text>
+    </svg>""",
+
+    "XAC_SUAT": """<svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="2"/>
+        <rect x="150" y="85" width="45" height="100" fill="#3B82F6"/>
+        <rect x="235" y="45" width="45" height="140" fill="#10B981"/>
+        <rect x="320" y="115" width="45" height="70" fill="#F59E0B"/>
+        <line x1="90" y1="185" x2="430" y2="185" stroke="#334155" stroke-width="2"/>
+        <line x1="90" y1="185" x2="90" y2="25" stroke="#334155" stroke-width="2"/>
+        <text x="180" y="35" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1E293B">Xác suất & Thống kê</text>
     </svg>"""
 }
 
@@ -418,33 +470,50 @@ def generate_advanced_exercise_ai(lesson_title):
         return None
 
 def generate_matrix_custom_exam(grade, term, p1_nb, p1_th, p1_vd, p2_nb, p2_th, p2_vd, p3_th, p3_vd, p3_vdc, p3_mod):
-    """Sinh đề thi theo chi tiết số lượng câu của từng mức độ nhận thức."""
+    """Sinh đề thi theo chi tiết số lượng câu của từng mức độ nhận thức bám sát GDPT 2018."""
     total_p1 = p1_nb + p1_th + p1_vd
     total_p2 = p2_nb + p2_th + p2_vd
     total_p3 = p3_th + p3_vd + p3_vdc
     
-    prompt = (
-        f"Bạn là chuyên gia khảo thí môn Toán THPT Chương trình GDPT 2018 (Bộ sách Kết nối tri thức).\n"
-        f"Hãy tạo 1 đề thi môn Toán dành cho {grade}, kỳ thi: {term}.\n"
-        f"MA TRẬN CẤU TRÚC CHI TIẾT:\n"
-        f"- PHẦN I (Trắc nghiệm 4 lựa chọn, chọn 1): Tổng {total_p1} câu. Trong đó: {p1_nb} câu Nhận biết, {p1_th} câu Thông hiểu, {p1_vd} câu Vận dụng.\n"
-        f"- PHẦN II (Trắc nghiệm Đúng/Sai, mỗi câu 4 ý a,b,c,d): Tổng {total_p2} câu. Trong đó có {p2_nb} câu Nhận biết, {p2_th} câu Thông hiểu, {p2_vd} câu Vận dụng.\n"
-        f"- PHẦN III (Trắc nghiệm trả lời ngắn): Tổng {total_p3} câu. Trong đó: {p3_th} câu Thông hiểu, {p3_vd} câu Vận dụng, {p3_vdc} câu Vận dụng cao. Có {p3_mod} câu bài toán thực tế mô hình hóa. Đáp án bắt buộc là số thực.\n"
-        "Nếu phần nào có số câu là 0 thì trả về mảng rỗng [] cho phần đó.\n"
-        "Trả về DUY NHẤT một chuỗi JSON hợp lệ không có markdown bọc ngoài:\n"
-        "{\n"
-        '  "exam_title": "ĐỀ THI ' + f'{grade.upper()} - {term.upper()}' + '",\n'
-        '  "part1": [\n'
-        '    {"id": "P1_1", "question": "Nội dung...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}\n'
-        '  ],\n'
-        '  "part2": [\n'
-        '    {"id": "P2_1", "question": "Nội dung...", "sub_items": [{"label": "a", "text": "...", "correct": true}, {"label": "b", "text": "...", "correct": false}, {"label": "c", "text": "...", "correct": true}, {"label": "d", "text": "...", "correct": false}]}\n'
-        '  ],\n'
-        '  "part3": [\n'
-        '    {"id": "P3_1", "question": "Nội dung...", "correct_num": "4.5", "is_modeled": true}\n'
-        '  ]\n'
-        "}"
-    )
+    prompt = f"""
+Bạn là chuyên gia Khảo thí và Đánh giá môn Toán THPT Chương trình GDPT 2018 (Bộ sách Kết nối tri thức với cuộc sống).
+Hãy thiết kế một đề kiểm tra chính thức môn Toán dành cho: {grade.upper()} - Kỳ thi: {term.upper()}.
+
+MA TRẬN ĐỀ THI YÊU CẦU BẮT BUỘC:
+1. PHẦN I (Trắc nghiệm nhiều lựa chọn 4 phương án A, B, C, D):
+   - Tổng số câu: {total_p1} câu.
+   - Cơ cấu mức độ: {p1_nb} câu Nhận biết (NB), {p1_th} câu Thông hiểu (TH), {p1_vd} câu Vận dụng (VD).
+   - Nội dung: Mỗi câu có 4 đáp án A, B, C, D, chỉ duy nhất 1 đáp án đúng.
+
+2. PHẦN II (Trắc nghiệm Đúng/Sai):
+   - Tổng số câu: {total_p2} câu.
+   - Cơ cấu mức độ: {p2_nb} câu Nhận biết (NB), {p2_th} câu Thông hiểu (TH), {p2_vd} câu Vận dụng (VD).
+   - Nội dung: Mỗi câu có phần thân đề bài và đúng 4 khẳng định a, b, c, d với giá trị đúng/sai (true/false) rõ ràng.
+
+3. PHẦN III (Trắc nghiệm trả lời ngắn):
+   - Tổng số câu: {total_p3} câu.
+   - Cơ cấu mức độ: {p3_th} câu Thông hiểu (TH), {p3_vd} câu Vận dụng (VD), {p3_vdc} câu Vận dụng cao (VDC).
+   - Trong đó BẮT BUỘC có đúng {p3_mod} câu là bài toán thực tế mô hình hóa (tối ưu hóa, kinh tế, vật lý, xác suất, đo đạc hình học).
+   - Đáp án đúng của Phần III bắt buộc phải là một con số cụ thể (nếu là số thập phân, yêu cầu làm tròn đến 1 chữ số thập phân).
+
+QUY TẮC ĐỊNH DẠNG TOÁN HỌC:
+- Viết công thức toán học bằng định dạng LaTeX chuẩn, đặt trong dấu $...$ (ví dụ: $x^2 - 3x + 2 = 0$, $\\frac{{2x-1}}{{x+1}}$, $\\sqrt{{x+1}}$, $\\int_0^1 f(x)dx$).
+- Nếu phần nào có tổng số câu là 0, trả về mảng rỗng [] cho phần đó.
+
+TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không có giải thích thêm với cấu trúc:
+{{
+  "exam_title": "ĐỀ THI {grade.upper()} - {term.upper()}",
+  "part1": [
+    {{"id": "P1_1", "question": "Nội dung câu...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "correct": "A"}}
+  ],
+  "part2": [
+    {{"id": "P2_1", "question": "Nội dung câu...", "sub_items": [{{"label": "a", "text": "...", "correct": true}}, {{"label": "b", "text": "...", "correct": false}}, {{"label": "c", "text": "...", "correct": true}}, {{"label": "d", "text": "...", "correct": false}}]}}
+  ],
+  "part3": [
+    {{"id": "P3_1", "question": "Nội dung câu...", "correct_num": "4.5", "is_modeled": true}}
+  ]
+}}
+"""
     try:
         raw = call_gemini_safe([prompt])
         t = raw.strip()
@@ -456,21 +525,21 @@ def generate_matrix_custom_exam(grade, term, p1_nb, p1_th, p1_vd, p2_nb, p2_th, 
     except Exception:
         part1_fall = []
         if total_p1 > 0:
-            part1_fall.append({"id": "P1_1", "question": f"Cho hàm số bậc ba $y = f(x)$ có đồ thị chuẩn. Điểm cực đại của hàm số là:", "options": ["A. x = 1", "B. x = -1", "C. y = 2", "D. x = 3"], "correct": "A"})
+            part1_fall.append({"id": "P1_1", "question": f"Cho hàm số bậc ba $y = f(x)$ có bảng biến thiên chuẩn. Điểm cực đại của hàm số đã cho là:", "options": ["A. $x = 1$", "B. $x = -1$", "C. $y = 2$", "D. $x = 3$"], "correct": "A"})
         part2_fall = []
         if total_p2 > 0:
             part2_fall.append({
-                "id": "P2_1", "question": "Cho hình chóp S.ABCD có đáy ABCD là hình vuông cạnh a, $SA \\perp (ABCD)$ và $SA = a\\sqrt{2}$. Xét tính đúng sai:",
+                "id": "P2_1", "question": "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$, $SA \\perp (ABCD)$ và $SA = a\\sqrt{2}$. Xét tính đúng, sai của các khẳng định sau:",
                 "sub_items": [
-                    {"label": "a", "text": "Đường thẳng SA vuông góc với (ABCD).", "correct": True},
-                    {"label": "b", "text": "Tam giác SBC vuông tại B.", "correct": True},
-                    {"label": "c", "text": "Góc giữa SC và (ABCD) bằng 60 độ.", "correct": False},
-                    {"label": "d", "text": "Thể tích khối chóp là a^3 căn 2 chia 3.", "correct": True}
+                    {"label": "a", "text": "Đường thẳng $SA$ vuông góc với mặt phẳng $(ABCD)$.", "correct": True},
+                    {"label": "b", "text": "Tam giác $SBC$ là tam giác vuông tại $B$.", "correct": True},
+                    {"label": "c", "text": "Góc giữa đường thẳng $SC$ và $(ABCD)$ bằng $60^\\circ$.", "correct": False},
+                    {"label": "d", "text": "Thể tích khối chóp $S.ABCD$ bằng $\\frac{a^3\\sqrt{2}}{3}$.", "correct": True}
                 ]
             })
         part3_fall = []
         if total_p3 > 0:
-            part3_fall.append({"id": "P3_1", "question": "Một xưởng làm hộp kim loại không nắp có thể tích 500 m^3, đáy hình chữ nhật có chiều dài gấp đôi chiều rộng. Tính chiều rộng đáy (mét) để tốn ít vật liệu nhất (làm tròn 1 chữ số thập phân).", "correct_num": "6.1", "is_modeled": True})
+            part3_fall.append({"id": "P3_1", "question": "Một xưởng sản xuất cần làm hộp chứa hàng dạng hình hộp chữ nhật không nắp có thể tích 500 m$^3$. Đáy có chiều dài gấp đôi chiều rộng. Tính chiều rộng của đáy (mét) để diện tích vật liệu nhỏ nhất (làm tròn đến 1 chữ số thập phân).", "correct_num": "6.1", "is_modeled": True})
 
         return {
             "exam_title": f"ĐỀ THI KHẢO THÍ CHUẨN HÓA {grade.upper()} - {term.upper()}",
@@ -479,46 +548,188 @@ def generate_matrix_custom_exam(grade, term, p1_nb, p1_th, p1_vd, p2_nb, p2_th, 
             "part3": part3_fall
         }
 
+# ==============================================================================
+# BỘ CHUYỂN ĐỔI LATEX SANG UNICODE TOÁN HỌC & XUẤT FILE WORD IN ĐƯỢC
+# ==============================================================================
+def clean_latex_to_text(text: str) -> str:
+    """Chuyển đổi các cú pháp LaTeX thông dụng sang ký tự Unicode toán học để in ngay trên Word."""
+    if not text:
+        return ""
+    s = str(text)
+
+    # 1. Bỏ dấu đóng/mở khối công thức $ hoặc $$
+    s = re.sub(r'\$\$?', '', s)
+
+    # 2. Chuyển đổi các ký hiệu đặc biệt
+    replacements = [
+        (r'\\pm', '±'),
+        (r'\\times', '×'),
+        (r'\\div', '÷'),
+        (r'\\approx', '≈'),
+        (r'\\ne', '≠'),
+        (r'\\le', '≤'),
+        (r'\\ge', '≥'),
+        (r'\\in', '∈'),
+        (r'\\notin', '∉'),
+        (r'\\subset', '⊂'),
+        (r'\\cap', '∩'),
+        (r'\\cup', '∪'),
+        (r'\\emptyset', '∅'),
+        (r'\\infty', '∞'),
+        (r'\\forall', '∀'),
+        (r'\\exists', '∃'),
+        (r'\\implies', '⇒'),
+        (r'\\iff', '⇔'),
+        (r'\\perp', '⊥'),
+        (r'\\parallel', '∥'),
+        (r'\\alpha', 'α'),
+        (r'\\beta', 'β'),
+        (r'\\pi', 'π'),
+        (r'\\Delta', 'Δ'),
+        (r'\\int', '∫'),
+        (r'\\mathbb\{R\}', 'ℝ'),
+        (r'\\mathbb\{N\}', 'ℕ'),
+        (r'\\mathbb\{Z\}', 'ℤ'),
+        (r'\\mathbb\{Q\}', 'ℚ'),
+    ]
+    for pattern, repl in replacements:
+        s = re.sub(pattern, repl, s)
+
+    # 3. Chuyển đổi phân số: \frac{a}{b} -> (a)/(b)
+    s = re.sub(r'\\frac\{([^{}]+)\}\{([^{}]+)\}', r'(\1)/(\2)', s)
+
+    # 4. Chuyển đổi căn thức: \sqrt{a} -> √(a)
+    s = re.sub(r'\\sqrt\{([^{}]+)\}', r'√(\1)', s)
+    s = re.sub(r'\\sqrt\s*([a-zA-Z0-9])', r'√\1', s)
+
+    # 5. Chuyển đổi vectơ: \vec{AB} -> vectơ AB
+    s = re.sub(r'\\vec\{([^{}]+)\}', r'vectơ \1', s)
+
+    # 6. Chuyển đổi số mũ cơ bản sang Unicode superscript
+    superscript_map = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻'}
+    def replace_pow(match):
+        p = match.group(1)
+        return ''.join(superscript_map.get(c, c) for c in p)
+    s = re.sub(r'\^\{([0-9+-]+)\}', replace_pow, s)
+    s = re.sub(r'\^([0-9])', lambda m: superscript_map.get(m.group(1), m.group(1)), s)
+
+    # 7. Chuyển đổi chỉ số dưới: x_1 -> x₁, x_0 -> x₀
+    subscript_map = {'0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'}
+    s = re.sub(r'\_\{([0-9]+)\}', lambda m: ''.join(subscript_map.get(c, c) for c in m.group(1)), s)
+    s = re.sub(r'\_([0-9])', lambda m: subscript_map.get(m.group(1), m.group(1)), s)
+
+    # 8. Dọn dẹp khoảng trắng thừa và dấu ngoặc nhọn
+    s = s.replace('{', '').replace('}', '')
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
 def export_exam_to_docx(exam_data):
-    """Xuất đề thi ra file Word (.docx) chuẩn format in ấn."""
+    """Xuất đề thi ra file Word (.docx) chuẩn format in ấn, sạch mã LaTeX."""
     doc = Document()
     
-    title_p = doc.add_paragraph()
-    title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run_t = title_p.add_run(exam_data.get("exam_title", "ĐỀ THI MÔN TOÁN THPT").upper() + "\n")
-    run_t.bold = True
-    run_t.font.size = Pt(14)
-    run_sub = title_p.add_run("Thời gian làm bài: 90 phút (Không kể thời gian phát đề)\n-----------------------")
-    run_sub.font.italic = True
+    for section in doc.sections:
+        section.top_margin = Inches(0.75)
+        section.bottom_margin = Inches(0.75)
+        section.left_margin = Inches(0.75)
+        section.right_margin = Inches(0.75)
+
+    table_header = doc.add_table(rows=1, cols=2)
+    table_header.autofit = False
     
+    cell_left = table_header.cell(0, 0)
+    p_left = cell_left.paragraphs[0]
+    p_left.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_left.add_run("BỘ GIÁO DỤC VÀ ĐÀO TẠO\n").bold = True
+    p_left.add_run("TRƯỜNG THPT CHUYÊN / CHUẨN\n").bold = True
+    p_left.add_run("ĐỀ THI CHÍNH THỨC").italic = True
+
+    cell_right = table_header.cell(0, 1)
+    p_right = cell_right.paragraphs[0]
+    p_right.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title_text = clean_latex_to_text(exam_data.get("exam_title", "ĐỀ KIỂM TRA MÔN TOÁN")).upper()
+    run_t = p_right.add_run(f"{title_text}\n")
+    run_t.bold = True
+    run_t.font.size = Pt(12)
+    p_right.add_run("Thời gian làm bài: 90 phút (Không kể thời gian phát đề)\n").italic = True
+    p_right.add_run("Mã đề thi: 101").bold = True
+
+    doc.add_paragraph("─" * 58).alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    p_info = doc.add_paragraph()
+    p_info.add_run("Họ và tên thí sinh: ............................................................................   Số báo danh: .....................\n")
+
     p1 = exam_data.get("part1", [])
     if p1:
-        doc.add_heading("PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn (Thí sinh chọn 1 đáp án)", level=2)
+        h1 = doc.add_paragraph()
+        r1 = h1.add_run("PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn.")
+        r1.bold = True
+        r1.font.size = Pt(11)
+        doc.add_paragraph("Thí sinh trả lời từ câu 1 đến câu " + str(len(p1)) + ". Mỗi câu hỏi thí sinh chỉ chọn một phương án.")
+
         for idx, q in enumerate(p1):
             p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(2)
             p.add_run(f"Câu {idx + 1}: ").bold = True
-            p.add_run(q.get("question", ""))
-            for opt in q.get("options", []):
-                doc.add_paragraph(f"    {opt}")
+            p.add_run(clean_latex_to_text(q.get("question", "")))
+            
+            opts = q.get("options", [])
+            for opt in opts:
+                p_opt = doc.add_paragraph()
+                p_opt.paragraph_format.left_indent = Inches(0.25)
+                p_opt.paragraph_format.space_before = Pt(0)
+                p_opt.paragraph_format.space_after = Pt(2)
+                p_opt.add_run(clean_latex_to_text(opt))
 
     p2 = exam_data.get("part2", [])
     if p2:
-        doc.add_heading("PHẦN II. Câu trắc nghiệm Đúng/Sai (Mỗi câu thí sinh trả lời đúng/sai cho các ý a, b, c, d)", level=2)
+        h2 = doc.add_paragraph()
+        h2.paragraph_format.space_before = Pt(10)
+        r2 = h2.add_run("PHẦN II. Câu trắc nghiệm đúng sai.")
+        r2.bold = True
+        r2.font.size = Pt(11)
+        doc.add_paragraph("Thí sinh trả lời từ câu 1 đến câu " + str(len(p2)) + ". Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai.")
+
         for idx, q in enumerate(p2):
             p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(2)
             p.add_run(f"Câu {idx + 1}: ").bold = True
-            p.add_run(q.get("question", ""))
+            p.add_run(clean_latex_to_text(q.get("question", "")))
+
             for sub in q.get("sub_items", []):
-                doc.add_paragraph(f"    {sub.get('label')}) {sub.get('text')}")
+                p_sub = doc.add_paragraph()
+                p_sub.paragraph_format.left_indent = Inches(0.25)
+                p_sub.paragraph_format.space_before = Pt(0)
+                p_sub.paragraph_format.space_after = Pt(2)
+                p_sub.add_run(f"{sub.get('label')}) ").bold = True
+                p_sub.add_run(clean_latex_to_text(sub.get("text", "")))
 
     p3 = exam_data.get("part3", [])
     if p3:
-        doc.add_heading("PHẦN III. Câu trắc nghiệm trả lời ngắn (Thí sinh điền kết quả vào ô trả lời)", level=2)
+        h3 = doc.add_paragraph()
+        h3.paragraph_format.space_before = Pt(10)
+        r3 = h3.add_run("PHẦN III. Câu trắc nghiệm trả lời ngắn.")
+        r3.bold = True
+        r3.font.size = Pt(11)
+        doc.add_paragraph("Thí sinh trả lời từ câu 1 đến câu " + str(len(p3)) + ". Viết kết quả dưới dạng số (làm tròn đến 1 chữ số thập phân nếu cần).")
+
         for idx, q in enumerate(p3):
             p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(2)
             p.add_run(f"Câu {idx + 1}: ").bold = True
-            p.add_run(q.get("question", ""))
-            doc.add_paragraph("    Đáp số: .....................................................")
+            p.add_run(clean_latex_to_text(q.get("question", "")))
+            
+            p_ans = doc.add_paragraph()
+            p_ans.paragraph_format.left_indent = Inches(0.25)
+            p_ans.add_run("Đáp số: .....................................................").italic = True
+
+    p_end = doc.add_paragraph()
+    p_end.paragraph_format.space_before = Pt(14)
+    p_end.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_end.add_run("────────── HẾT ──────────\n").bold = True
+    p_end.add_run("Cán bộ coi thi không giải thích gì thêm.").italic = True
 
     doc_io = io.BytesIO()
     doc.save(doc_io)

@@ -97,7 +97,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO GEMINI API & CƠ CHẾ DÒ MODEL KHẢ DỤNG ĐỘNG (DỰA TRÊN LISTMODELS)
+# 2. KHỞI TẠO GEMINI API & CƠ CHẾ DÒ MODEL KHẢ DỤNG ĐỘNG
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -112,11 +112,10 @@ try:
 except Exception:
     pass
 
-# Biến đệm lưu danh sách model để tránh quét liên tục
 CACHED_AVAILABLE_MODELS = []
 
 def get_dynamic_supported_models():
-    """Truy vấn trực tiếp ModelService.ListModels để lấy danh sách model thực sự khả dụng."""
+    """Truy vấn trực tiếp danh sách model thực sự khả dụng để tránh lỗi 404."""
     global CACHED_AVAILABLE_MODELS
     if CACHED_AVAILABLE_MODELS:
         return CACHED_AVAILABLE_MODELS
@@ -127,12 +126,10 @@ def get_dynamic_supported_models():
     discovered = []
     try:
         for m in client.models.list():
-            # Chuẩn hóa tên model (bỏ tiền tố 'models/')
             model_id = m.name.replace('models/', '') if m.name else ""
             if not model_id:
                 continue
             
-            # Kiểm tra xem model có hỗ trợ generateContent không
             supports_generate = False
             if hasattr(m, 'supported_generation_methods') and m.supported_generation_methods:
                 if 'generateContent' in m.supported_generation_methods:
@@ -141,7 +138,6 @@ def get_dynamic_supported_models():
                 if 'generateContent' in m.supported_actions:
                     supports_generate = True
             else:
-                # Nếu không có thuộc tính liệt kê, chỉ nhận diện các model dòng flash hoặc pro
                 if 'flash' in model_id.lower() or 'pro' in model_id.lower():
                     supports_generate = True
             
@@ -150,7 +146,6 @@ def get_dynamic_supported_models():
     except Exception:
         pass
 
-    # Sắp xếp ưu tiên: Flash nhẹ -> Flash tiêu chuẩn -> Pro
     priority_order = [
         'gemini-3.8-flash',
         'gemini-2.5-flash-lite',
@@ -158,8 +153,7 @@ def get_dynamic_supported_models():
         'gemini-2.0-flash-lite',
         'gemini-2.0-flash',
         'gemini-flash-latest',
-        'gemini-2.5-pro',
-        'gemini-2.0-pro'
+        'gemini-2.5-pro'
     ]
     
     sorted_models = []
@@ -172,7 +166,6 @@ def get_dynamic_supported_models():
         if d not in sorted_models:
             sorted_models.append(d)
 
-    # Dự phòng an toàn nếu không lấy được danh sách từ API
     if not sorted_models:
         sorted_models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash']
 
@@ -199,10 +192,8 @@ def call_gemini_safe(contents_payload):
             except Exception as e:
                 err_str = str(e)
                 last_err = err_str
-                # Nếu model bị lỗi 404 (không tồn tại), bỏ qua ngay lập tức
                 if "404" in err_str or "NOT_FOUND" in err_str:
                     break
-                # Nếu bị quá tải (503) hoặc chạm hạn mức (429), giãn cách rồi đổi model
                 if "503" in err_str or "UNAVAILABLE" in err_str:
                     time.sleep(1.5)
                     break
@@ -495,13 +486,43 @@ def reward_student_flower(student_id, earned, reason):
             break
 
 # ==============================================================================
-# HÀM AI SINH ĐỀ TƯƠNG TỰ, ĐỀ NÂNG CAO VÀ ĐỀ THI MA TRẬN TÙY CHỈNH
+# HÀM XỬ LÝ CHUỖI JSON CHỐNG LỖI INVALID ESCAPE SEQUENCE
+# ==============================================================================
+def safe_parse_json(raw_text: str):
+    """
+    Xử lý triệt để lỗi 'Invalid \escape' khi AI sinh công thức Toán học có dấu gạch chéo ngược.
+    """
+    t = raw_text.strip()
+    if t.startswith("```json"):
+        t = t[7:]
+    elif t.startswith("```"):
+        t = t[3:]
+    if t.endswith("```"):
+        t = t[:-3]
+    t = t.strip()
+
+    # Thử parse trực tiếp với strict=False
+    try:
+        return json.loads(t, strict=False)
+    except Exception:
+        pass
+
+    # Nếu gặp lỗi escape, dùng regex để sửa các dấu \ đơn thành \\ (ngoại trừ các escape chuẩn như \" \n \r \t \b \f \\)
+    fixed_text = re.sub(r'\\(?![/"\\bfnrtu])', r'\\\\', t)
+    try:
+        return json.loads(fixed_text, strict=False)
+    except Exception as e:
+        raise Exception(f"Lỗi đọc định dạng JSON: {e}")
+
+# ==============================================================================
+# HÀM AI SINH ĐỀ TƯƠNG TỰ, ĐỀ NÂNG CAO VÀ ĐỀ THI MA TRẬN
 # ==============================================================================
 def generate_similar_exercise_ai(base_problem):
     prompt = (
         f"Dựa vào bài toán gốc: '{base_problem}'.\n"
         "Hãy tạo 1 bài toán TƯƠNG TỰ CÙNG DẠNG, chỉ đổi số liệu.\n"
         "Đáp số là 1 con số thực duy nhất.\n"
+        "LƯU Ý QUAN TRỌNG: Mọi dấu gạch chéo ngược trong công thức phải được escape 2 lần (ví dụ \\\\frac, \\\\sqrt).\n"
         "Trả về định dạng JSON thuần:\n"
         "{\n"
         '  "problem": "Nội dung đề bài mới",\n'
@@ -511,12 +532,7 @@ def generate_similar_exercise_ai(base_problem):
     )
     try:
         raw_text = call_gemini_safe([prompt])
-        t = raw_text.strip()
-        if t.startswith("```json"):
-            t = t[7:]
-        if t.endswith("```"):
-            t = t[:-3]
-        return json.loads(t.strip())
+        return safe_parse_json(raw_text)
     except Exception:
         return None
 
@@ -525,6 +541,7 @@ def generate_advanced_exercise_ai(lesson_title):
         f"Thuộc bài học: '{lesson_title}' (Toán THPT GDPT 2018).\n"
         "Hãy sáng tạo 1 bài toán mức độ VẬN DỤNG CAO hoặc MÔ HÌNH HÓA THỰC TẾ.\n"
         "Đáp số là số thực cụ thể.\n"
+        "LƯU Ý QUAN TRỌNG: Mọi dấu gạch chéo ngược trong công thức phải được escape 2 lần (ví dụ \\\\frac, \\\\sqrt).\n"
         "Trả về định dạng JSON thuần:\n"
         "{\n"
         '  "problem": "Nội dung bài toán",\n'
@@ -534,17 +551,12 @@ def generate_advanced_exercise_ai(lesson_title):
     )
     try:
         raw_text = call_gemini_safe([prompt])
-        t = raw_text.strip()
-        if t.startswith("```json"):
-            t = t[7:]
-        if t.endswith("```"):
-            t = t[:-3]
-        return json.loads(t.strip())
+        return safe_parse_json(raw_text)
     except Exception:
         return None
 
 def generate_matrix_custom_exam(grade, term, p1_nb, p1_th, p1_vd, p2_nb, p2_th, p2_vd, p3_th, p3_vd, p3_vdc, p3_mod):
-    """Sinh đề thi chính xác số lượng câu theo ma trận; tinh giản để AI phản hồi nhanh nhất."""
+    """Sinh đề thi chính xác số lượng câu theo ma trận; chống lỗi invalid escape."""
     total_p1 = p1_nb + p1_th + p1_vd
     total_p2 = p2_nb + p2_th + p2_vd
     total_p3 = p3_th + p3_vd + p3_vdc
@@ -554,11 +566,15 @@ Bạn là chuyên gia Khảo thí môn Toán THPT Chương trình GDPT 2018.
 Tạo 1 đề thi Toán cho: {grade.upper()} - Kỳ thi: {term.upper()}.
 
 MA TRẬN BẮT BUỘC (PHẢI TẠO ĐỦ SỐ LƯỢNG):
-1. PHẦN I (Trắc nghiệm 4 lựa chọn): Tạo ĐỦ {total_p1} câu. (Mỗi câu có A, B, C, D; correct là 'A','B','C' hoặc 'D').
+1. PHẦN I (Trắc nghiệm 4 lựa chọn): Tạo ĐỦ {total_p1} câu. (Mỗi câu có options A, B, C, D; correct là 'A','B','C' hoặc 'D').
 2. PHẦN II (Trắc nghiệm Đúng/Sai): Tạo ĐỦ {total_p2} câu. (Mỗi câu 4 ý a, b, c, d; correct là true/false).
 3. PHẦN III (Trả lời ngắn): Tạo ĐỦ {total_p3} câu. Trong đó có {p3_mod} câu mô hình hóa thực tế. Đáp số correct_num là số thực.
 
-Công thức toán đặt trong dấu $...$. Trả về DUY NHẤT chuỗi JSON (không kèm chữ nào khác):
+QUY TẮC BẮT BUỘC VỀ JSON:
+- Viết công thức toán trong dấu $...$.
+- MỌI DẤU GẠCH CHÉO NGƯỢC PHẢI ĐƯỢC ESCAPE HAI LẦN (ví dụ: viết \\\\frac thay vì \\frac, \\\\sqrt thay vì \\sqrt) để đảm bảo chuỗi JSON hợp lệ 100%.
+
+Trả về DUY NHẤT chuỗi JSON (không kèm chú thích bên ngoài):
 {{
   "exam_title": "ĐỀ THI {grade.upper()} - {term.upper()}",
   "part1": [
@@ -576,21 +592,7 @@ Công thức toán đặt trong dấu $...$. Trả về DUY NHẤT chuỗi JSON 
     if not raw:
         raise Exception("Không nhận được phản hồi từ AI.")
         
-    t = raw.strip()
-    if t.startswith("```json"):
-        t = t[7:]
-    elif t.startswith("```"):
-        t = t[3:]
-    if t.endswith("```"):
-        t = t[:-3]
-    t = t.strip()
-    
-    try:
-        exam_json = json.loads(t)
-    except Exception as parse_err:
-        raise Exception(f"Lỗi đọc định dạng JSON: {parse_err}. AI trả về không đúng định dạng.")
-
-    return exam_json
+    return safe_parse_json(raw)
 
 # ==============================================================================
 # BỘ XUẤT CÔNG THỨC DẠNG EQUATION AN TOÀN TUYỆT ĐỐI (TRÁNH LỖI XML)

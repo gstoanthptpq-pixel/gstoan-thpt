@@ -97,7 +97,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO GEMINI API & CƠ CHẾ GỌI XOAY VÒNG CHỐNG NGHẼN 503
+# 2. KHỞI TẠO GEMINI API & CƠ CHẾ DÒ MODEL KHẢ DỤNG ĐỘNG (DỰA TRÊN LISTMODELS)
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -112,24 +112,82 @@ try:
 except Exception:
     pass
 
+# Biến đệm lưu danh sách model để tránh quét liên tục
+CACHED_AVAILABLE_MODELS = []
+
+def get_dynamic_supported_models():
+    """Truy vấn trực tiếp ModelService.ListModels để lấy danh sách model thực sự khả dụng."""
+    global CACHED_AVAILABLE_MODELS
+    if CACHED_AVAILABLE_MODELS:
+        return CACHED_AVAILABLE_MODELS
+    
+    if not client:
+        return []
+    
+    discovered = []
+    try:
+        for m in client.models.list():
+            # Chuẩn hóa tên model (bỏ tiền tố 'models/')
+            model_id = m.name.replace('models/', '') if m.name else ""
+            if not model_id:
+                continue
+            
+            # Kiểm tra xem model có hỗ trợ generateContent không
+            supports_generate = False
+            if hasattr(m, 'supported_generation_methods') and m.supported_generation_methods:
+                if 'generateContent' in m.supported_generation_methods:
+                    supports_generate = True
+            elif hasattr(m, 'supported_actions') and m.supported_actions:
+                if 'generateContent' in m.supported_actions:
+                    supports_generate = True
+            else:
+                # Nếu không có thuộc tính liệt kê, chỉ nhận diện các model dòng flash hoặc pro
+                if 'flash' in model_id.lower() or 'pro' in model_id.lower():
+                    supports_generate = True
+            
+            if supports_generate:
+                discovered.append(model_id)
+    except Exception:
+        pass
+
+    # Sắp xếp ưu tiên: Flash nhẹ -> Flash tiêu chuẩn -> Pro
+    priority_order = [
+        'gemini-3.8-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash',
+        'gemini-flash-latest',
+        'gemini-2.5-pro',
+        'gemini-2.0-pro'
+    ]
+    
+    sorted_models = []
+    for p in priority_order:
+        for d in discovered:
+            if p in d and d not in sorted_models:
+                sorted_models.append(d)
+                
+    for d in discovered:
+        if d not in sorted_models:
+            sorted_models.append(d)
+
+    # Dự phòng an toàn nếu không lấy được danh sách từ API
+    if not sorted_models:
+        sorted_models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash']
+
+    CACHED_AVAILABLE_MODELS = sorted_models
+    return CACHED_AVAILABLE_MODELS
+
 def call_gemini_safe(contents_payload):
-    """Cơ chế xoay vòng thông minh qua nhiều họ model để vượt qua lỗi quá tải 503."""
+    """Gọi model an toàn, tự động chuyển model tiếp theo khi gặp 503 hoặc 429."""
     if not client:
         raise Exception("Chưa cấu hình GEMINI_API_KEY trong Streamlit Secrets!")
     
-    # Ưu tiên các model nhẹ, ít nghẽn, và chuyển sang model Pro/Flash khác nếu bị 503
-    candidate_models = [
-        'gemini-2.5-flash-lite',
-        'gemini-2.5-flash',
-        'gemini-1.5-flash',
-        'gemini-2.0-flash',
-        'gemini-3.8-flash',
-        'gemini-2.5-pro',
-        'gemini-1.5-pro'
-    ]
+    active_models = get_dynamic_supported_models()
     last_err = ""
     
-    for m in candidate_models:
+    for m in active_models:
         for attempt in range(2):
             try:
                 res = client.models.generate_content(
@@ -141,7 +199,10 @@ def call_gemini_safe(contents_payload):
             except Exception as e:
                 err_str = str(e)
                 last_err = err_str
-                # Nếu cụm server quá tải (503) hoặc chạm hạn mức (429), giãn cách rồi đổi model
+                # Nếu model bị lỗi 404 (không tồn tại), bỏ qua ngay lập tức
+                if "404" in err_str or "NOT_FOUND" in err_str:
+                    break
+                # Nếu bị quá tải (503) hoặc chạm hạn mức (429), giãn cách rồi đổi model
                 if "503" in err_str or "UNAVAILABLE" in err_str:
                     time.sleep(1.5)
                     break
@@ -891,7 +952,7 @@ with tab1:
             
             st.markdown("""
             <div class="audio-box">
-                <b>🎙️ Âm Thanh Thuyết Minh Chủ Điểm (Trích Vở tự học):</b><br>
+                <b>🎙️️ Âm Thanh Thuyết Minh Chủ Điểm (Trích Vở tự học):</b><br>
                 <small>Nghe giảng cô đọng kiến thức cốt lõi và các bẫy sai lầm thường gặp:</small>
             </div>
             """, unsafe_allow_html=True)

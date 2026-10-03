@@ -97,7 +97,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO GEMINI API & CƠ CHẾ GỌI TỐI ƯU TỐC ĐỘ, CHỐNG NGHẼN
+# 2. KHỞI TẠO GEMINI API & CƠ CHẾ GỌI XOAY VÒNG CHỐNG NGHẼN 503
 # ==============================================================================
 client = None
 if "GEMINI_API_KEY" in st.secrets:
@@ -113,30 +113,45 @@ except Exception:
     pass
 
 def call_gemini_safe(contents_payload):
-    """Gọi API với thứ tự ưu tiên các model Flash siêu tốc để phản hồi nhanh nhất."""
+    """Cơ chế xoay vòng thông minh qua nhiều họ model để vượt qua lỗi quá tải 503."""
     if not client:
         raise Exception("Chưa cấu hình GEMINI_API_KEY trong Streamlit Secrets!")
     
-    # Danh sách model tối ưu tốc độ và sẵn sàng phản hồi
-    fast_models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.8-flash']
+    # Ưu tiên các model nhẹ, ít nghẽn, và chuyển sang model Pro/Flash khác nếu bị 503
+    candidate_models = [
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash',
+        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+        'gemini-3.8-flash',
+        'gemini-2.5-pro',
+        'gemini-1.5-pro'
+    ]
     last_err = ""
     
-    for m in fast_models:
-        try:
-            res = client.models.generate_content(
-                model=m,
-                contents=contents_payload
-            )
-            if res and res.text:
-                return res.text
-        except Exception as e:
-            err_str = str(e)
-            last_err = err_str
-            # Tự động chuyển model nếu gặp quá tải (503) hoặc không tồn tại (404)
-            time.sleep(0.5)
-            continue
-            
-    raise Exception(f"Máy chủ AI phản hồi: {last_err}")
+    for m in candidate_models:
+        for attempt in range(2):
+            try:
+                res = client.models.generate_content(
+                    model=m,
+                    contents=contents_payload
+                )
+                if res and res.text:
+                    return res.text
+            except Exception as e:
+                err_str = str(e)
+                last_err = err_str
+                # Nếu cụm server quá tải (503) hoặc chạm hạn mức (429), giãn cách rồi đổi model
+                if "503" in err_str or "UNAVAILABLE" in err_str:
+                    time.sleep(1.5)
+                    break
+                elif "429" in err_str:
+                    time.sleep(2.0)
+                    break
+                time.sleep(0.5)
+                continue
+                
+    raise Exception(f"Máy chủ AI đang phản hồi: {last_err}")
 
 def get_lecture_audio(text_script, audio_id):
     filename = f"lecture_{audio_id}.mp3"
@@ -550,8 +565,6 @@ def convert_latex_to_clean_math(latex_str: str) -> str:
 
 def add_math_equation_element(paragraph, math_text: str):
     """Tạo đối tượng Equation (m:oMath) an toàn bằng API DOM chuẩn, không bị lỗi XMLSyntaxError."""
-    NS_M = "[http://schemas.openxmlformats.org/officeDocument/2006/math](http://schemas.openxmlformats.org/officeDocument/2006/math)"
-    
     oMath = OxmlElement('m:oMath')
     r = OxmlElement('m:r')
     
@@ -1260,7 +1273,7 @@ with tab4:
                             st.session_state["exam_submitted_result"] = None
                             st.rerun()
                     except Exception as e:
-                        st.error(f"⚠️️ Thông báo kết nối: {e}")
+                        st.error(f"⚠️ Thông báo kết nối: {e}")
 
     # Giao diện làm bài thi khi đã tạo đề
     exam = st.session_state["generated_exam"]
